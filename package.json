@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.7.4",
     "@hookform/resolvers": "^3.9.0",
     "@next/swc-wasm-nodejs": "13.5.1",
     "@prisma/client": "^6.3.1",
@@ -44,6 +45,7 @@
     "autoprefixer": "10.4.15",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
+    "clerk": "^0.8.3",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
@@ -54,8 +56,10 @@
     "jose": "^5.9.6",
     "lucide-react": "^0.446.0",
     "next": "13.5.1",
+    "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.3.0",
     "postcss": "8.4.30",
+    "prisma": "^6.3.1",
     "react": "18.2.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "18.2.0",
