@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -13,38 +13,9 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const data = [
-  { month: 'Jan', revenue: 45000, expenses: 38000 },
-  { month: 'Feb', revenue: 52000, expenses: 42000 },
-  { month: 'Mar', revenue: 48000, expenses: 40000 },
-  { month: 'Apr', revenue: 61000, expenses: 45000 },
-  { month: 'May', revenue: 55000, expenses: 48000 },
-  { month: 'Jun', revenue: 67000, expenses: 51000 },
-];
-
-const recentTransactions = [
-  {
-    id: 1,
-    description: 'Office Supplies',
-    amount: -245.50,
-    date: '2024-03-20',
-    category: 'Expenses',
-  },
-  {
-    id: 2,
-    description: 'Client Payment - ABC Corp',
-    amount: 5000.00,
-    date: '2024-03-19',
-    category: 'Income',
-  },
-  {
-    id: 3,
-    description: 'Utility Bills',
-    amount: -380.25,
-    date: '2024-03-18',
-    category: 'Expenses',
-  },
-];
+// Empty state data - will be replaced with real data from database
+const data = [];
+const recentTransactions = [];
 
 export default function FinancePage() {
   return (
@@ -58,48 +29,67 @@ export default function FinancePage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$328,500</div>
-            <p className="text-xs text-muted-foreground">
-              +15.2% from last month
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No revenue data yet</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Add First Transaction
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Expenses</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$264,000</div>
-            <p className="text-xs text-muted-foreground">
-              +8.4% from last month
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No expenses recorded</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Record Expense
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$64,500</div>
-            <p className="text-xs text-muted-foreground">
-              +21.6% from last month
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No profit data yet</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                View Analytics
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Invoices</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$12,450</div>
-            <p className="text-xs text-muted-foreground">
-              8 invoices pending
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No pending invoices</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Create Invoice
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -109,18 +99,17 @@ export default function FinancePage() {
           <CardHeader>
             <CardTitle>Revenue vs Expenses</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="revenue" stroke="#10b981" name="Revenue" />
-                  <Line type="monotone" dataKey="expenses" stroke="#ef4444" name="Expenses" />
-                </LineChart>
-              </ResponsiveContainer>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-12 w-12 mx-auto text-muted-foreground" />
+              <h3 className="text-lg font-medium">No Financial Data Available</h3>
+              <p className="text-sm text-muted-foreground">
+                Start recording transactions to see your financial analytics and trends.
+              </p>
+              <Button className="mt-4">
+                <Plus className="mr-2 h-4 w-4" />
+                Record First Transaction
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -129,23 +118,17 @@ export default function FinancePage() {
           <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">{transaction.description}</p>
-                    <p className="text-sm text-muted-foreground">{transaction.date}</p>
-                  </div>
-                  <div className={`text-right ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {transaction.amount > 0 ? '+' : ''}
-                    ${Math.abs(transaction.amount).toFixed(2)}
-                  </div>
-                </div>
-              ))}
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-12 w-12 mx-auto text-muted-foreground" />
+              <h3 className="text-lg font-medium">No Transactions Yet</h3>
+              <p className="text-sm text-muted-foreground">
+                Your recent financial transactions will appear here.
+              </p>
+              <Button className="mt-4">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Transaction
+              </Button>
             </div>
           </CardContent>
         </Card>

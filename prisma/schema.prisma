@@ -9,11 +9,16 @@ generator client {
 
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  clerkId   String   @unique
   email     String   @unique
+  password  String
   firstName String?
   lastName  String?
   image     String?
+  bio       String?
+  role      String?
+  location  String?
+  darkMode  Boolean  @default(false)
+  compactView Boolean @default(false)
   company   Company? @relation(fields: [companyId], references: [id])
   companyId String?  @db.ObjectId
   notifications Notification[]
@@ -30,6 +35,8 @@ model Company {
   website   String?
   logo      String?
   users     User[]
+  inventory InventoryItem[]
+  employees Employee[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -44,4 +51,40 @@ model Notification {
   userId    String   @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model InventoryItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  sku         String
+  category    String
+  quantity    Int
+  price       Float
+  status      String
+  description String?
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Employee {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName   String
+  lastName    String
+  email       String   @unique
+  phone       String?
+  position    String
+  department  String
+  startDate   DateTime
+  salary      Float?
+  status      String   @default("active")
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
 }

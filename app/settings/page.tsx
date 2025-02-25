@@ -100,11 +100,9 @@ export default function SettingsPage() {
     try {
       setSaving(true)
       const name = (document.getElementById("company") as HTMLInputElement).value
-      const role = (document.getElementById("role") as HTMLInputElement).value
 
       await updateCompany({
         name,
-        role,
       })
 
       toast({
@@ -224,6 +222,7 @@ export default function SettingsPage() {
                     defaultValue={company?.name || ""}
                     placeholder="Company name"
                     disabled={saving}
+                    onBlur={() => handleUpdateCompany()}
                   />
                 </div>
                 <div className="space-y-2">

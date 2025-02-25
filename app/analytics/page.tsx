@@ -1,18 +1,9 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Plus, Users, Timer, MousePointerClick, Clock } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, } from 'recharts';
 
 const salesData = [
   { month: 'Jan', sales: 4000 },
@@ -34,54 +25,77 @@ const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3
 
 export default function AnalyticsPage() {
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Analytics</h2>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Export Report
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2,350</div>
-            <p className="text-xs text-muted-foreground">
-              +180.1% from last month
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No user data yet</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                View Users
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
+            <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,247</div>
-            <p className="text-xs text-muted-foreground">
-              +201 since last hour
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No active sessions</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Track Sessions
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Bounce Rate</CardTitle>
+            <MousePointerClick className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">24.57%</div>
-            <p className="text-xs text-muted-foreground">
-              -1.4% from last week
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No bounce rate data</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                View Analytics
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Session Duration</CardTitle>
+            <CardTitle className="text-sm font-medium">Session Duration</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">4m 32s</div>
-            <p className="text-xs text-muted-foreground">
-              +32s from last week
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No duration data</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                View Sessions
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -91,17 +105,17 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle>Monthly Sales</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="sales" fill="hsl(var(--primary))" />
-                </BarChart>
-              </ResponsiveContainer>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-12 w-12 mx-auto text-muted-foreground" />
+              <h3 className="text-lg font-medium">No Sales Data Available</h3>
+              <p className="text-sm text-muted-foreground">
+                Start tracking sales to see your monthly performance analytics.
+              </p>
+              <Button className="mt-4">
+                <Plus className="mr-2 h-4 w-4" />
+                Track Sales
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -110,38 +124,17 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle>Product Distribution</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={productData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {productData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 space-y-2">
-              {productData.map((item, index) => (
-                <div key={item.name} className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
-                  <span className="text-sm">{item.name}</span>
-                </div>
-              ))}
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-12 w-12 mx-auto text-muted-foreground" />
+              <h3 className="text-lg font-medium">No Products Yet</h3>
+              <p className="text-sm text-muted-foreground">
+                Add products to see their distribution analytics.
+              </p>
+              <Button className="mt-4">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Products
+              </Button>
             </div>
           </CardContent>
         </Card>
