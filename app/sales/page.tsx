@@ -1,37 +1,6 @@
-import { DataTable } from '@/components/sales/data-table';
-import { columns } from '@/components/sales/columns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Overview } from '@/components/sales/overview';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-
-// Placeholder data - will be replaced with MongoDB data
-const data = [
-  {
-    id: '1',
-    customer: 'John Doe',
-    email: 'john@example.com',
-    amount: 1234.56,
-    status: 'completed',
-    date: '2024-03-20',
-  },
-  {
-    id: '2',
-    customer: 'Jane Smith',
-    email: 'jane@example.com',
-    amount: 789.12,
-    status: 'pending',
-    date: '2024-03-19',
-  },
-  {
-    id: '3',
-    customer: 'Bob Johnson',
-    email: 'bob@example.com',
-    amount: 456.78,
-    status: 'processing',
-    date: '2024-03-18',
-  },
-];
+import { Plus, DollarSign, ShoppingCart, TrendingUp, Users } from 'lucide-react';
 
 export default function SalesPage() {
   return (
@@ -45,70 +14,89 @@ export default function SalesPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Sales
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No sales data yet</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Add First Sale
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Average Order Value
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$249.99</div>
-            <p className="text-xs text-muted-foreground">
-              +4.3% from last month
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No orders yet</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Create Order
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Orders
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">182</div>
-            <p className="text-xs text-muted-foreground">
-              +12.5% from last month
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No orders yet</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Add First Order
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Conversion Rate
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3.2%</div>
-            <p className="text-xs text-muted-foreground">
-              +0.3% from last month
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No customers yet</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Add First Customer
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="col-span-4">
+      <Card>
         <CardHeader>
           <CardTitle>Sales Overview</CardTitle>
         </CardHeader>
-        <CardContent className="pl-2">
-          <Overview />
+        <CardContent className="flex flex-col items-center justify-center py-6">
+          <div className="text-center space-y-3">
+            <Plus className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h3 className="text-lg font-medium">No Sales Data Available</h3>
+            <p className="text-sm text-muted-foreground">
+              Start adding sales to see your business metrics and analytics.
+            </p>
+            <Button className="mt-4">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Your First Sale
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      <DataTable columns={columns} data={data} />
     </div>
   );
 }
