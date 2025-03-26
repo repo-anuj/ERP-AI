@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/components/ui/use-toast"
 
 const employeeFormSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
@@ -25,6 +26,8 @@ type EmployeeFormValues = z.infer<typeof employeeFormSchema>
 
 export function AddEmployeeDialog() {
   const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
@@ -41,6 +44,7 @@ export function AddEmployeeDialog() {
 
   async function onSubmit(data: EmployeeFormValues) {
     try {
+      setLoading(true)
       const response = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,15 +52,32 @@ export function AddEmployeeDialog() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to add employee")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Failed to add employee")
       }
 
+      const employee = await response.json()
+      
       setOpen(false)
       form.reset()
-      // TODO: Add success toast notification
+      
+      toast({
+        title: "Employee Added",
+        description: `${employee.firstName} ${employee.lastName} has been added successfully.`,
+        variant: "default",
+      })
+      
+      // Refresh the page to show the new employee
+      window.location.reload()
     } catch (error) {
       console.error("Failed to add employee:", error)
-      // TODO: Add error toast notification
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add employee. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -190,7 +211,9 @@ export function AddEmployeeDialog() {
               )}
             />
             <DialogFooter>
-              <Button type="submit">Add Employee</Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Adding..." : "Add Employee"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

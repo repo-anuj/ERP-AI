@@ -3,41 +3,42 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DollarSign, PlusCircle, ShoppingCart } from 'lucide-react';
+import { PlusCircle, Users } from 'lucide-react';
 import Link from 'next/link';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
-interface RecentSalesProps {
+interface RecentEmployeesProps {
   data?: Array<{
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
-    amount: number;
-    date: string | Date;
-    image?: string;
+    position: string;
+    department: string;
+    createdAt: string | Date;
   }>;
 }
 
-export function RecentSales({ data }: RecentSalesProps) {
+export function RecentEmployees({ data }: RecentEmployeesProps) {
   if (!data || data.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Recent Sales</CardTitle>
+          <CardTitle>Recent Employees</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-10 space-y-4">
-          <ShoppingCart className="h-16 w-16 text-muted-foreground" />
+          <Users className="h-16 w-16 text-muted-foreground" />
           <div className="text-center space-y-2">
-            <h3 className="font-medium">No sales yet</h3>
+            <h3 className="font-medium">No employees yet</h3>
             <p className="text-sm text-muted-foreground">
-              Start recording your first sale to track your business growth
+              Start adding employees to build your team
             </p>
           </div>
-          <Link href="/sales">
+          <Link href="/hr">
             <Button variant="outline" className="mt-4">
               <PlusCircle className="mr-2 h-4 w-4" />
-              Record First Sale
+              Add First Employee
             </Button>
           </Link>
         </CardContent>
@@ -47,40 +48,38 @@ export function RecentSales({ data }: RecentSalesProps) {
 
   return (
     <div className="space-y-6">
-      {data.map((sale) => {
-        const saleDate = new Date(sale.date);
-        const formattedDate = formatDate(saleDate);
-        const initials = sale.name.split(' ').map(n => n[0]).join('').toUpperCase();
+      {data.map((employee) => {
+        const hireDate = new Date(employee.createdAt);
+        const formattedDate = formatDate(hireDate);
+        const initials = `${employee.firstName[0]}${employee.lastName[0]}`.toUpperCase();
         
         return (
-          <div key={sale.id} className="flex items-center">
+          <div key={employee.id} className="flex items-center">
             <Avatar className="h-9 w-9 border">
-              <AvatarImage src={sale.image} />
               <AvatarFallback className="bg-primary/10 text-primary">{initials}</AvatarFallback>
             </Avatar>
             <div className="ml-4 space-y-1 flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium leading-none truncate">{sale.name}</p>
+                <p className="text-sm font-medium leading-none truncate">
+                  {employee.firstName} {employee.lastName}
+                </p>
                 <Badge variant="outline" className="ml-2 text-xs">
                   {formattedDate}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground truncate">
-                {sale.email || "No email provided"}
+                {employee.position} • {employee.department}
               </p>
-            </div>
-            <div className="ml-auto font-medium text-green-600">
-              {formatCurrency(sale.amount)}
             </div>
           </div>
         );
       })}
       
       <div className="pt-4 text-center border-t">
-        <Link href="/sales">
+        <Link href="/hr">
           <Button variant="ghost" size="sm" className="gap-1">
-            <DollarSign className="h-4 w-4" />
-            View all sales
+            <Users className="h-4 w-4" />
+            View all employees
           </Button>
         </Link>
       </div>

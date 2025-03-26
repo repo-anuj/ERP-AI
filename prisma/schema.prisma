@@ -37,6 +37,8 @@ model Company {
   users     User[]
   inventory InventoryItem[]
   employees Employee[]
+  customers Customer[]
+  sales     Sale[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -83,8 +85,62 @@ model Employee {
   status      String   @default("active")
   company     Company  @relation(fields: [companyId], references: [id])
   companyId   String   @db.ObjectId
+  sales       Sale[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([companyId])
+}
+
+model Customer {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+  sales       Sale[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Sale {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceNumber String?
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  String   @db.ObjectId
+  employee    Employee? @relation(fields: [employeeId], references: [id])
+  employeeId  String?  @db.ObjectId
+  date        DateTime
+  status      String
+  total       Float
+  tax         Float?
+  notes       String?
+  items       SaleItem[]
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([employeeId])
+  @@index([companyId])
+}
+
+model SaleItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  saleId      String   @db.ObjectId
+  product     String
+  description String?
+  quantity    Int
+  unitPrice   Float
+  total       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([saleId])
 }
