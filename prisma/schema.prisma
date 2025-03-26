@@ -1,10 +1,10 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 model User {
@@ -13,47 +13,134 @@ model User {
   password  String
   firstName String?
   lastName  String?
-  role      String   @default("user")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  image     String?
+  bio       String?
+  role      String?
+  location  String?
+  darkMode  Boolean  @default(false)
+  compactView Boolean @default(false)
   company   Company? @relation(fields: [companyId], references: [id])
   companyId String?  @db.ObjectId
+  notifications Notification[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Company {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  industry    String
-  size        String?
-  description String?
-  
-  // Contact & Location
-  address     String?
-  city        String?
-  state       String?
-  zipCode     String?
-  country     String?
-  phone       String?
-  
-  // Business Operations
-  businessType      String?
-  operatingHours    String?
-  mainProducts      String?
-  
-  // Industry Specific
-  technologyStack   String[]
-  certifications    String[]
-  manufacturingCapacity String?
-  retailLocations   Int?
-  
-  // Department Setup
-  departments       String[]
-  additionalInfo    String?
-  
-  // Timestamps
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  website   String?
+  logo      String?
+  users     User[]
+  inventory InventoryItem[]
+  employees Employee[]
+  customers Customer[]
+  sales     Sale[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // Relations
-  users      User[]
-} 
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InventoryItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  sku         String
+  category    String
+  quantity    Int
+  price       Float
+  status      String
+  description String?
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Employee {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName   String
+  lastName    String
+  email       String   @unique
+  phone       String?
+  position    String
+  department  String
+  startDate   DateTime
+  salary      Float?
+  status      String   @default("active")
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+  sales       Sale[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Customer {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+  sales       Sale[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Sale {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceNumber String?
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  String   @db.ObjectId
+  employee    Employee? @relation(fields: [employeeId], references: [id])
+  employeeId  String?  @db.ObjectId
+  date        DateTime
+  status      String
+  total       Float
+  tax         Float?
+  notes       String?
+  items       SaleItem[]
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([employeeId])
+  @@index([companyId])
+}
+
+model SaleItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  saleId      String   @db.ObjectId
+  product     String
+  description String?
+  quantity    Int
+  unitPrice   Float
+  total       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([saleId])
+}

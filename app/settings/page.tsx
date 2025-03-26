@@ -16,21 +16,123 @@ import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
+import { useUser } from "@/contexts/user-context"
+import { useToast } from "@/components/ui/use-toast"
+import { useCompany } from "@/contexts/company-context"
+import { useNotifications } from "@/contexts/notification-context"
 
 export default function SettingsPage() {
-  const [profileImage, setProfileImage] = useState("/placeholder-avatar.jpg")
+  const { toast } = useToast()
+  const { user, loading: userLoading, updateUser } = useUser()
+  const { company, loading: companyLoading, updateCompany } = useCompany()
+  const { notifications, loading: notificationLoading, markAsRead } = useNotifications()
+  const [saving, setSaving] = useState(false)
   const searchParams = useSearchParams()
   const defaultTab = searchParams.get("tab") || "profile"
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+
+    try {
+      setSaving(true)
+      const formData = new FormData()
+      formData.append("image", file)
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error("Failed to upload image")
+
+      const { url } = await response.json()
+      await updateUser({ image: url })
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully.",
+      })
+    } catch (error) {
+      console.error("Failed to upload image:", error)
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
     }
+  }
+
+  const handleUpdateProfile = async () => {
+    try {
+      setSaving(true)
+      const firstName = (document.getElementById("firstName") as HTMLInputElement).value
+      const lastName = (document.getElementById("lastName") as HTMLInputElement).value
+      const bio = (document.getElementById("bio") as HTMLTextAreaElement).value
+      const role = (document.getElementById("role") as HTMLInputElement).value
+      const location = (document.getElementById("location") as HTMLInputElement).value
+
+      await updateUser({
+        firstName,
+        lastName,
+        bio,
+        role,
+        location,
+      })
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleUpdateCompany = async () => {
+    try {
+      setSaving(true)
+      const name = (document.getElementById("company") as HTMLInputElement).value
+
+      await updateCompany({
+        name,
+      })
+
+      toast({
+        title: "Success",
+        description: "Company information updated successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update company information. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const getInitials = () => {
+    if (!user) return "?"
+    const first = user.firstName?.[0] || ""
+    const last = user.lastName?.[0] || ""
+    return (first + last).toUpperCase() || user.email[0].toUpperCase()
+  }
+
+  if (userLoading || companyLoading) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-center">Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -54,8 +156,8 @@ export default function SettingsPage() {
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={profileImage} />
-                  <AvatarFallback>CN</AvatarFallback>
+                  <AvatarImage src={user?.image || "/placeholder-avatar.jpg"} />
+                  <AvatarFallback>{getInitials()}</AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
                   <Label htmlFor="picture">Profile Picture</Label>
@@ -64,6 +166,7 @@ export default function SettingsPage() {
                     type="file"
                     accept="image/*"
                     onChange={handleImageUpload}
+                    disabled={saving}
                   />
                 </div>
               </div>
@@ -71,45 +174,81 @@ export default function SettingsPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" placeholder="Enter your first name" />
+                  <Input 
+                    id="firstName"
+                    defaultValue={user?.firstName || ""}
+                    placeholder="Enter your first name"
+                    disabled={saving}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" placeholder="Enter your last name" />
+                  <Input 
+                    id="lastName"
+                    defaultValue={user?.lastName || ""}
+                    placeholder="Enter your last name"
+                    disabled={saving}
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="Enter your email" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={user?.email || ""}
+                  disabled
+                  className="bg-muted"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
                 <Textarea
                   id="bio"
+                  defaultValue={user?.bio || ""}
                   placeholder="Write something about yourself"
                   className="h-32"
+                  disabled={saving}
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="company">Company</Label>
-                  <Input id="company" placeholder="Company name" />
+                  <Input 
+                    id="company"
+                    defaultValue={company?.name || ""}
+                    placeholder="Company name"
+                    disabled={saving}
+                    onBlur={() => handleUpdateCompany()}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Input id="role" placeholder="Your role" />
+                  <Input 
+                    id="role"
+                    defaultValue={user?.role || ""}
+                    placeholder="Your role"
+                    disabled={saving}
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
-                <Input id="location" placeholder="City, Country" />
+                <Input 
+                  id="location"
+                  defaultValue={user?.location || ""}
+                  placeholder="City, Country"
+                  disabled={saving}
+                />
               </div>
 
-              <Button>Update Profile</Button>
+              <Button onClick={handleUpdateProfile} disabled={saving}>
+                {saving ? "Saving..." : "Update Profile"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -155,39 +294,47 @@ export default function SettingsPage() {
         <TabsContent value="notifications">
           <Card>
             <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
+              <CardTitle>Notifications</CardTitle>
               <CardDescription>
-                Choose how you want to be notified.
+                View your recent notifications and updates.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive email notifications for important updates
-                  </p>
+            <CardContent>
+              {notificationLoading ? (
+                <div className="text-center py-4">Loading notifications...</div>
+              ) : notifications.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  No notifications yet
                 </div>
-                <Switch />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Push Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive push notifications for important updates
-                  </p>
+              ) : (
+                <div className="space-y-4">
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`p-4 rounded-lg border ${
+                        notification.read ? "bg-muted" : "bg-background"
+                      } cursor-pointer`}
+                      onClick={() => !notification.read && markAsRead(notification.id)}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="text-sm font-medium">
+                            {notification.title}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {notification.message}
+                          </p>
+                        </div>
+                        <time className="text-xs text-muted-foreground">
+                          {new Date(notification.createdAt).toLocaleDateString()}
+                        </time>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <Switch />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Task Reminders</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Get reminders for upcoming tasks and deadlines
-                  </p>
-                </div>
-                <Switch />
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -208,7 +355,7 @@ export default function SettingsPage() {
                     Toggle between light and dark mode
                   </p>
                 </div>
-                <Switch />
+                <Switch defaultChecked={user?.darkMode} />
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
@@ -217,7 +364,7 @@ export default function SettingsPage() {
                     Use a more compact view for dense information
                   </p>
                 </div>
-                <Switch />
+                <Switch defaultChecked={user?.compactView} />
               </div>
             </CardContent>
           </Card>

@@ -14,26 +14,52 @@ import { MoreHorizontal } from 'lucide-react';
 
 export type Employee = {
   id: string;
-  name: string;
-  department: string;
-  role: string;
-  status: string;
-  joinDate: string;
+  firstName: string;
+  lastName: string;
   email: string;
+  phone?: string;
+  position: string;
+  department: string;
+  startDate: string;
+  salary?: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export const columns: ColumnDef<Employee>[] = [
   {
-    accessorKey: 'name',
+    id: 'name',
     header: 'Name',
+    cell: ({ row }) => {
+      const firstName = row.original.firstName;
+      const lastName = row.original.lastName;
+      return `${firstName} ${lastName}`;
+    },
+  },
+  {
+    accessorKey: 'email',
+    header: 'Email',
+  },
+  {
+    accessorKey: 'position',
+    header: 'Position',
   },
   {
     accessorKey: 'department',
     header: 'Department',
+    cell: ({ row }) => {
+      const department = row.getValue('department') as string;
+      return department.charAt(0).toUpperCase() + department.slice(1);
+    },
   },
   {
-    accessorKey: 'role',
-    header: 'Role',
+    accessorKey: 'startDate',
+    header: 'Start Date',
+    cell: ({ row }) => {
+      const date = row.getValue('startDate') as string;
+      return new Date(date).toLocaleDateString();
+    },
   },
   {
     accessorKey: 'status',
@@ -41,19 +67,11 @@ export const columns: ColumnDef<Employee>[] = [
     cell: ({ row }) => {
       const status = row.getValue('status') as string;
       return (
-        <Badge variant={status === 'Active' ? 'default' : 'secondary'}>
-          {status}
+        <Badge variant={status === 'active' ? 'default' : 'secondary'}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>
       );
     },
-  },
-  {
-    accessorKey: 'joinDate',
-    header: 'Join Date',
-  },
-  {
-    accessorKey: 'email',
-    header: 'Email',
   },
   {
     id: 'actions',

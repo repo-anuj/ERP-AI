@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, FolderGit2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -47,7 +47,7 @@ const projects = [
 
 export default function ProjectsPage() {
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Projects</h2>
         <Button>
@@ -57,119 +57,86 @@ export default function ProjectsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+            <FolderGit2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">
-              +2 from last month
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No projects yet</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Add First Project
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              Active projects
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No active projects</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                Start Project
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">
-              This quarter
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No completed projects</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                View Projects
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">2</div>
-            <p className="text-xs text-muted-foreground">
-              Needs attention
-            </p>
+          <CardContent className="flex flex-col items-center justify-center py-6">
+            <div className="text-center space-y-3">
+              <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No overdue projects</p>
+              <Button variant="outline" size="sm" className="mt-2">
+                View Timeline
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Active Projects</CardTitle>
+          <CardTitle>Project Overview</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Progress</TableHead>
-                  <TableHead>Deadline</TableHead>
-                  <TableHead>Team</TableHead>
-                  <TableHead>Priority</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {projects.map((project) => (
-                  <TableRow key={project.id}>
-                    <TableCell className="font-medium">{project.name}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          project.status === 'Completed'
-                            ? 'default'
-                            : project.status === 'In Progress'
-                            ? 'secondary'
-                            : 'outline'
-                        }
-                      >
-                        {project.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Progress value={project.progress} className="w-[60px]" />
-                        <span className="text-sm">{project.progress}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{project.deadline}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {project.team.map((member, index) => (
-                          <Badge key={index} variant="outline">
-                            {member}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          project.priority === 'High'
-                            ? 'destructive'
-                            : project.priority === 'Medium'
-                            ? 'secondary'
-                            : 'outline'
-                        }
-                      >
-                        {project.priority}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        <CardContent className="flex flex-col items-center justify-center py-6">
+          <div className="text-center space-y-3">
+            <Plus className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h3 className="text-lg font-medium">No Projects Available</h3>
+            <p className="text-sm text-muted-foreground">
+              Start creating projects to track your team's progress and milestones.
+            </p>
+            <Button className="mt-4">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Your First Project
+            </Button>
           </div>
         </CardContent>
       </Card>
