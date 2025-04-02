@@ -91,7 +91,7 @@ export function DataTable<TData, TValue>({
 
   // Apply category filter
   useEffect(() => {
-    if (selectedCategory) {
+    if (selectedCategory && selectedCategory !== '_all') {
       table.getColumn('category')?.setFilterValue(selectedCategory);
     } else {
       table.getColumn('category')?.setFilterValue(undefined);
@@ -100,7 +100,7 @@ export function DataTable<TData, TValue>({
 
   // Apply status filter
   useEffect(() => {
-    if (selectedStatus) {
+    if (selectedStatus && selectedStatus !== '_all') {
       table.getColumn('status')?.setFilterValue(selectedStatus);
     } else {
       table.getColumn('status')?.setFilterValue(undefined);
@@ -311,8 +311,8 @@ export function DataTable<TData, TValue>({
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setSelectedCategory('');
-                  setSelectedStatus('');
+                  setSelectedCategory('_all');
+                  setSelectedStatus('_all');
                   setGlobalFilter('');
                 }}
                 className="h-9"

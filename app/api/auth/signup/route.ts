@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import * as z from "zod"
 import { hashPassword } from "@/lib/password"
+import { v4 as uuidv4 } from 'uuid'
 
 export const runtime = 'nodejs'
 
@@ -47,6 +48,9 @@ export async function POST(req: Request) {
             const hashedPassword = await hashPassword(password)
             console.log("Password hashed successfully")
 
+            // Generate a unique clerkId
+            const clerkId = uuidv4()
+
             // Create user
             const user = await prisma.user.create({
                 data: {
@@ -54,6 +58,7 @@ export async function POST(req: Request) {
                     password: hashedPassword,
                     firstName,
                     lastName,
+                    clerkId,
                 },
             })
             console.log("User created successfully:", { id: user.id, email: user.email })
@@ -95,4 +100,4 @@ export async function OPTIONS(request: Request) {
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
     })
-} 
+}
