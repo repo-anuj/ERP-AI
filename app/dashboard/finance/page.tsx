@@ -48,6 +48,8 @@ interface Account {
   name: string;
   type: string;
   balance: number;
+  initialBalance?: number;
+  currentBalance?: number;
 }
 
 export default function FinancePage() {
@@ -99,8 +101,14 @@ export default function FinancePage() {
       
       if (response.ok) {
         const data = await response.json();
-        setAccounts(data);
-        setHasAccounts(data.length > 0);
+        // Store initialBalance for later reference
+        const accountsWithInitialBalance = data.map((account: Account) => ({
+          ...account,
+          initialBalance: account.balance,
+          currentBalance: account.balance // Will be updated when transactions are loaded
+        }));
+        setAccounts(accountsWithInitialBalance);
+        setHasAccounts(accountsWithInitialBalance.length > 0);
       } else {
         toast.error('Failed to fetch accounts');
         setHasAccounts(false);
@@ -247,7 +255,7 @@ export default function FinancePage() {
     }
   };
 
-  // Calculate financial statistics
+  // Calculate financial statistics and update account balances
   const calculateStats = (transactionsList: Transaction[]) => {
     const completedTransactions = transactionsList.filter(
       t => t.status === 'completed'
@@ -279,6 +287,41 @@ export default function FinancePage() {
       pendingIncome,
       pendingExpenses
     });
+
+    // Update account balances based on transactions
+    updateAccountBalances(completedTransactions);
+  };
+
+  // Update account balances based on completed transactions
+  const updateAccountBalances = (completedTransactions: Transaction[]) => {
+    // Create a copy of accounts
+    const updatedAccounts = [...accounts];
+    
+    // Reset all account balances to their initial values
+    updatedAccounts.forEach(account => {
+      account.currentBalance = account.initialBalance || 0;
+    });
+    
+    // Update balances based on transactions
+    completedTransactions.forEach(transaction => {
+      // Find the account this transaction belongs to
+      const accountIndex = updatedAccounts.findIndex(a => {
+        // Match by name or by id if available
+        return a.name === transaction.account || 
+               (typeof transaction.account === 'object' && transaction.account?.id === a.id);
+      });
+      
+      if (accountIndex >= 0) {
+        // Found the account, update its balance
+        if (transaction.type === 'income') {
+          updatedAccounts[accountIndex].currentBalance! += transaction.amount;
+        } else if (transaction.type === 'expense') {
+          updatedAccounts[accountIndex].currentBalance! -= transaction.amount;
+        }
+      }
+    });
+    
+    setAccounts(updatedAccounts);
   };
 
   // Handle adding a new transaction
@@ -594,9 +637,16 @@ export default function FinancePage() {
             <div className="text-2xl font-bold">
               {accounts.length}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {accounts.map(a => a.name).join(', ')}
-            </p>
+            <div className="mt-2 space-y-2 max-h-24 overflow-y-auto">
+              {accounts && accounts.length > 0 ? accounts.map(account => (
+                <div key={account.id} className="flex justify-between text-xs">
+                  <span className="truncate mr-2">{account.name}</span>
+                  <span className={account.currentBalance! >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    {formatCurrency(account.currentBalance || 0)}
+                  </span>
+                </div>
+              )) : 'No accounts'}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -629,8 +679,10 @@ export default function FinancePage() {
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
-                  {availableCategories.map((category) => (
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {availableCategories
+                    .filter(category => category && category.trim() !== '')
+                    .map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -649,8 +701,10 @@ export default function FinancePage() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
-                  {availableStatuses.map((status) => (
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {availableStatuses
+                    .filter(status => status && status.trim() !== '')
+                    .map((status) => (
                     <SelectItem key={status} value={status}>
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </SelectItem>

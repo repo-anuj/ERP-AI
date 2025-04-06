@@ -31,6 +31,8 @@ interface Account {
   name: string;
   type: string;
   balance: number;
+  initialBalance?: number;
+  currentBalance?: number;
   currency: string;
   number?: string;
   institutionName?: string;
@@ -40,14 +42,23 @@ interface Account {
 export default function AccountsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [totalBalance, setTotalBalance] = useState(0);
+  const [isUpdatingBalances, setIsUpdatingBalances] = useState(false);
   
   // Fetch accounts when component mounts
   useEffect(() => {
     fetchAccounts();
   }, []);
+  
+  // Effect to fetch transactions only after accounts are loaded
+  useEffect(() => {
+    if (accounts.length > 0) {
+      fetchTransactions();
+    }
+  }, [accounts.length]);
   
   // Fetch accounts from the API
   const fetchAccounts = async () => {
@@ -57,8 +68,14 @@ export default function AccountsPage() {
       
       if (response.ok) {
         const data = await response.json();
-        setAccounts(data);
-        calculateTotalBalance(data);
+        // Store initialBalance for later reference
+        const accountsWithInitialBalance = data.map((account: Account) => ({
+          ...account,
+          initialBalance: account.balance,
+          currentBalance: account.balance // Will be updated when transactions are loaded
+        }));
+        setAccounts(accountsWithInitialBalance);
+        calculateTotalBalance(accountsWithInitialBalance);
       } else {
         toast.error('Failed to fetch accounts');
       }
@@ -73,10 +90,15 @@ export default function AccountsPage() {
   // Calculate total balance across all accounts
   const calculateTotalBalance = (accountsList: Account[]) => {
     const total = accountsList.reduce((sum, account) => {
+      // Use currentBalance if available, otherwise fall back to balance
+      const balanceToUse = typeof account.currentBalance !== 'undefined' 
+        ? account.currentBalance 
+        : account.balance;
+        
       // For credit accounts, negative balance is actually good
       const balanceValue = account.type === 'credit' 
-        ? -account.balance
-        : account.balance;
+        ? -balanceToUse
+        : balanceToUse;
       
       return sum + balanceValue;
     }, 0);
@@ -121,6 +143,164 @@ export default function AccountsPage() {
   const handleAccountSuccess = () => {
     setAccountDialogOpen(false);
     fetchAccounts();
+  };
+
+  // Fetch transactions from the API
+  const fetchTransactions = async () => {
+    try {
+      setIsUpdatingBalances(true);
+      const response = await fetch('/api/finance/transactions');
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Map API data to match our expected format
+        const mappedTransactions = data.map((transaction: any) => ({
+          id: transaction.id,
+          date: transaction.date,
+          description: transaction.description,
+          amount: transaction.amount,
+          type: transaction.type,
+          category: transaction.category?.name || (typeof transaction.category === 'string' ? transaction.category : 'Other'),
+          account: transaction.account?.name || (typeof transaction.account === 'string' ? transaction.account : 'Default'),
+          reference: transaction.reference,
+          status: transaction.status,
+        }));
+        
+        setTransactions(mappedTransactions);
+        updateAccountBalances(mappedTransactions);
+        
+        // Also fetch related data from other modules
+        fetchSalesData();
+        fetchInventoryData();
+      } else {
+        toast.error('Failed to fetch transactions');
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    } finally {
+      setIsUpdatingBalances(false);
+    }
+  };
+
+  // Fetch sales data and convert to income transactions
+  const fetchSalesData = async () => {
+    try {
+      const response = await fetch('/api/sales/invoices?status=paid');
+      
+      if (response.ok) {
+        const invoicesData = await response.json();
+        
+        if (!Array.isArray(invoicesData)) {
+          console.error('Invalid sales data format');
+          return;
+        }
+        
+        // Map sales data to transactions
+        const salesTransactions: Transaction[] = invoicesData.map((invoice: any) => ({
+          id: `sales-${invoice.id}`,
+          date: invoice.paymentDate || invoice.date,
+          description: `Invoice #${invoice.number}: ${invoice.customerName || 'Customer'}`,
+          amount: invoice.total,
+          type: 'income',
+          category: 'Sales',
+          account: invoice.paymentMethod || 'Default Account',
+          reference: invoice.number,
+          status: invoice.status === 'paid' ? 'completed' : 'pending',
+          sourceType: 'sales',
+          originalData: invoice
+        }));
+        
+        // Add to transactions array
+        setTransactions(prev => {
+          // Filter out any existing sales transactions to avoid duplicates
+          const filtered = prev.filter(t => !t.id.startsWith('sales-'));
+          const combined = [...filtered, ...salesTransactions];
+          updateAccountBalances(combined);
+          return combined;
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching sales data:', error);
+    }
+  };
+
+  // Fetch inventory data and convert to expense transactions
+  const fetchInventoryData = async () => {
+    try {
+      const response = await fetch('/api/inventory/purchases');
+      
+      if (response.ok) {
+        const purchasesData = await response.json();
+        
+        if (!Array.isArray(purchasesData)) {
+          console.error('Invalid inventory data format');
+          return;
+        }
+        
+        // Map inventory data to transactions
+        const inventoryTransactions: Transaction[] = purchasesData.map((purchase: any) => ({
+          id: `inventory-${purchase.id}`,
+          date: purchase.date,
+          description: `Purchase: ${purchase.itemName || 'Inventory item'}`,
+          amount: purchase.totalCost,
+          type: 'expense',
+          category: 'Inventory Purchase',
+          account: 'Inventory Account',
+          reference: purchase.purchaseOrder || purchase.reference || `PO-${purchase.id.substring(0, 8)}`,
+          status: purchase.status === 'paid' ? 'completed' : (purchase.status || 'pending'),
+          sourceType: 'inventory',
+          originalData: purchase
+        }));
+        
+        // Add to transactions array
+        setTransactions(prev => {
+          // Filter out any existing inventory transactions to avoid duplicates
+          const filtered = prev.filter(t => !t.id.startsWith('inventory-'));
+          const combined = [...filtered, ...inventoryTransactions];
+          updateAccountBalances(combined);
+          return combined;
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching inventory data:', error);
+    }
+  };
+
+  // Update account balances based on completed transactions
+  const updateAccountBalances = (transactionsList: Transaction[]) => {
+    // Create a copy of accounts
+    const updatedAccounts = [...accounts];
+    
+    // Reset all account balances to their initial values
+    updatedAccounts.forEach(account => {
+      account.currentBalance = account.initialBalance || 0;
+    });
+    
+    // Only use completed transactions to update balances
+    const completedTransactions = transactionsList.filter(t => t.status === 'completed');
+    
+    // Update balances based on transactions
+    completedTransactions.forEach(transaction => {
+      // Find the account this transaction belongs to
+      const accountIndex = updatedAccounts.findIndex(a => {
+        // Match by name or by id if available
+        return a.name === transaction.account || 
+               (typeof transaction.account === 'object' && transaction.account?.id === a.id);
+      });
+      
+      if (accountIndex >= 0) {
+        // Found the account, update its balance
+        if (transaction.type === 'income') {
+          updatedAccounts[accountIndex].currentBalance! += transaction.amount;
+        } else if (transaction.type === 'expense') {
+          updatedAccounts[accountIndex].currentBalance! -= transaction.amount;
+        }
+      }
+    });
+    
+    setAccounts(updatedAccounts);
+    calculateTotalBalance(updatedAccounts);
   };
 
   // Get icon for account type
@@ -210,10 +390,13 @@ export default function AccountsPage() {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={fetchAccounts}
+            onClick={() => {
+              fetchAccounts();
+              fetchTransactions();
+            }}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+            {isUpdatingBalances ? 'Updating...' : 'Refresh'}
           </Button>
           <Button size="sm" onClick={handleAddAccount}>
             <PlusIcon className="mr-2 h-4 w-4" />
@@ -235,6 +418,7 @@ export default function AccountsPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               Across {accounts.length} accounts
+              {isUpdatingBalances && ' • Updating balances...'}
             </p>
           </CardContent>
         </Card>
@@ -296,12 +480,21 @@ export default function AccountsPage() {
                       </div>
                     </TableCell>
                     <TableCell>{getAccountTypeLabel(account.type)}</TableCell>
-                    <TableCell className={
-                      account.type === 'credit' 
-                        ? (account.balance > 0 ? 'text-red-600' : 'text-green-600')
-                        : (account.balance >= 0 ? 'text-green-600' : 'text-red-600')
-                    }>
-                      {formatCurrency(account.balance)} {account.currency !== 'USD' && account.currency}
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className={
+                          account.type === 'credit' 
+                            ? ((account.currentBalance || account.balance) > 0 ? 'text-red-600' : 'text-green-600')
+                            : ((account.currentBalance || account.balance) >= 0 ? 'text-green-600' : 'text-red-600')
+                        }>
+                          {formatCurrency(account.currentBalance || account.balance)} {account.currency !== 'USD' && account.currency}
+                        </div>
+                        {account.currentBalance !== account.initialBalance && (
+                          <div className="text-xs text-muted-foreground">
+                            Initial: {formatCurrency(account.initialBalance || account.balance)}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>{account.institutionName || '—'}</TableCell>
                     <TableCell className="max-w-xs truncate">

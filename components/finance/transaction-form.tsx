@@ -378,12 +378,14 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Transactio
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
+                      {categories
+                        .filter(category => category && category.name && category.name.trim() !== '')
+                        .map((category) => (
                         <SelectItem 
                           key={category.id} 
-                          value={category.name}
+                          value={category.name || `category-${category.id}`}
                         >
-                          {category.name}
+                          {category.name || `Category ${category.id}`}
                         </SelectItem>
                       ))}
                       <SelectItem value="__new">+ Add new category</SelectItem>
@@ -422,7 +424,7 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Transactio
                 <FormLabel>Account</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value || undefined}
+                  value={field.value || ''}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -430,11 +432,13 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Transactio
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {DEFAULT_ACCOUNTS.map((account) => (
-                      <SelectItem key={account} value={account}>
-                        {account}
-                      </SelectItem>
-                    ))}
+                    {DEFAULT_ACCOUNTS
+                      .filter(account => account && account.trim() !== '')
+                      .map((account) => (
+                        <SelectItem key={account} value={account || `account-${account}`}>
+                          {account}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -419,12 +419,14 @@ export function TransactionDialog({
                           </FormControl>
                           <SelectContent>
                             <div className="max-h-[200px] overflow-y-auto">
-                              {categories.map((category) => (
+                              {categories
+                                .filter(category => category.name && category.name.trim() !== '')
+                                .map((category) => (
                                 <SelectItem
                                   key={category.id || category.name}
-                                  value={category.name}
+                                  value={category.name || `category-${category.id}`}
                                 >
-                                  {category.name}
+                                  {category.name || `Category ${category.id}`}
                                 </SelectItem>
                               ))}
                             </div>
@@ -463,12 +465,14 @@ export function TransactionDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {accounts.map((account) => (
+                      {accounts
+                        .filter(account => account.name && account.name.trim() !== '')
+                        .map((account) => (
                         <SelectItem
                           key={account.id || account.name}
-                          value={account.name}
+                          value={account.name || `account-${account.id}`}
                         >
-                          {account.name}
+                          {account.name || `Account ${account.id}`}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -89,6 +89,13 @@ export function AIAssistant({ aggregatedData, isLoading = false }: AIAssistantPr
     return !ANALYSIS_KEYWORDS.some(keyword => lowerCaseMessage.includes(keyword));
   };
 
+  // Function to detect if analysis mode should be activated based on message content
+  const detectAnalysisMode = (message: string): boolean => {
+    if (!message.trim()) return false;
+    const lowerCaseMessage = message.toLowerCase();
+    return ANALYSIS_KEYWORDS.some(keyword => lowerCaseMessage.includes(keyword));
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     

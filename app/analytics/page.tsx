@@ -315,7 +315,7 @@ export default function AnalyticsPage() {
   };
   
   const generateFinanceTypeData = () => {
-    if (!aggregatedData?.finance.length) return [];
+    if (!aggregatedData?.finance?.length) return [];
     
     const typeMap: {[key: string]: number} = {
       income: 0,
@@ -324,8 +324,9 @@ export default function AnalyticsPage() {
     
     // Sum up amounts by type
     aggregatedData.finance.forEach(item => {
+      if (!item) return;
       const type = item.type || 'unknown';
-      typeMap[type] = (typeMap[type] || 0) + item.amount;
+      typeMap[type] = (typeMap[type] || 0) + (typeof item.amount === 'number' ? item.amount : 0);
     });
     
     // Convert to array format for chart
@@ -336,21 +337,21 @@ export default function AnalyticsPage() {
   };
 
   const calculateNetBalance = () => {
-    if (!aggregatedData?.finance.length) return 0;
+    if (!aggregatedData?.finance?.length) return 0;
     
     const income = aggregatedData.finance
-      .filter(item => item.type === 'income')
-      .reduce((sum, item) => sum + item.amount, 0);
+      .filter(item => item?.type === 'income')
+      .reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0);
       
     const expenses = aggregatedData.finance
-      .filter(item => item.type === 'expense')
-      .reduce((sum, item) => sum + item.amount, 0);
+      .filter(item => item?.type === 'expense')
+      .reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0);
       
     return income - expenses;
   };
   
   const generateIncomeExpenseByMonth = () => {
-    if (!aggregatedData?.finance.length) return [];
+    if (!aggregatedData?.finance?.length) return [];
     
     const monthMap: {[key: string]: {income: number, expense: number}} = {};
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -362,12 +363,19 @@ export default function AnalyticsPage() {
     
     // Sum up income and expenses by month
     aggregatedData.finance.forEach(transaction => {
-      const date = new Date(transaction.date);
-      const month = months[date.getMonth()];
-      if (transaction.type === 'income') {
-        monthMap[month].income += transaction.amount;
-      } else if (transaction.type === 'expense') {
-        monthMap[month].expense += transaction.amount;
+      if (!transaction || !transaction.date) return;
+      try {
+        const date = new Date(transaction.date);
+        if (isNaN(date.getTime())) return; // Skip invalid dates
+        
+        const month = months[date.getMonth()];
+        if (transaction.type === 'income') {
+          monthMap[month].income += (typeof transaction.amount === 'number' ? transaction.amount : 0);
+        } else if (transaction.type === 'expense') {
+          monthMap[month].expense += (typeof transaction.amount === 'number' ? transaction.amount : 0);
+        }
+      } catch (error) {
+        console.error('Error processing transaction date:', error);
       }
     });
     
@@ -380,16 +388,17 @@ export default function AnalyticsPage() {
   };
   
   const generateExpenseByCategory = () => {
-    if (!aggregatedData?.finance.length) return [];
+    if (!aggregatedData?.finance?.length) return [];
     
     const categoryMap: {[key: string]: number} = {};
     
     // Sum up expenses by category
     aggregatedData.finance
-      .filter(item => item.type === 'expense')
+      .filter(item => item && item.type === 'expense')
       .forEach(expense => {
-        const category = expense.category || 'Uncategorized';
-        categoryMap[category] = (categoryMap[category] || 0) + expense.amount;
+        if (!expense) return;
+        const category = expense.category && typeof expense.category === 'object' ? expense.category.name : (expense.category || 'Uncategorized');
+        categoryMap[category] = (categoryMap[category] || 0) + (typeof expense.amount === 'number' ? expense.amount : 0);
       });
     
     // Convert to array format for chart
@@ -620,7 +629,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${aggregatedData?.sales.reduce((sum, sale) => sum + sale.amount, 0).toLocaleString() || '0'}
+                        ${aggregatedData?.sales.reduce((sum, sale) => sum + (typeof sale.amount === 'number' ? sale.amount : 0), 0).toLocaleString() || '0'}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total revenue from all sales
@@ -636,7 +645,7 @@ export default function AnalyticsPage() {
                     <CardContent>
                       <div className="text-2xl font-bold">
                         ${aggregatedData?.sales.length 
-                          ? (aggregatedData.sales.reduce((sum, sale) => sum + sale.amount, 0) / aggregatedData.sales.length).toFixed(2)
+                          ? (aggregatedData.sales.reduce((sum, sale) => sum + (typeof sale.amount === 'number' ? sale.amount : 0), 0) / aggregatedData.sales.length).toFixed(2)
                           : '0'}
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -956,10 +965,10 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${aggregatedData?.finance
-                          .filter(item => item.type === 'income')
-                          .reduce((sum, item) => sum + item.amount, 0)
-                          .toLocaleString() || '0'}
+                        ${(aggregatedData?.finance
+                          ?.filter(item => item?.type === 'income')
+                          ?.reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0) || 0)
+                          .toLocaleString()}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total income transactions
@@ -974,10 +983,10 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${aggregatedData?.finance
-                          .filter(item => item.type === 'expense')
-                          .reduce((sum, item) => sum + item.amount, 0)
-                          .toLocaleString() || '0'}
+                        ${(aggregatedData?.finance
+                          ?.filter(item => item?.type === 'expense')
+                          ?.reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0) || 0)
+                          .toLocaleString()}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total expense transactions
@@ -992,7 +1001,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${calculateNetBalance().toLocaleString()}
+                        ${(calculateNetBalance() || 0).toLocaleString()}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Net balance (income - expenses)
@@ -1105,7 +1114,7 @@ export default function AnalyticsPage() {
                             <tr key={transaction.id} className="border-b hover:bg-muted/50">
                               <td className="p-2">{new Date(transaction.date).toLocaleDateString()}</td>
                               <td className="p-2">{transaction.description || 'N/A'}</td>
-                              <td className="p-2">{transaction.category}</td>
+                              <td className="p-2">{transaction.category && typeof transaction.category === 'object' ? transaction.category.name : transaction.category}</td>
                               <td className="p-2">
                                 <span className={transaction.type === 'income' ? 'text-green-500' : 'text-red-500'}>
                                   {transaction.type}

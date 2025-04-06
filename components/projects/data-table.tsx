@@ -140,7 +140,7 @@ export function DataTable<TData, TValue>({
                         <SelectValue placeholder={`Select ${column.title}`} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         {column.options.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}

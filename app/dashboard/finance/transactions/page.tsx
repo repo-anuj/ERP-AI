@@ -448,8 +448,10 @@ export default function TransactionsPage() {
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
-                  {categories.map((category) => (
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories
+                    .filter(category => category && category.trim() !== '')
+                    .map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -468,8 +470,10 @@ export default function TransactionsPage() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
-                  {statuses.map((status) => (
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {statuses
+                    .filter(status => status && status.trim() !== '')
+                    .map((status) => (
                     <SelectItem key={status} value={status}>
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </SelectItem>
