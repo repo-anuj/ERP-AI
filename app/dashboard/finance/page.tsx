@@ -39,7 +39,7 @@ interface Transaction {
   account: string;
   reference?: string;
   status: string;
-  sourceType?: 'sales' | 'inventory';
+  sourceType?: 'finance' | 'sales' | 'inventory';
   originalData?: any;
 }
 
@@ -63,7 +63,11 @@ export default function FinancePage() {
   const [activeTab, setActiveTab] = useState('all');
   const [stats, setStats] = useState({
     totalIncome: 0,
+    salesIncome: 0,
+    regularIncome: 0,
     totalExpenses: 0,
+    inventoryExpenses: 0,
+    regularExpenses: 0,
     balance: 0,
     pendingIncome: 0,
     pendingExpenses: 0
@@ -142,16 +146,18 @@ export default function FinancePage() {
           account: transaction.account?.name || (typeof transaction.account === 'string' ? transaction.account : 'Default'),
           reference: transaction.reference,
           status: transaction.status,
+          sourceType: 'finance',
         }));
         
         setTransactions(mappedTransactions);
-        calculateStats(mappedTransactions);
         
         // Extract categories and statuses for filtering
         const uniqueCategories = Array.from(new Set(mappedTransactions.map(t => t.category))).filter(Boolean);
         const uniqueStatuses = Array.from(new Set(mappedTransactions.map(t => t.status))).filter(Boolean);
         setAvailableCategories(uniqueCategories as string[]);
         setAvailableStatuses(uniqueStatuses as string[]);
+        
+        // Calculate stats will be called after all data is fetched
       } else {
         toast.error('Failed to fetch transactions');
       }
@@ -166,92 +172,213 @@ export default function FinancePage() {
   // Fetch sales data and convert to income transactions
   const fetchSalesData = async () => {
     try {
-      const response = await fetch('/api/sales');
+      // Fetch main sales data
+      const salesResponse = await fetch('/api/sales');
       
-      if (response.ok) {
-        const salesResponse = await response.json();
+      if (!salesResponse.ok) {
+        toast.error('Failed to fetch sales data');
+        return;
+      }
+      
+      const salesData = await salesResponse.json();
+      
+      if (!salesData.data || !Array.isArray(salesData.data)) {
+        console.error('Invalid sales data format');
+        return;
+      }
+      
+      // Fetch customers for additional details
+      const customersResponse = await fetch('/api/sales/customers');
+      let customersData: any[] = [];
+      
+      if (customersResponse.ok) {
+        const customerResult = await customersResponse.json();
+        if (customerResult && Array.isArray(customerResult.data)) {
+          customersData = customerResult.data;
+        }
+      }
+      
+      // Create a lookup map for customers
+      const customersMap = new Map();
+      customersData.forEach(customer => {
+        customersMap.set(customer.id, customer);
+      });
+      
+      // Fetch products for item details
+      const productsResponse = await fetch('/api/sales/products');
+      let productsData: any[] = [];
+      
+      if (productsResponse.ok) {
+        const productResult = await productsResponse.json();
+        if (productResult && Array.isArray(productResult.data)) {
+          productsData = productResult.data;
+        }
+      }
+      
+      // Create a lookup map for products
+      const productsMap = new Map();
+      productsData.forEach(product => {
+        productsMap.set(product.id, product);
+      });
+      
+      // Map sales data to transactions with enhanced details
+      const salesTransactions: Transaction[] = salesData.data.map((sale: any) => {
+        // Get customer details
+        const customerDetails = sale.customerId ? customersMap.get(sale.customerId) : null;
+        const customerName = sale.customer?.name || (customerDetails?.name || 'Customer');
         
-        if (!salesResponse.data || !Array.isArray(salesResponse.data)) {
-          console.error('Invalid sales data format');
-          return;
+        // Build details about items in the sale
+        let itemsList = '';
+        if (sale.items && Array.isArray(sale.items) && sale.items.length > 0) {
+          const itemDetails = sale.items.map((item: any) => {
+            const productDetails = item.productId ? productsMap.get(item.productId) : null;
+            const productName = item.name || (productDetails?.name || 'Product');
+            const quantity = item.quantity || 1;
+            return `${quantity}x ${productName}`;
+          }).join(', ');
+          
+          if (itemDetails) {
+            itemsList = ` (${itemDetails})`;
+          }
         }
         
-        // Map sales data to transactions
-        const salesTransactions: Transaction[] = salesResponse.data.map((sale: any) => ({
+        // Create a detailed description
+        const description = `Sale to ${customerName}${itemsList}`;
+        const paymentMethod = sale.paymentMethod || customerDetails?.preferredPaymentMethod || 'Sales Account';
+        
+        return {
           id: `sales-${sale.id}`,
           date: sale.date,
-          description: `Sale to ${sale.customer?.name || 'Customer'}`,
+          description,
           amount: sale.total,
           type: 'income',
           category: 'Sales Revenue',
-          account: 'Sales Account',
+          account: paymentMethod,
           reference: sale.invoiceNumber || `INV-${sale.id.substring(0, 8)}`,
           status: sale.status === 'paid' ? 'completed' : (sale.status || 'pending'),
           sourceType: 'sales',
-          originalData: sale
-        }));
-        
-        // Add to transactions array
-        setTransactions(prev => {
-          // Filter out any existing sales transactions to avoid duplicates
-          const filtered = prev.filter(t => !t.id.startsWith('sales-'));
-          return [...filtered, ...salesTransactions];
-        });
-      }
+          originalData: {
+            ...sale,
+            customerDetails
+          }
+        };
+      });
+      
+      // Add to transactions array
+      setTransactions(prev => {
+        // Filter out any existing sales transactions to avoid duplicates
+        const filtered = prev.filter(t => !t.id.startsWith('sales-'));
+        const combined = [...filtered, ...salesTransactions];
+        calculateStats(combined);
+        return combined;
+      });
     } catch (error) {
       console.error('Error fetching sales data:', error);
-    } finally {
-      // Recalculate stats with updated transactions
-      setTransactions(current => {
-        calculateStats(current);
-        return current;
-      });
+      toast.error('Failed to process sales data');
     }
   };
 
   // Fetch inventory data and convert to expense transactions
   const fetchInventoryData = async () => {
     try {
-      const response = await fetch('/api/inventory/purchases');
+      // First fetch all inventory purchases
+      const purchasesResponse = await fetch('/api/inventory/purchases');
       
-      if (response.ok) {
-        const purchasesData = await response.json();
+      if (!purchasesResponse.ok) {
+        toast.error('Failed to fetch inventory purchases');
+        return;
+      }
+      
+      const purchasesData = await purchasesResponse.json();
+      
+      if (!Array.isArray(purchasesData)) {
+        console.error('Invalid inventory data format');
+        return;
+      }
+      
+      // Then fetch inventory items to get more details
+      const itemsResponse = await fetch('/api/inventory/items');
+      let itemsData: any[] = [];
+      
+      if (itemsResponse.ok) {
+        itemsData = await itemsResponse.json();
+      }
+      
+      // Create a lookup map for inventory items
+      const itemsMap = new Map();
+      if (Array.isArray(itemsData)) {
+        itemsData.forEach(item => {
+          itemsMap.set(item.id, item);
+        });
+      }
+      
+      // Fetch suppliers if available
+      const suppliersResponse = await fetch('/api/inventory/suppliers');
+      let suppliersData: any[] = [];
+      
+      if (suppliersResponse.ok) {
+        suppliersData = await suppliersResponse.json();
+      }
+      
+      // Create a lookup map for suppliers
+      const suppliersMap = new Map();
+      if (Array.isArray(suppliersData)) {
+        suppliersData.forEach(supplier => {
+          suppliersMap.set(supplier.id, supplier);
+        });
+      }
+      
+      // Map inventory data to transactions with enhanced details
+      const inventoryTransactions: Transaction[] = purchasesData.map((purchase: any) => {
+        // Get item details if available
+        const itemDetails = purchase.itemId ? itemsMap.get(purchase.itemId) : null;
+        const supplierDetails = purchase.supplierId ? suppliersMap.get(purchase.supplierId) : null;
         
-        if (!Array.isArray(purchasesData)) {
-          console.error('Invalid inventory data format');
-          return;
+        // Build a more detailed description
+        let itemName = purchase.itemName || (itemDetails?.name || 'Unknown Item');
+        let supplierName = purchase.supplierName || (supplierDetails?.name || 'Unknown Supplier');
+        let quantityInfo = purchase.quantity ? `${purchase.quantity} units` : '';
+        let unitPrice = purchase.unitPrice ? `@ ${formatCurrency(purchase.unitPrice)}` : '';
+        
+        // Format the description to include more details
+        let description = `Inventory: ${itemName}`;
+        if (quantityInfo && unitPrice) {
+          description += ` (${quantityInfo} ${unitPrice})`;
+        }
+        if (supplierName !== 'Unknown Supplier') {
+          description += ` from ${supplierName}`;
         }
         
-        // Map inventory data to transactions
-        const inventoryTransactions: Transaction[] = purchasesData.map((purchase: any) => ({
+        return {
           id: `inventory-${purchase.id}`,
           date: purchase.date,
-          description: `Purchase: ${purchase.itemName || 'Inventory item'}`,
-          amount: purchase.totalCost,
+          description,
+          amount: purchase.totalCost || (purchase.unitPrice * purchase.quantity) || 0,
           type: 'expense',
           category: 'Inventory Purchase',
-          account: 'Inventory Account',
+          account: purchase.paymentMethod || purchase.account || 'Inventory Account',
           reference: purchase.purchaseOrder || purchase.reference || `PO-${purchase.id.substring(0, 8)}`,
           status: purchase.status === 'paid' ? 'completed' : (purchase.status || 'pending'),
           sourceType: 'inventory',
-          originalData: purchase
-        }));
-        
-        // Add to transactions array
-        setTransactions(prev => {
-          // Filter out any existing inventory transactions to avoid duplicates
-          const filtered = prev.filter(t => !t.id.startsWith('inventory-'));
-          return [...filtered, ...inventoryTransactions];
-        });
-      }
+          originalData: {
+            ...purchase,
+            itemDetails,
+            supplierDetails
+          }
+        };
+      });
+      
+      // Add to transactions array
+      setTransactions(prev => {
+        // Filter out any existing inventory transactions to avoid duplicates
+        const filtered = prev.filter(t => !t.id.startsWith('inventory-'));
+        const combined = [...filtered, ...inventoryTransactions];
+        calculateStats(combined);
+        return combined;
+      });
     } catch (error) {
       console.error('Error fetching inventory data:', error);
-    } finally {
-      // Recalculate stats with updated transactions
-      setTransactions(current => {
-        calculateStats(current);
-        return current;
-      });
+      toast.error('Failed to process inventory data');
     }
   };
 
@@ -264,14 +391,33 @@ export default function FinancePage() {
       t => t.status === 'pending'
     );
     
+    // Group income by source type
     const totalIncome = completedTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
+    
+    const salesIncome = completedTransactions
+      .filter(t => t.type === 'income' && t.sourceType === 'sales')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const regularIncome = completedTransactions
+      .filter(t => t.type === 'income' && t.sourceType !== 'sales')
+      .reduce((sum, t) => sum + t.amount, 0);
       
+    // Group expenses by source type
     const totalExpenses = completedTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
+    
+    const inventoryExpenses = completedTransactions
+      .filter(t => t.type === 'expense' && t.sourceType === 'inventory')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const regularExpenses = completedTransactions
+      .filter(t => t.type === 'expense' && t.sourceType !== 'inventory')
+      .reduce((sum, t) => sum + t.amount, 0);
       
+    // Pending transactions
     const pendingIncome = pendingTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
@@ -282,7 +428,11 @@ export default function FinancePage() {
     
     setStats({
       totalIncome,
+      salesIncome,
+      regularIncome,
       totalExpenses,
+      inventoryExpenses,
+      regularExpenses,
       balance: totalIncome - totalExpenses,
       pendingIncome,
       pendingExpenses
@@ -604,9 +754,19 @@ export default function FinancePage() {
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(stats.totalIncome)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(stats.pendingIncome)} pending
-            </p>
+            <div className="space-y-1 mt-1">
+              <div className="text-xs flex justify-between">
+                <span>Sales:</span>
+                <span className="font-medium">{formatCurrency(stats.salesIncome)}</span>
+              </div>
+              <div className="text-xs flex justify-between">
+                <span>Other Income:</span>
+                <span className="font-medium">{formatCurrency(stats.regularIncome)}</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {formatCurrency(stats.pendingIncome)} pending
+              </div>
+            </div>
           </CardContent>
         </Card>
         
@@ -621,9 +781,19 @@ export default function FinancePage() {
             <div className="text-2xl font-bold text-red-600">
               {formatCurrency(stats.totalExpenses)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(stats.pendingExpenses)} pending
-            </p>
+            <div className="space-y-1 mt-1">
+              <div className="text-xs flex justify-between">
+                <span>Inventory:</span>
+                <span className="font-medium">{formatCurrency(stats.inventoryExpenses)}</span>
+              </div>
+              <div className="text-xs flex justify-between">
+                <span>Other Expenses:</span>
+                <span className="font-medium">{formatCurrency(stats.regularExpenses)}</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {formatCurrency(stats.pendingExpenses)} pending
+              </div>
+            </div>
           </CardContent>
         </Card>
         

@@ -34,12 +34,24 @@ export async function decrypt(token: string): Promise<any> {
     }
 }
 
-export async function verifyAuth(token: string) {
+export async function verifyAuth(tokenOrCookies: string | ReadonlyRequestCookies) {
     try {
-        return await decrypt(token)
+        let token: string;
+        
+        // Check if we received cookies object or token string
+        if (typeof tokenOrCookies === 'string') {
+            token = tokenOrCookies;
+        } else {
+            // It's a cookies object
+            const cookieToken = tokenOrCookies.get('token')?.value;
+            if (!cookieToken) return null;
+            token = cookieToken;
+        }
+        
+        return await decrypt(token);
     } catch (error) {
-        console.error('Failed to verify token:', error)
-        return null
+        console.error('Failed to verify token:', error);
+        return null;
     }
 }
 

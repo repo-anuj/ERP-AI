@@ -39,12 +39,47 @@ interface AIResponse {
   tables?: TableData[];
 }
 
+interface InventoryMetrics {
+  totalItems: number;
+  totalQuantity: number;
+  totalValue: number;
+  lowStock: number;
+  categories: number;
+}
+
+interface SalesMetrics {
+  totalSales: number;
+  totalRevenue: number;
+  averageSale: number;
+  pendingPayments: number;
+  topCustomers: { name: string; amount: number }[];
+}
+
+interface FinanceMetrics {
+  totalIncome: number;
+  totalExpenses: number;
+  netProfit: number;
+  cashFlow: number;
+  topExpenseCategories: { name: string; amount: number }[];
+  topIncomeCategories: { name: string; amount: number }[];
+}
+
 interface AggregatedData {
-  inventory: any[];
-  sales: any[];
-  finance: any[];
+  inventory: {
+    items: any[];
+    metrics: InventoryMetrics;
+  };
+  sales: {
+    transactions: any[];
+    metrics: SalesMetrics;
+  };
+  finance: {
+    transactions: any[];
+    metrics: FinanceMetrics;
+  };
   projects: any[];
   employees: any[];
+  lastUpdated?: string;
 }
 
 interface AIAssistantProps {
@@ -75,6 +110,15 @@ export function AIAssistant({ aggregatedData, isLoading = false }: AIAssistantPr
   const [isAnalysisMode, setIsAnalysisMode] = useState(false);
   const [showVisualizations, setShowVisualizations] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [dataPreloaded, setDataPreloaded] = useState(false);
+
+  // Preprocess and store data for faster AI responses
+  useEffect(() => {
+    if (aggregatedData && !isLoading && !dataPreloaded) {
+      console.log('Preloading data for AI assistant');
+      setDataPreloaded(true);
+    }
+  }, [aggregatedData, isLoading, dataPreloaded]);
 
   // Scroll to bottom of messages when new messages are added
   useEffect(() => {
@@ -110,28 +154,31 @@ export function AIAssistant({ aggregatedData, isLoading = false }: AIAssistantPr
     const shouldAnalyze = !isConversational(inputValue);
     setIsAnalysisMode(shouldAnalyze);
     
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prevMessages => [...prevMessages, userMessage]);
     setInputValue('');
     setIsAiThinking(true);
-    
+    setAiResponse(null);
+
     try {
-      // Prepare conversation history for the AI
       const conversationHistory = messages
-        .filter(m => m.role !== 'system')
-        .slice(-6) // Include last 6 messages for context
-        .map(m => ({
-          role: m.role,
-          content: m.content
+        .filter(msg => msg.role !== 'system')
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
         }));
-      
-      // Add current user message
-      conversationHistory.push({
-        role: 'user',
-        content: userMessage.content
-      });
       
       // Use backend API for analysis mode
       if (shouldAnalyze) {
+        // Enhanced data payload with metrics for analysis
+        const enhancedDataPayload = {
+          inventory: aggregatedData.inventory || { metrics: {}, items: [] },
+          sales: aggregatedData.sales || { metrics: {}, transactions: [] },
+          finance: aggregatedData.finance || { metrics: {}, transactions: [] },
+          projects: aggregatedData.projects || [],
+          employees: aggregatedData.employees || [],
+          lastUpdated: aggregatedData.lastUpdated || new Date().toISOString()
+        };
+        
         const apiResponse = await fetch('/api/analytics/ai', {
           method: 'POST',
           headers: {
@@ -140,51 +187,35 @@ export function AIAssistant({ aggregatedData, isLoading = false }: AIAssistantPr
           body: JSON.stringify({
             query: userMessage.content,
             conversationHistory,
-            analyze: true
+            analyze: true,
+            enhancedData: enhancedDataPayload
           })
         });
         
-        if (apiResponse.ok) {
-          const processedResponse = await apiResponse.json();
-          setAiResponse(processedResponse);
-          
-          // Add AI response to chat
-          const assistantMessage: Message = {
-            role: 'assistant',
-            content: processedResponse.text,
-            timestamp: new Date()
-          };
-          
-          setMessages(prev => [...prev, assistantMessage]);
-          setIsAiThinking(false);
-          return;
+        if (!apiResponse.ok) {
+          throw new Error('Failed to get AI response');
         }
-      }
-      
-      // Use client-side API for conversational mode
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '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'}`,
-          "HTTP-Referer": window.location.href,
-          "X-Title": "ERP-AI Analytics Assistant",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          "model": "deepseek/deepseek-v3-base:free",
-          "messages": [
-            {
-              "role": "system",
-              "content": `You are an AI analytics assistant for an ERP system. ${shouldAnalyze ? 
-                `Analyze the provided business data and answer questions about inventory, sales, finance, projects, and employees.
+
+        const result = await apiResponse.json();
+        
+        // Parse the response for visualizations
+        if (result) {
+          setAiResponse(result);
+        }
+      } else {
+        // Use OpenAI API for regular chat
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                "role": "system",
+                "content": shouldAnalyze 
+                ? `You are a helpful ERP analytics assistant with knowledge about business operations, inventory management, sales, finance, project management, and employee management.
                 
-                IMPORTANT: Always respond in a conversational, helpful tone. Do NOT just list query results. Instead, analyze the data and provide meaningful insights.
-                
-                When appropriate, include structured data tables to help illustrate your points.
-                
-                When appropriate, suggest visualizations to help understand the data.
-                
-                Your response MUST be a JSON object with the following structure:
                 {
                   "text": "Your conversational analysis and insights here",
                   "charts": [
@@ -212,90 +243,83 @@ export function AIAssistant({ aggregatedData, isLoading = false }: AIAssistantPr
                 `You are a helpful conversational assistant for an ERP system. Respond in a natural, helpful way to questions about business operations and ERP systems. You don't need to analyze any data right now - just chat with the user in a friendly manner.
                 
                 If the user asks a question that would require data analysis, you can suggest they use keywords like "analyze", "report", or "metrics" to trigger the data analysis capabilities.`
-              }`
-            },
-            ...conversationHistory,
-            {
-              "role": "user",
-              "content": shouldAnalyze 
+              },
+              ...conversationHistory,
+              {
+                "role": "user",
+                "content": shouldAnalyze 
                 ? JSON.stringify({
                     query: userMessage.content,
-                    data: aggregatedData,
+                    data: {
+                      inventorySummary: aggregatedData.inventory.metrics,
+                      inventoryItems: aggregatedData.inventory.items.slice(0, 20),
+                      salesSummary: aggregatedData.sales.metrics,
+                      recentSales: aggregatedData.sales.transactions.slice(0, 10),
+                      financeSummary: aggregatedData.finance.metrics,
+                      recentTransactions: aggregatedData.finance.transactions.slice(0, 10),
+                      projectCount: aggregatedData.projects.length,
+                      projects: aggregatedData.projects.slice(0, 10),
+                      employeeCount: aggregatedData.employees.length,
+                      lastUpdated: aggregatedData.lastUpdated
+                    },
                     conversationHistory: conversationHistory
                   }) 
                 : userMessage.content
-            }
-          ]
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
-      
-      const result = await response.json();
-      const aiContent = result.choices[0].message.content;
-      
-      // Process AI response
-      let processedResponse: AIResponse;
-      
-      if (shouldAnalyze) {
-        try {
-          // Try to parse as JSON first
-          processedResponse = JSON.parse(aiContent);
-          
-          // Ensure required properties exist
-          if (!processedResponse.text) {
-            processedResponse.text = "I've analyzed your data. Here are my findings.";
-          }
-          
-          if (!processedResponse.charts) {
-            processedResponse.charts = [];
-          }
-          
-          if (!processedResponse.tables) {
-            processedResponse.tables = [];
-          }
-        } catch (e) {
-          // If not valid JSON, use as plain text
-          processedResponse = { 
-            text: aiContent,
-            charts: [],
-            tables: [] 
-          };
+              }
+            ]
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to get AI response');
         }
-      } else {
-        // For conversational mode, just use the text
-        processedResponse = { 
-          text: aiContent,
-          charts: [],
-          tables: [] 
-        };
+        
+        const result = await response.json();
+        const aiContent = result.choices[0].message.content;
+        
+        try {
+          // Try to parse as JSON (for analysis mode)
+          const jsonResponse = JSON.parse(aiContent);
+          setAiResponse(jsonResponse);
+        } catch (e) {
+          // If not JSON, it's a regular text response
+          setAiResponse({ text: aiContent });
+        }
       }
-      
-      setAiResponse(processedResponse);
-      
-      // Add AI response to chat
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: processedResponse.text,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      
+
+      // Add AI response to messages
+      if (aiResponse) {
+        setMessages(prevMessages => [
+          ...prevMessages,
+          {
+            role: 'assistant',
+            content: aiResponse.text,
+            timestamp: new Date(),
+          },
+        ]);
+      } else {
+        setMessages(prevMessages => [
+          ...prevMessages,
+          {
+            role: 'assistant',
+            content: 'I analyzed your request.',
+            timestamp: new Date(),
+          },
+        ]);
+      }
+
     } catch (error) {
       console.error('Error getting AI response:', error);
-      toast.error('Failed to process your query');
+      toast.error('Failed to get AI response. Please try again.');
       
       // Add error message to chat
-      setMessages(prev => [
-        ...prev, 
+      setMessages(prevMessages => [
+        ...prevMessages,
         {
           role: 'assistant',
-          content: 'Sorry, I encountered an error while processing your query. Please try again.',
-          timestamp: new Date()
-        }
+          content: 'Sorry, I encountered an error while processing your request. Please try again.',
+          timestamp: new Date(),
+        },
       ]);
     } finally {
       setIsAiThinking(false);

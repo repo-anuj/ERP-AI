@@ -47,6 +47,7 @@ import {
 import { toast } from 'sonner';
 import { EmptyAnalytics } from '@/components/analytics/empty-state';
 import { AIAssistant } from '@/components/analytics/ai-assistant';
+import { RealtimeDashboard } from '@/components/analytics/realtime-dashboard';
 
 // Define types for different data sections
 interface InventoryItem {
@@ -97,12 +98,47 @@ interface EmployeeData {
   startDate: string;
 }
 
+interface InventoryMetrics {
+  totalItems: number;
+  totalQuantity: number;
+  totalValue: number;
+  lowStock: number;
+  categories: number;
+}
+
+interface SalesMetrics {
+  totalSales: number;
+  totalRevenue: number;
+  averageSale: number;
+  pendingPayments: number;
+  topCustomers: { name: string; amount: number }[];
+}
+
+interface FinanceMetrics {
+  totalIncome: number;
+  totalExpenses: number;
+  netProfit: number;
+  cashFlow: number;
+  topExpenseCategories: { name: string; amount: number }[];
+  topIncomeCategories: { name: string; amount: number }[];
+}
+
 interface AggregatedData {
-  inventory: InventoryItem[];
-  sales: SaleData[];
-  finance: FinanceData[];
+  inventory: {
+    items: InventoryItem[];
+    metrics: InventoryMetrics;
+  };
+  sales: {
+    transactions: SaleData[];
+    metrics: SalesMetrics;
+  };
+  finance: {
+    transactions: FinanceData[];
+    metrics: FinanceMetrics;
+  };
   projects: ProjectData[];
   employees: EmployeeData[];
+  lastUpdated?: string;
 }
 
 // AI response interface
@@ -125,44 +161,183 @@ export default function AnalyticsPage() {
   const fetchAllData = async () => {
     setIsLoading(true);
     try {
-      // Fetch inventory data
+      // Fetch inventory data - use the direct inventory API endpoint
       const inventoryResponse = await fetch('/api/inventory');
-      const inventoryData = inventoryResponse.ok ? await inventoryResponse.json() : { items: [] };
+      const inventoryItems = inventoryResponse.ok ? await inventoryResponse.json() : [];
       
-      // Fetch sales data
+      // Fetch inventory categories - we need to fetch this separately
+      const categoriesResponse = await fetch('/api/inventory/categories');
+      const categoriesData = categoriesResponse.ok ? await categoriesResponse.json() : [];
+      
+      // Fetch inventory suppliers
+      const suppliersResponse = await fetch('/api/inventory/suppliers');
+      const suppliersData = suppliersResponse.ok ? await suppliersResponse.json() : [];
+      
+      // Build inventory metrics from actual data
+      const inventoryMetrics = {
+        totalItems: inventoryItems.length,
+        totalQuantity: inventoryItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0),
+        totalValue: inventoryItems.reduce((sum: number, item: any) => sum + ((item.quantity || 0) * (item.price || 0)), 0),
+        lowStock: inventoryItems.filter((item: any) => (item.quantity || 0) <= (item.reorderLevel || 5)).length,
+        categories: categoriesData.length || new Set(inventoryItems.map((item: any) => item.category)).size
+      };
+      
+      // Fetch sales data - use both GET and PATCH endpoints for complete data
       const salesResponse = await fetch('/api/sales');
       const salesData = salesResponse.ok ? await salesResponse.json() : { data: [] };
+      const salesTransactions = salesData.data || [];
       
-      // Fetch finance data
+      // Fetch sales metrics using the PATCH endpoint (same as in the sales page)
+      const salesMetricsResponse = await fetch('/api/sales', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ days: 30 }), // Last 30 days metrics
+      });
+      
+      let salesMetricsData = {
+        currentPeriod: { totalSales: 0, totalRevenue: 0, averageOrderValue: 0, uniqueCustomers: 0 },
+        previousPeriod: { totalSales: 0, totalRevenue: 0, averageOrderValue: 0, uniqueCustomers: 0 },
+        growth: { sales: 0, revenue: 0, averageOrderValue: 0, customers: 0 },
+        salesByDay: []
+      };
+      
+      if (salesMetricsResponse.ok) {
+        salesMetricsData = await salesMetricsResponse.json();
+        console.log('Sales metrics loaded:', salesMetricsData);
+      }
+      
+      // Fetch customers for better sales data
+      const customersResponse = await fetch('/api/customers');
+      const customersData = customersResponse.ok ? await customersResponse.json() : [];
+      
+      // Calculate sales metrics from actual data, using both transaction data and metrics data from the API
+      const topCustomersMap = salesTransactions.reduce((map: Map<string, number>, sale: any) => {
+        const customerName = sale.customer?.name || 'Unknown';
+        map.set(customerName, (map.get(customerName) || 0) + (sale.totalAmount || 0));
+        return map;
+      }, new Map<string, number>());
+      
+      const topCustomersEntries: Array<[string, number]> = Array.from(topCustomersMap);
+      const topCustomersArray = topCustomersEntries.map(
+        (entry): { name: string; amount: number } => ({ 
+          name: entry[0], 
+          amount: entry[1] 
+        })
+      ).sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+      
+      const salesMetrics = {
+        totalSales: salesMetricsData.currentPeriod?.totalSales || salesTransactions.length,
+        totalRevenue: salesMetricsData.currentPeriod?.totalRevenue || 
+          salesTransactions.reduce((sum: number, sale: any) => sum + (sale.totalAmount || 0), 0),
+        averageSale: salesMetricsData.currentPeriod?.averageOrderValue || 
+          (salesTransactions.length > 0 ? 
+            salesTransactions.reduce((sum: number, sale: any) => sum + (sale.totalAmount || 0), 0) / salesTransactions.length : 0),
+        pendingPayments: salesTransactions.filter((sale: any) => sale.status === 'pending' || sale.status === 'unpaid').length,
+        topCustomers: topCustomersArray,
+        growth: salesMetricsData.growth || { sales: 0, revenue: 0, averageOrderValue: 0, customers: 0 },
+        salesByDay: salesMetricsData.salesByDay || []
+      };
+      
+      // Fetch finance transactions - use the direct finance/transactions API endpoint
       const financeResponse = await fetch('/api/finance/transactions');
-      const financeData = financeResponse.ok ? await financeResponse.json() : [];
+      const financeTransactions = financeResponse.ok ? await financeResponse.json() : [];
       
-      // Fetch projects data
+      // Calculate financial metrics from actual transactions
+      const incomeTransactions = financeTransactions.filter((t: any) => t.type === 'income');
+      const expenseTransactions = financeTransactions.filter((t: any) => t.type === 'expense');
+      
+      const totalIncome = incomeTransactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+      const totalExpenses = expenseTransactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+      
+      // Create expense categories map
+      const expenseCategoriesMap = expenseTransactions.reduce((map: Map<string, number>, t: any) => {
+        const category = t.category?.name || 'Uncategorized';
+        map.set(category, (map.get(category) || 0) + (t.amount || 0));
+        return map;
+      }, new Map<string, number>());
+      
+      // Create income categories map
+      const incomeCategoriesMap = incomeTransactions.reduce((map: Map<string, number>, t: any) => {
+        const category = t.category?.name || 'Uncategorized';
+        map.set(category, (map.get(category) || 0) + (t.amount || 0));
+        return map;
+      }, new Map<string, number>());
+      
+      // Convert to arrays with explicit type casting
+      const topExpenseCategoriesEntries: Array<[string, number]> = Array.from(expenseCategoriesMap);
+      const topExpenseCategories = topExpenseCategoriesEntries.map(
+        (entry): { name: string; amount: number } => ({ 
+          name: entry[0], 
+          amount: entry[1] 
+        })
+      ).sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+      
+      const topIncomeCategoriesEntries: Array<[string, number]> = Array.from(incomeCategoriesMap);
+      const topIncomeCategories = topIncomeCategoriesEntries.map(
+        (entry): { name: string; amount: number } => ({ 
+          name: entry[0], 
+          amount: entry[1] 
+        })
+      ).sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+      
+      const financeMetrics = {
+        totalIncome,
+        totalExpenses,
+        netProfit: totalIncome - totalExpenses,
+        cashFlow: totalIncome - totalExpenses,
+        topExpenseCategories,
+        topIncomeCategories
+      };
+      
+      // Fetch projects data - use the direct projects API endpoint
       const projectsResponse = await fetch('/api/projects');
       const projectsData = projectsResponse.ok ? await projectsResponse.json() : [];
       
-      // Fetch employees data
+      // Fetch employees data - use the direct employees API endpoint
       const employeesResponse = await fetch('/api/employees');
       const employeesData = employeesResponse.ok ? await employeesResponse.json() : [];
 
-      // Aggregate all data
+      // Aggregate all data with enhanced structure
       const allData = {
-        inventory: inventoryData.items || [],
-        sales: salesData.data || [],
-        finance: financeData || [],
+        inventory: {
+          items: inventoryItems,
+          metrics: inventoryMetrics
+        },
+        sales: {
+          transactions: salesTransactions,
+          metrics: salesMetrics
+        },
+        finance: {
+          transactions: financeTransactions,
+          metrics: financeMetrics
+        },
         projects: projectsData || [],
-        employees: employeesData || []
+        employees: employeesData || [],
+        lastUpdated: new Date().toISOString()
       };
+      
+      console.log('Analytics data loaded:', {
+        inventoryCount: inventoryItems.length,
+        salesCount: salesTransactions.length,
+        financeCount: financeTransactions.length,
+        projectsCount: projectsData.length,
+        employeesCount: employeesData.length
+      });
       
       setAggregatedData(allData);
       
       // Check if there's any data
       const hasAnyData = 
-        (allData.inventory && allData.inventory.length > 0) ||
-        (allData.sales && allData.sales.length > 0) ||
-        (allData.finance && allData.finance.length > 0) ||
-        (allData.projects && allData.projects.length > 0) ||
-        (allData.employees && allData.employees.length > 0);
+        (inventoryItems.length > 0) ||
+        (salesTransactions.length > 0) ||
+        (financeTransactions.length > 0) ||
+        (projectsData.length > 0) ||
+        (employeesData.length > 0);
       
       setHasData(hasAnyData);
     } catch (error) {
@@ -173,81 +348,135 @@ export default function AnalyticsPage() {
     }
   };
 
-  // Generate overview data
+  // Generate overview data with enhanced metrics
   const getOverviewData = () => {
     if (!aggregatedData) return null;
     
     return {
-      totalInventory: aggregatedData.inventory.length,
-      totalSales: aggregatedData.sales.length,
+      // Core metrics
+      totalInventory: aggregatedData.inventory.metrics.totalItems,
+      totalInventoryValue: aggregatedData.inventory.metrics.totalValue,
+      lowStockItems: aggregatedData.inventory.metrics.lowStock,
+      totalSales: aggregatedData.sales.metrics.totalSales,
+      totalRevenue: aggregatedData.sales.metrics.totalRevenue,
+      averageSale: aggregatedData.sales.metrics.averageSale,
       totalProjects: aggregatedData.projects.length,
       totalEmployees: aggregatedData.employees.length,
+      netProfit: aggregatedData.finance.metrics.netProfit,
+      cashFlow: aggregatedData.finance.metrics.cashFlow,
       
-      // Sales summary
+      // Sales metrics
       salesByMonth: generateMonthlySalesData(),
+      topCustomers: aggregatedData.sales.metrics.topCustomers,
+      pendingPayments: aggregatedData.sales.metrics.pendingPayments,
       
-      // Inventory by category
+      // Inventory metrics
       inventoryByCategory: generateInventoryCategoryData(),
+      inventoryValue: aggregatedData.inventory.metrics.totalValue,
+      inventoryQuantity: aggregatedData.inventory.metrics.totalQuantity,
       
-      // Project status
+      // Project metrics
       projectsByStatus: generateProjectStatusData(),
+      activeProjects: aggregatedData.projects.filter(p => p.status === 'active' || p.status === 'in-progress').length,
+      completedProjects: aggregatedData.projects.filter(p => p.status === 'completed').length,
       
-      // Financial summary
-      financeByType: generateFinanceTypeData()
+      // Financial metrics
+      financeByType: generateFinanceTypeData(),
+      topExpenseCategories: aggregatedData.finance.metrics.topExpenseCategories,
+      topIncomeCategories: aggregatedData.finance.metrics.topIncomeCategories,
+      incomeVsExpense: [
+        { name: 'Income', value: aggregatedData.finance.metrics.totalIncome },
+        { name: 'Expenses', value: aggregatedData.finance.metrics.totalExpenses }
+      ],
+      
+      // Last updated timestamp
+      lastUpdated: aggregatedData.lastUpdated
     };
   };
   
   // Helper functions to transform data for charts
   const generateMonthlySalesData = () => {
-    if (!aggregatedData?.sales.length) return [];
+    if (!aggregatedData?.sales.metrics.salesByDay || !aggregatedData?.sales.metrics.salesByDay.length) {
+      // Fallback to calculating from transaction data if the API data is not available
+      if (!aggregatedData?.sales.transactions.length) return [];
+      
+      const monthMap: {[key: string]: {revenue: number, profit: number}} = {};
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      // Initialize all months
+      months.forEach(month => {
+        monthMap[month] = {revenue: 0, profit: 0};
+      });
+      
+      // Sum up sales by month
+      aggregatedData.sales.transactions.forEach(sale => {
+        const date = new Date(sale.date);
+        const month = months[date.getMonth()];
+        monthMap[month].revenue += sale.amount;
+        // Estimate profit as 30% of revenue for visualization purposes
+        monthMap[month].profit += sale.amount * 0.3;
+      });
+      
+      // Convert to array format for chart
+      return months.map(name => ({
+        name,
+        revenue: monthMap[name].revenue,
+        profit: monthMap[name].profit
+      }));
+    }
     
-    const monthMap: {[key: string]: number} = {};
+    // If we have data from the API, use it for more accurate visualization
+    const salesByDay = aggregatedData.sales.metrics.salesByDay;
+    const monthMap: {[key: string]: {revenue: number, profit: number}} = {};
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
-    // Initialize all months with 0
+    // Initialize all months
     months.forEach(month => {
-      monthMap[month] = 0;
+      monthMap[month] = {revenue: 0, profit: 0};
     });
     
-    // Sum up sales by month
-    aggregatedData.sales.forEach(sale => {
-      const date = new Date(sale.date);
+    // Process the daily sales data into monthly buckets
+    salesByDay.forEach(day => {
+      const date = new Date(day.date);
       const month = months[date.getMonth()];
-      monthMap[month] += sale.amount;
+      monthMap[month].revenue += day.revenue || 0;
+      // Estimate profit as 30% of revenue for visualization purposes
+      monthMap[month].profit += (day.revenue || 0) * 0.3;
     });
     
     // Convert to array format for chart
-    return Object.keys(monthMap).map(month => ({
-      month,
-      value: monthMap[month]
+    return months.map(name => ({
+      name,
+      revenue: monthMap[name].revenue,
+      profit: monthMap[name].profit
     }));
   };
   
   const generateSalesByStatus = () => {
-    if (!aggregatedData?.sales.length) return [];
+    if (!aggregatedData?.sales.transactions.length) return [];
     
     const statusMap: {[key: string]: number} = {};
     
     // Count sales by status
-    aggregatedData.sales.forEach(sale => {
+    aggregatedData.sales.transactions.forEach(sale => {
       const status = sale.status || 'Unknown';
       statusMap[status] = (statusMap[status] || 0) + 1;
     });
     
     // Convert to array format for chart
-    return Object.keys(statusMap).map(status => ({
-      name: status,
-      value: statusMap[status]
+    return Object.keys(statusMap).map(name => ({
+      name,
+      value: statusMap[name]
     }));
   };
   
   const generateTopCustomers = () => {
-    if (!aggregatedData?.sales.length) return [];
+    if (!aggregatedData?.sales.transactions.length) return [];
     
     const customerMap: {[key: string]: number} = {};
     
     // Sum up purchases by customer
-    aggregatedData.sales.forEach(sale => {
+    aggregatedData.sales.transactions.forEach(sale => {
       const customer = sale.customer || 'Unknown';
       customerMap[customer] = (customerMap[customer] || 0) + sale.amount;
     });
@@ -260,12 +489,12 @@ export default function AnalyticsPage() {
   };
   
   const generateInventoryCategoryData = () => {
-    if (!aggregatedData?.inventory.length) return [];
+    if (!aggregatedData?.inventory.items.length) return [];
     
     const categoryMap: {[key: string]: number} = {};
     
     // Count items by category
-    aggregatedData.inventory.forEach(item => {
+    aggregatedData.inventory.items.forEach(item => {
       const category = item.category || 'Uncategorized';
       categoryMap[category] = (categoryMap[category] || 0) + 1;
     });
@@ -278,12 +507,12 @@ export default function AnalyticsPage() {
   };
   
   const generateInventoryValueByCategory = () => {
-    if (!aggregatedData?.inventory.length) return [];
+    if (!aggregatedData?.inventory.items.length) return [];
     
     const categoryMap: {[key: string]: number} = {};
     
     // Sum up values by category
-    aggregatedData.inventory.forEach(item => {
+    aggregatedData.inventory.items.forEach(item => {
       const category = item.category || 'Uncategorized';
       const itemValue = item.price * item.quantity;
       categoryMap[category] = (categoryMap[category] || 0) + itemValue;
@@ -315,7 +544,7 @@ export default function AnalyticsPage() {
   };
   
   const generateFinanceTypeData = () => {
-    if (!aggregatedData?.finance?.length) return [];
+    if (!aggregatedData?.finance.transactions.length) return [];
     
     const typeMap: {[key: string]: number} = {
       income: 0,
@@ -323,7 +552,7 @@ export default function AnalyticsPage() {
     };
     
     // Sum up amounts by type
-    aggregatedData.finance.forEach(item => {
+    aggregatedData.finance.transactions.forEach(item => {
       if (!item) return;
       const type = item.type || 'unknown';
       typeMap[type] = (typeMap[type] || 0) + (typeof item.amount === 'number' ? item.amount : 0);
@@ -337,21 +566,13 @@ export default function AnalyticsPage() {
   };
 
   const calculateNetBalance = () => {
-    if (!aggregatedData?.finance?.length) return 0;
+    if (!aggregatedData?.finance.transactions.length) return 0;
     
-    const income = aggregatedData.finance
-      .filter(item => item?.type === 'income')
-      .reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0);
-      
-    const expenses = aggregatedData.finance
-      .filter(item => item?.type === 'expense')
-      .reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0);
-      
-    return income - expenses;
+    return aggregatedData.finance.metrics.netProfit || 0;
   };
   
   const generateIncomeExpenseByMonth = () => {
-    if (!aggregatedData?.finance?.length) return [];
+    if (!aggregatedData?.finance.transactions.length) return [];
     
     const monthMap: {[key: string]: {income: number, expense: number}} = {};
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -362,7 +583,7 @@ export default function AnalyticsPage() {
     });
     
     // Sum up income and expenses by month
-    aggregatedData.finance.forEach(transaction => {
+    aggregatedData.finance.transactions.forEach(transaction => {
       if (!transaction || !transaction.date) return;
       try {
         const date = new Date(transaction.date);
@@ -388,26 +609,13 @@ export default function AnalyticsPage() {
   };
   
   const generateExpenseByCategory = () => {
-    if (!aggregatedData?.finance?.length) return [];
+    if (!aggregatedData?.finance.metrics.topExpenseCategories) return [];
     
-    const categoryMap: {[key: string]: number} = {};
-    
-    // Sum up expenses by category
-    aggregatedData.finance
-      .filter(item => item && item.type === 'expense')
-      .forEach(expense => {
-        if (!expense) return;
-        const category = expense.category && typeof expense.category === 'object' ? expense.category.name : (expense.category || 'Uncategorized');
-        categoryMap[category] = (categoryMap[category] || 0) + (typeof expense.amount === 'number' ? expense.amount : 0);
-      });
-    
-    // Convert to array format for chart
-    return Object.keys(categoryMap)
-      .map(name => ({
-        name,
-        value: categoryMap[name]
-      }))
-      .sort((a, b) => b.value - a.value);
+    // Use the precomputed top expense categories
+    return aggregatedData.finance.metrics.topExpenseCategories.map(category => ({
+      name: category.name,
+      value: category.amount
+    })) as Array<{name: string, value: number}>;
   };
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#83a6ed'];
@@ -489,74 +697,93 @@ export default function AnalyticsPage() {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="relative overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          {isLoading ? (
+            <div className="grid gap-4 grid-cols-1">
+              <Card className="p-6">
+                <Skeleton className="h-8 w-32 mb-4" />
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-4">
+                  <Skeleton className="h-24 rounded-lg" />
+                  <Skeleton className="h-24 rounded-lg" />
+                  <Skeleton className="h-24 rounded-lg" />
+                  <Skeleton className="h-24 rounded-lg" />
+                </div>
+              </Card>
+            </div>
+          ) : (
+            <RealtimeDashboard 
+              data={overviewData} 
+              isLoading={isLoading} 
+              onRefresh={fetchAllData} 
+            />
+          )}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="relative overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{overviewData?.totalSales || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   Total sales recorded in the system
                 </p>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <Card className="relative overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="relative overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Inventory Items</CardTitle>
                 <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{overviewData?.totalInventory || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   Products currently in inventory
                 </p>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <Card className="relative overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="relative overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
                 <Rocket className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{overviewData?.totalProjects || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   Projects currently being managed
                 </p>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <Card className="relative overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="relative overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Employees</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{overviewData?.totalEmployees || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   Total team members
                 </p>
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+          </div>
 
-      <div className="grid gap-4 md:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
+          <div className="grid gap-4 md:grid-cols-7">
+            <Card className="col-span-4">
+              <CardHeader>
                 <CardTitle>Monthly Sales Trend</CardTitle>
-          </CardHeader>
+              </CardHeader>
               <CardContent>
                 {overviewData?.salesByMonth.length ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={overviewData.salesByMonth}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
+                      <XAxis dataKey="name" />
                       <YAxis />
                       <ReTooltip />
-                      <Area type="monotone" dataKey="value" fill="#8884d8" stroke="#8884d8" />
+                      <Area type="monotone" dataKey="revenue" fill="#8884d8" stroke="#8884d8" />
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
@@ -564,11 +791,11 @@ export default function AnalyticsPage() {
                     <p className="text-muted-foreground">No sales data available</p>
             </div>
                 )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <Card className="col-span-3">
-          <CardHeader>
+            <Card className="col-span-3">
+              <CardHeader>
                 <CardTitle>Inventory by Category</CardTitle>
               </CardHeader>
               <CardContent>
@@ -580,7 +807,7 @@ export default function AnalyticsPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }: { name: string, percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
@@ -604,9 +831,9 @@ export default function AnalyticsPage() {
         
         <TabsContent value="ai-insights">
           <AIAssistant aggregatedData={aggregatedData || {
-            inventory: [],
-            sales: [],
-            finance: [],
+            inventory: { items: [], metrics: {} },
+            sales: { transactions: [], metrics: {} },
+            finance: { transactions: [], metrics: {} },
             projects: [],
             employees: []
           }} isLoading={isLoading} />
@@ -629,7 +856,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${aggregatedData?.sales.reduce((sum, sale) => sum + (typeof sale.amount === 'number' ? sale.amount : 0), 0).toLocaleString() || '0'}
+                        ${aggregatedData?.sales.metrics.totalRevenue.toLocaleString() || '0'}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total revenue from all sales
@@ -644,9 +871,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${aggregatedData?.sales.length 
-                          ? (aggregatedData.sales.reduce((sum, sale) => sum + (typeof sale.amount === 'number' ? sale.amount : 0), 0) / aggregatedData.sales.length).toFixed(2)
-                          : '0'}
+                        ${aggregatedData?.sales.metrics.averageSale.toFixed(2) || '0'}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Average value per transaction
@@ -661,7 +886,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {aggregatedData?.sales.filter(sale => sale.status === 'completed').length || 0}
+                        {aggregatedData?.sales.transactions.filter(sale => sale.status === 'completed').length || 0}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Number of completed sales
@@ -676,7 +901,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {aggregatedData?.sales.filter(sale => sale.status === 'pending').length || 0}
+                        {aggregatedData?.sales.transactions.filter(sale => sale.status === 'pending').length || 0}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Number of pending sales
@@ -697,11 +922,11 @@ export default function AnalyticsPage() {
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={overviewData.salesByMonth}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
+                        <XAxis dataKey="name" />
                         <YAxis />
                         <ReTooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="value" stroke="#8884d8" name="Revenue" />
+                        <Line type="monotone" dataKey="revenue" stroke="#8884d8" name="Revenue" />
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
@@ -717,7 +942,7 @@ export default function AnalyticsPage() {
                   <CardTitle>Sales by Status</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {aggregatedData?.sales.length ? (
+                  {aggregatedData?.sales.transactions.length ? (
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie
@@ -725,7 +950,7 @@ export default function AnalyticsPage() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }: { name: string, percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
@@ -751,7 +976,7 @@ export default function AnalyticsPage() {
                 <CardTitle>Top Customers</CardTitle>
               </CardHeader>
               <CardContent>
-                {aggregatedData?.sales.length ? (
+                {aggregatedData?.sales.transactions.length ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <ReBarChart data={generateTopCustomers()}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -789,7 +1014,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {aggregatedData?.inventory.length || 0}
+                        {aggregatedData?.inventory.items.length || 0}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total items in inventory
@@ -804,7 +1029,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${aggregatedData?.inventory.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString() || '0'}
+                        ${aggregatedData?.inventory.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString() || '0'}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total inventory value
@@ -819,7 +1044,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {new Set(aggregatedData?.inventory.map(item => item.category) || []).size}
+                        {new Set(aggregatedData?.inventory.items.map(item => item.category) || []).size}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Number of unique categories
@@ -834,7 +1059,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {aggregatedData?.inventory.filter(item => item.quantity < 10).length || 0}
+                        {aggregatedData?.inventory.items.filter(item => item.quantity < 10).length || 0}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Items with quantity less than 10
@@ -883,7 +1108,7 @@ export default function AnalyticsPage() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }: { name: string, percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
@@ -910,37 +1135,45 @@ export default function AnalyticsPage() {
                 <CardDescription>Items with low quantity in stock</CardDescription>
               </CardHeader>
               <CardContent>
-                {aggregatedData?.inventory.filter(item => item.quantity < 10).length ? (
+                {aggregatedData?.inventory.items.filter(item => item.quantity < 10).length ? (
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-2">Name</th>
-                          <th className="text-left p-2">Category</th>
-                          <th className="text-left p-2">Quantity</th>
-                          <th className="text-left p-2">Price</th>
-                          <th className="text-left p-2">Status</th>
+                        <tr>
+                          <th className="py-2 px-3 text-left border-b">Name</th>
+                          <th className="py-2 px-3 text-left border-b">Category</th>
+                          <th className="py-2 px-3 text-left border-b">Quantity</th>
+                          <th className="py-2 px-3 text-left border-b">Status</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {aggregatedData.inventory
+                        {aggregatedData.inventory.items
                           .filter(item => item.quantity < 10)
                           .sort((a, b) => a.quantity - b.quantity)
                           .map((item) => (
-                            <tr key={item.id} className="border-b hover:bg-muted/50">
-                              <td className="p-2">{item.name}</td>
-                              <td className="p-2">{item.category}</td>
-                              <td className="p-2">{item.quantity}</td>
-                              <td className="p-2">${item.price}</td>
-                              <td className="p-2">{item.status}</td>
+                            <tr key={item.id} className="border-b border-gray-100">
+                              <td className="py-2 px-3">{item.name}</td>
+                              <td className="py-2 px-3">{item.category || 'Uncategorized'}</td>
+                              <td className="py-2 px-3">{item.quantity}</td>
+                              <td className="py-2 px-3">
+                                <span className={`inline-block px-2 py-1 rounded-full text-xs ${
+                                  item.quantity === 0 
+                                    ? 'bg-red-100 text-red-800' 
+                                    : item.quantity < 5 
+                                      ? 'bg-yellow-100 text-yellow-800' 
+                                      : 'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {item.quantity === 0 ? 'Out of Stock' : item.quantity < 5 ? 'Low Stock' : 'In Stock'}
+                                </span>
+                              </td>
                             </tr>
                           ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-[200px]">
-                    <p className="text-muted-foreground">No items require restocking</p>
+                  <div className="text-center py-6">
+                    <p>No low stock items found.</p>
                   </div>
                 )}
               </CardContent>
@@ -965,10 +1198,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${(aggregatedData?.finance
-                          ?.filter(item => item?.type === 'income')
-                          ?.reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0) || 0)
-                          .toLocaleString()}
+                        ${(aggregatedData?.finance.metrics.totalIncome || 0).toLocaleString()}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total income transactions
@@ -983,10 +1213,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${(aggregatedData?.finance
-                          ?.filter(item => item?.type === 'expense')
-                          ?.reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0) || 0)
-                          .toLocaleString()}
+                        ${(aggregatedData?.finance.metrics.totalExpenses || 0).toLocaleString()}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total expense transactions
@@ -1001,7 +1228,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${(calculateNetBalance() || 0).toLocaleString()}
+                        ${(aggregatedData?.finance.metrics.netProfit || 0).toLocaleString()}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Net balance (income - expenses)
@@ -1016,7 +1243,7 @@ export default function AnalyticsPage() {
           </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {aggregatedData?.finance.length || 0}
+                        {aggregatedData?.finance.transactions.length || 0}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total number of transactions
@@ -1033,7 +1260,7 @@ export default function AnalyticsPage() {
                   <CardTitle>Income vs Expenses</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {aggregatedData?.finance.length ? (
+                  {aggregatedData?.finance.transactions.length ? (
                     <ResponsiveContainer width="100%" height={300}>
                       <ReBarChart data={generateIncomeExpenseByMonth()}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -1058,7 +1285,7 @@ export default function AnalyticsPage() {
                   <CardTitle>Expense Categories</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {aggregatedData?.finance.length ? (
+                  {aggregatedData?.finance.transactions.length ? (
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie
@@ -1066,7 +1293,7 @@ export default function AnalyticsPage() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }: { name: string, percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
@@ -1093,7 +1320,7 @@ export default function AnalyticsPage() {
                 <CardDescription>Latest financial transactions</CardDescription>
               </CardHeader>
               <CardContent>
-                {aggregatedData?.finance.length ? (
+                {aggregatedData?.finance.transactions.length ? (
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
@@ -1107,7 +1334,7 @@ export default function AnalyticsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {aggregatedData.finance
+                        {aggregatedData.finance.transactions
                           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                           .slice(0, 5)
                           .map((transaction) => (
