@@ -42,8 +42,8 @@ export default function InventoryPage() {
     try {
       const response = await fetch('/api/inventory');
       if (response.ok) {
-        const items = await response.json();
-        const formattedItems = items.map((item: any) => ({
+        const responseData = await response.json();
+        const formattedItems = responseData.items.map((item: any) => ({
           ...item,
           lastUpdated: new Date(item.updatedAt).toLocaleString(),
         }));

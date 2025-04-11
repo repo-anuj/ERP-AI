@@ -5,14 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Plus, Users, Briefcase, Clock, TrendingUp } from 'lucide-react';
 import { AddEmployeeDialog } from '@/components/hr/add-employee-dialog';
 import { DataTable } from '@/components/hr/data-table';
-import { columns } from '@/components/hr/columns';
-import { useEffect, useState } from 'react';
+import { columns, Employee } from '@/components/hr/columns';
+import { EditEmployeeModal } from '@/components/hr/edit-employee-modal';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function HRPage() {
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,6 +57,57 @@ export default function HRPage() {
 
     fetchData();
   }, [toast]);
+
+  const handleOpenEditModal = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingEmployee(null);
+  };
+
+  const handleEditSuccess = () => {
+    handleCloseEditModal();
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch employees
+        const employeesResponse = await fetch('/api/employees');
+        if (employeesResponse.ok) {
+          const employeesData = await employeesResponse.json();
+          
+          // Format the employee data for the table
+          const formattedEmployees = employeesData.map((employee: any) => ({
+            ...employee,
+            startDate: employee.startDate, // The date will be formatted in the column cell
+          }));
+          
+          setEmployees(formattedEmployees);
+        }
+        
+        // Fetch departments
+        const departmentsResponse = await fetch('/api/departments');
+        if (departmentsResponse.ok) {
+          const departmentsData = await departmentsResponse.json();
+          setDepartments(departmentsData);
+        }
+      } catch (error) {
+        console.error('Error fetching HR data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load HR data. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  };
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
@@ -184,7 +238,11 @@ export default function HRPage() {
               <p>Loading employee data...</p>
             </div>
           ) : employees.length > 0 ? (
-            <DataTable columns={columns} data={employees} />
+            <DataTable 
+              columns={columns} 
+              data={employees} 
+              onEdit={handleOpenEditModal} 
+            />
           ) : (
             <div className="flex flex-col items-center justify-center py-6">
               <div className="text-center space-y-3">
@@ -202,6 +260,13 @@ export default function HRPage() {
           )}
         </CardContent>
       </Card>
+
+      <EditEmployeeModal
+        employee={editingEmployee}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   );
 }
