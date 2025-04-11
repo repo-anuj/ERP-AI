@@ -12,6 +12,7 @@ import {
   Settings,
   Users,
   X,
+  DollarSign,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -46,8 +47,8 @@ const routes = [
   },
   {
     label: 'Finance',
-    icon: Building2,
-    href: '/finance',
+    icon: DollarSign,
+    href: '/dashboard/finance',
   },
   {
     label: 'Analytics',

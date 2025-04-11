@@ -8,39 +8,44 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  email     String   @unique
-  password  String
-  firstName String?
-  lastName  String?
-  image     String?
-  bio       String?
-  role      String?
-  location  String?
-  darkMode  Boolean  @default(false)
-  compactView Boolean @default(false)
-  company   Company? @relation(fields: [companyId], references: [id])
-  companyId String?  @db.ObjectId
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  email         String         @unique
+  password      String
+  firstName     String?
+  lastName      String?
+  image         String?
+  bio           String?
+  role          String?
+  location      String?
+  darkMode      Boolean        @default(false)
+  compactView   Boolean        @default(false)
+  company       Company?       @relation(fields: [companyId], references: [id])
+  companyId     String?        @db.ObjectId
   notifications Notification[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  transactions  Transaction[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Company {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  address   String?
-  phone     String?
-  email     String?
-  website   String?
-  logo      String?
-  users     User[]
-  inventory InventoryItem[]
-  employees Employee[]
-  customers Customer[]
-  sales     Sale[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  address           String?
+  phone             String?
+  email             String?
+  website           String?
+  logo              String?
+  users             User[]
+  inventory         InventoryItem[]
+  employees         Employee[]
+  customers         Customer[]
+  sales             Sale[]
+  projects          Project[]
+  transactions      Transaction[]
+  budgetCategories  BudgetCategory[]
+  financialAccounts FinancialAccount[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 }
 
 model Notification {
@@ -73,60 +78,145 @@ model InventoryItem {
 }
 
 model Employee {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  firstName   String
-  lastName    String
-  email       String   @unique
-  phone       String?
-  position    String
-  department  String
-  startDate   DateTime
-  salary      Float?
-  status      String   @default("active")
-  company     Company  @relation(fields: [companyId], references: [id])
-  companyId   String   @db.ObjectId
-  sales       Sale[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName  String
+  lastName   String
+  email      String   @unique
+  phone      String?
+  position   String
+  department String
+  startDate  DateTime
+  salary     Float?
+  status     String   @default("active")
+  company    Company  @relation(fields: [companyId], references: [id])
+  companyId  String   @db.ObjectId
+  sales      Sale[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([companyId])
 }
 
 model Customer {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  email       String?
-  phone       String?
-  address     String?
-  company     Company  @relation(fields: [companyId], references: [id])
-  companyId   String   @db.ObjectId
-  sales       Sale[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  company   Company  @relation(fields: [companyId], references: [id])
+  companyId String   @db.ObjectId
+  sales     Sale[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
 }
 
 model Sale {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
   invoiceNumber String?
-  customer    Customer @relation(fields: [customerId], references: [id])
-  customerId  String   @db.ObjectId
-  employee    Employee? @relation(fields: [employeeId], references: [id])
-  employeeId  String?  @db.ObjectId
-  date        DateTime
-  status      String
-  total       Float
-  tax         Float?
-  notes       String?
-  items       SaleItem[]
-  company     Company  @relation(fields: [companyId], references: [id])
-  companyId   String   @db.ObjectId
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  customer      Customer   @relation(fields: [customerId], references: [id])
+  customerId    String     @db.ObjectId
+  employee      Employee?  @relation(fields: [employeeId], references: [id])
+  employeeId    String?    @db.ObjectId
+  date          DateTime
+  status        String
+  total         Float
+  tax           Float?
+  notes         String?
+  items         SaleItem[]
+  company       Company    @relation(fields: [companyId], references: [id])
+  companyId     String     @db.ObjectId
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   @@index([customerId])
   @@index([employeeId])
+  @@index([companyId])
+}
+
+model Project {
+  id                   String          @id @default(auto()) @map("_id") @db.ObjectId
+  name                 String
+  description          String?
+  type                 String // internal, client, research, maintenance
+  status               String // planning, in_progress, on_hold, completed, cancelled
+  startDate            DateTime
+  endDate              DateTime
+  completionPercentage Int
+  projectManager       ProjectMember
+  teamMembers          ProjectMember[]
+  client               ProjectClient?
+  budget               Float
+  expenses             Float
+  priority             String // low, medium, high
+  tags                 String[]
+  notes                String?
+  tasks                Task[]
+  milestones           Milestone[]
+  company              Company         @relation(fields: [companyId], references: [id])
+  companyId            String          @db.ObjectId
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@index([companyId])
+}
+
+type ProjectMember {
+  employeeId String
+  name       String
+  role       String?
+  department String?
+}
+
+type ProjectClient {
+  customerId String?
+  name       String
+  company    String?
+  email      String?
+}
+
+model Task {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  project              Project  @relation(fields: [projectId], references: [id])
+  projectId            String   @db.ObjectId
+  name                 String
+  description          String?
+  status               String // not_started, in_progress, completed, blocked
+  priority             String // low, medium, high, urgent
+  assigneeId           String
+  assigneeName         String
+  startDate            DateTime
+  dueDate              DateTime
+  estimatedHours       Int
+  actualHours          Float
+  completionPercentage Int
+  dependencies         String[] @db.ObjectId
+  notes                String?
+  companyId            String   @db.ObjectId
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([companyId])
+}
+
+model Milestone {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  project        Project   @relation(fields: [projectId], references: [id])
+  projectId      String    @db.ObjectId
+  name           String
+  description    String?
+  targetDate     DateTime
+  completionDate DateTime?
+  status         String // pending, completed, missed
+  deliverables   String?
+  notes          String?
+  companyId      String    @db.ObjectId
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([projectId])
   @@index([companyId])
 }
 
@@ -143,4 +233,71 @@ model SaleItem {
   updatedAt   DateTime @updatedAt
 
   @@index([saleId])
+}
+
+model Transaction {
+  id          String            @id @default(auto()) @map("_id") @db.ObjectId
+  date        DateTime
+  description String
+  amount      Float
+  type        String // income, expense
+  category    BudgetCategory?   @relation(fields: [categoryId], references: [id])
+  categoryId  String?           @db.ObjectId
+  account     FinancialAccount? @relation(fields: [accountId], references: [id])
+  accountId   String?           @db.ObjectId
+  reference   String? // invoice number, receipt number
+  notes       String?
+  recurring   Boolean           @default(false)
+  status      String            @default("completed") // pending, completed, cancelled
+  relatedTo   String? // project id, customer id, invoice id
+  attachments String[]
+  tags        String[]
+  company     Company           @relation(fields: [companyId], references: [id])
+  companyId   String            @db.ObjectId
+  user        User?             @relation(fields: [userId], references: [id])
+  userId      String?           @db.ObjectId
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([companyId])
+  @@index([categoryId])
+  @@index([accountId])
+  @@index([date])
+  @@index([type])
+}
+
+model BudgetCategory {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  type         String // income, expense
+  limit        Float?
+  color        String?
+  icon         String?
+  transactions Transaction[]
+  company      Company       @relation(fields: [companyId], references: [id])
+  companyId    String        @db.ObjectId
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([name, companyId])
+  @@index([companyId])
+}
+
+model FinancialAccount {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  type            String // bank, cash, credit, investment, other
+  number          String?
+  balance         Float         @default(0)
+  currency        String        @default("USD")
+  institutionName String?
+  description     String?
+  transactions    Transaction[]
+  company         Company       @relation(fields: [companyId], references: [id])
+  companyId       String        @db.ObjectId
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([name, companyId])
+  @@index([companyId])
 }

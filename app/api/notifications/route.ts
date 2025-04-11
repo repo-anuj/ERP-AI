@@ -1,17 +1,29 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { verifyAuth } from "@/lib/auth";
+import { cookies } from "next/headers";
+
+// Configure route segment config
+export const runtime = 'nodejs'; // Using nodejs runtime instead of edge for Prisma compatibility
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    // Use our custom auth method instead of next-auth
+    const cookieStore = cookies();
+    const token = cookieStore.get('token')?.value;
+    
+    if (!token) {
+      return new NextResponse("Unauthorized - No token provided", { status: 401 });
+    }
+    
+    const payload = await verifyAuth(token);
+    
+    if (!payload || !payload.email) {
+      return new NextResponse("Unauthorized - Invalid token", { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: payload.email },
     });
 
     if (!user) {
@@ -33,9 +45,18 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    // Use our custom auth method instead of next-auth
+    const cookieStore = cookies();
+    const token = cookieStore.get('token')?.value;
+    
+    if (!token) {
+      return new NextResponse("Unauthorized - No token provided", { status: 401 });
+    }
+    
+    const payload = await verifyAuth(token);
+    
+    if (!payload || !payload.email) {
+      return new NextResponse("Unauthorized - Invalid token", { status: 401 });
     }
 
     const body = await request.json();
@@ -46,7 +67,7 @@ export async function PATCH(request: Request) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: payload.email },
     });
 
     if (!user) {

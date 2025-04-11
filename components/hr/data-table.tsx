@@ -23,23 +23,32 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface Employee {
+  // Add properties of Employee interface
 }
 
-export function DataTable<TData, TValue>({
+interface DataTableProps<TData extends Employee, TValue> {
+  columns: (onEdit: (employee: Employee) => void) => ColumnDef<TData, TValue>[]; // Update columns prop to receive onEdit handler
+  data: TData[];
+  onEdit: (employee: Employee) => void; // Add the onEdit callback prop
+}
+
+export function DataTable<TData extends Employee, TValue>({
   columns,
   data,
+  onEdit,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
+  // Generate columns by passing the onEdit handler
+  const generatedColumns = useMemo(() => columns(onEdit), [onEdit]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: generatedColumns, // Use the generated columns
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -104,7 +113,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={generatedColumns.length}
                   className="h-24 text-center"
                 >
                   No results.

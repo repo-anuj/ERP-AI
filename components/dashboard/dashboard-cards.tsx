@@ -99,7 +99,7 @@ export function DashboardCards({ data }: DashboardCardProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Link href="/finance" className="block">
+      <Link href="/dashboard/finance" className="block">
         <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>

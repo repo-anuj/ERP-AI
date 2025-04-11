@@ -286,7 +286,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PUT: Process a return/refund
+// PUT: Update a sale
 export async function PUT(req: NextRequest) {
   try {
     const token = cookies().get('token')?.value;
@@ -313,17 +313,17 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     
     // Validate required fields
-    if (!body.saleId || !body.reason || !body.items || body.items.length === 0) {
+    if (!body.id) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Sale ID is required' },
         { status: 400 }
       );
     }
     
-    // Find the original sale
-    const originalSale = await prisma.sale.findFirst({
+    // Find the sale
+    const sale = await prisma.sale.findFirst({
       where: {
-        id: body.saleId,
+        id: body.id,
         companyId,
       },
       include: {
@@ -332,110 +332,20 @@ export async function PUT(req: NextRequest) {
       },
     });
     
-    if (!originalSale) {
+    if (!sale) {
       return NextResponse.json(
         { error: 'Sale not found' },
         { status: 404 }
       );
     }
     
-    // Validate return items
-    const returnErrors: string[] = [];
-    const returnItems: {
-      originalItemId: string;
-      product: string;
-      description: string | null;
-      quantity: number;
-      unitPrice: number;
-      total: number;
-    }[] = [];
-    const inventoryUpdates: { id: string; quantity: number }[] = [];
-    
-    for (const returnItem of body.items) {
-      // Find the original sale item
-      const originalItem = originalSale.items.find(item => item.id === returnItem.itemId);
-      
-      if (!originalItem) {
-        returnErrors.push(`Item with ID ${returnItem.itemId} not found in original sale`);
-        continue;
-      }
-      
-      if (returnItem.quantity > originalItem.quantity) {
-        returnErrors.push(`Return quantity (${returnItem.quantity}) exceeds original quantity (${originalItem.quantity}) for ${originalItem.product}`);
-        continue;
-      }
-      
-      // Find inventory item to update
-      const inventoryItem = await prisma.inventoryItem.findFirst({
-        where: {
-          companyId,
-          name: originalItem.product,
-        },
-      });
-      
-      if (inventoryItem) {
-        inventoryUpdates.push({
-          id: inventoryItem.id,
-          quantity: inventoryItem.quantity + returnItem.quantity,
-        });
-      }
-      
-      returnItems.push({
-        originalItemId: originalItem.id,
-        product: originalItem.product,
-        description: originalItem.description,
-        quantity: returnItem.quantity,
-        unitPrice: originalItem.unitPrice,
-        total: returnItem.quantity * originalItem.unitPrice,
-      });
-    }
-    
-    if (returnErrors.length > 0) {
-      return NextResponse.json(
-        { error: 'Return validation failed', details: returnErrors },
-        { status: 400 }
-      );
-    }
-    
-    // Calculate total refund amount
-    const refundTotal = returnItems.reduce((sum, item) => sum + item.total, 0);
-    const refundTax = originalSale.tax 
-      ? (refundTotal / originalSale.total) * originalSale.tax 
-      : 0;
-    
-    // Create a new sale record for the return
-    const returnSale = await prisma.sale.create({
+    // Update the sale
+    const updatedSale = await prisma.sale.update({
+      where: { id: body.id },
       data: {
-        invoiceNumber: `RET-${originalSale.invoiceNumber || Date.now()}`,
-        date: new Date(),
-        status: 'returned',
-        total: -refundTotal, // Negative amount for return
-        tax: -refundTax,
-        notes: `Return for sale ${originalSale.invoiceNumber}. Reason: ${body.reason}`,
-        customer: {
-          connect: {
-            id: originalSale.customerId,
-          },
-        },
-        employee: user.role === 'employee' ? {
-          connect: {
-            email: user.email,
-          },
-        } : undefined,
-        company: {
-          connect: {
-            id: companyId,
-          },
-        },
-        items: {
-          create: returnItems.map(item => ({
-            product: item.product,
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: -item.total, // Negative amount for return
-          })),
-        },
+        status: body.status || sale.status,
+        notes: body.notes !== undefined ? body.notes : sale.notes,
+        invoiceNumber: body.invoiceNumber !== undefined ? body.invoiceNumber : sale.invoiceNumber,
       },
       include: {
         customer: true,
@@ -444,49 +354,119 @@ export async function PUT(req: NextRequest) {
       },
     });
     
-    // Update inventory quantities
-    for (const update of inventoryUpdates) {
-      await prisma.inventoryItem.update({
-        where: { id: update.id },
-        data: { quantity: update.quantity },
-      });
-    }
-    
-    // Update original sale status if all items are returned
-    const allItemsReturned = originalSale.items.every(originalItem => {
-      const returnedItem = returnItems.find(ri => ri.originalItemId === originalItem.id);
-      return returnedItem && returnedItem.quantity === originalItem.quantity;
-    });
-    
-    if (allItemsReturned) {
-      await prisma.sale.update({
-        where: { id: originalSale.id },
-        data: { status: 'returned' },
-      });
-    } else {
-      await prisma.sale.update({
-        where: { id: originalSale.id },
-        data: { status: 'partial-return' },
-      });
-    }
-    
-    return NextResponse.json({
-      return: returnSale,
-      originalSale: {
-        id: originalSale.id,
-        status: allItemsReturned ? 'returned' : 'partial-return',
-      },
-    });
+    return NextResponse.json(updatedSale);
   } catch (error) {
-    console.error('Error processing return:', error);
+    console.error('Error updating sale:', error);
     return NextResponse.json(
-      { error: 'Failed to process return' },
+      { error: 'Failed to update sale' },
       { status: 500 }
     );
   }
 }
 
-// PATCH: Get sales metrics
+// DELETE: Remove a sale
+export async function DELETE(req: NextRequest) {
+  try {
+    const token = cookies().get('token')?.value;
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const payload = await verifyAuth(token);
+    
+    if (!payload.email) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: payload.email as string },
+    });
+
+    if (!user?.companyId) {
+      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
+
+    const companyId = user.companyId;
+    
+    // Get sale ID from query parameters
+    const url = new URL(req.url);
+    const id = url.searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Sale ID is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Find the sale to ensure it exists and belongs to the company
+    const sale = await prisma.sale.findFirst({
+      where: {
+        id,
+        companyId,
+      },
+      include: {
+        items: true,
+      },
+    });
+    
+    if (!sale) {
+      return NextResponse.json(
+        { error: 'Sale not found' },
+        { status: 404 }
+      );
+    }
+    
+    // If the sale is completed, we should return inventory items to stock
+    if (sale.status === 'completed') {
+      // For each sale item, find the corresponding inventory item and update quantity
+      for (const item of sale.items) {
+        // Find inventory item by name
+        const inventoryItem = await prisma.inventoryItem.findFirst({
+          where: {
+            companyId,
+            name: item.product,
+          },
+        });
+        
+        if (inventoryItem) {
+          // Return items to inventory
+          await prisma.inventoryItem.update({
+            where: { id: inventoryItem.id },
+            data: { 
+              quantity: inventoryItem.quantity + item.quantity 
+            },
+          });
+        }
+      }
+    }
+    
+    // Delete the sale items first (to avoid foreign key constraints)
+    await prisma.saleItem.deleteMany({
+      where: {
+        saleId: id,
+      },
+    });
+    
+    // Delete the sale
+    await prisma.sale.delete({
+      where: {
+        id,
+      },
+    });
+    
+    return NextResponse.json({ success: true, message: 'Sale deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting sale:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete sale' },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH: Process returns and get metrics
 export async function PATCH(req: NextRequest) {
   try {
     const token = cookies().get('token')?.value;
