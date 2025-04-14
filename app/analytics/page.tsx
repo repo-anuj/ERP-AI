@@ -1,21 +1,28 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  RefreshCw, 
-  BarChart4,
-  FileBarChart
-} from 'lucide-react';
+import { RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EmptyAnalytics } from '@/components/analytics/empty-state';
 import { AIAssistant } from '@/components/analytics/ai-assistant';
 import { RealtimeDashboard } from '@/components/analytics/realtime-dashboard';
 import { AnalyticsFilters, FilterState } from '@/components/analytics/filters';
+// import { PaginationControls } from '@/components/analytics/pagination-controls';
+import { InventoryAnalytics } from '@/components/analytics/inventory-analytics';
+import { SalesAnalytics } from '@/components/analytics/sales-analytics';
+import { FinanceAnalytics } from '@/components/analytics/finance-analytics';
+import { CrossModuleAnalytics } from '@/components/analytics/cross-module-analytics';
+import { Reporting } from '@/components/analytics/reporting';
+import { NotificationsPopover } from '@/components/analytics/notifications';
 import { exportAsCSV, exportAsJSON } from '@/lib/export-utils';
+import { LoadingIndicator } from '@/components/analytics/loading-indicator';
+// import { websocketService } from '@/lib/websocket-service';
+import { alertsService } from '@/lib/alerts-service';
+// import { reportingService } from '@/lib/reporting-service';
 
 // Import existing chart components from the current analytics page
 // (We'll reuse the existing visualization components)
@@ -26,15 +33,19 @@ export default function AnalyticsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasData, setHasData] = useState(false);
   const [aggregatedData, setAggregatedData] = useState<any>(null);
-  
+
   // Use a ref to store the current filter state without triggering rerenders
   const filtersRef = useRef<FilterState>({
     startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
     endDate: new Date(),
     modules: ['inventory', 'sales', 'finance', 'employees', 'projects', 'crossModuleAnalysis'],
-    filters: {}
+    filters: {},
+    pagination: {
+      page: 1,
+      pageSize: 50
+    }
   });
-  
+
   // State for UI display of filters (doesn't trigger data fetching)
   const [displayFilters, setDisplayFilters] = useState<FilterState>(filtersRef.current);
 
@@ -49,7 +60,7 @@ export default function AnalyticsPage() {
 
       // Get filters from ref instead of state
       const currentFilters = filtersRef.current;
-      
+
       // Prepare filters for API request
       const apiFilters = {
         dateRange: {
@@ -57,7 +68,8 @@ export default function AnalyticsPage() {
           endDate: currentFilters.endDate?.toISOString()
         },
         modules: currentFilters.modules,
-        filters: currentFilters.filters
+        filters: currentFilters.filters,
+        pagination: currentFilters.pagination || { page: 1, pageSize: 50 }
       };
 
       // Call our new consolidated API endpoint
@@ -76,7 +88,7 @@ export default function AnalyticsPage() {
       const data = await response.json();
       console.log('Fetched Analytics Data:', JSON.stringify(data, null, 2));
       setAggregatedData(data);
-      
+
       // Check if we have meaningful data
       setHasData(checkForData(data));
 
@@ -96,19 +108,23 @@ export default function AnalyticsPage() {
   // Check if data contains meaningful values
   const checkForData = (data: any) => {
     if (!data) return false;
-    
+
     // Check for data in each module
     const hasInventory = data.inventory?.items?.length > 0;
     const hasSales = data.sales?.transactions?.length > 0;
     const hasFinance = data.finance?.transactions?.length > 0;
     const hasEmployees = data.employees?.employees?.length > 0;
     const hasProjects = data.projects?.projects?.length > 0;
-    
+
     return hasInventory || hasSales || hasFinance || hasEmployees || hasProjects;
   };
 
-  // Fetch data only once on mount
+  // Fetch data and initialize services on mount
   useEffect(() => {
+    // Initialize services
+    alertsService.init();
+
+    // Fetch initial data
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array means this runs once on mount
@@ -129,6 +145,31 @@ export default function AnalyticsPage() {
     setDisplayFilters(newFilters);
     // Update the ref
     filtersRef.current = newFilters;
+  };
+
+  // Handle pagination changes
+  const handlePageChange = (page: number) => {
+    const newFilters = { ...filtersRef.current };
+    if (!newFilters.pagination) {
+      newFilters.pagination = { page: 1, pageSize: 50 };
+    }
+    newFilters.pagination.page = page;
+    filtersRef.current = newFilters;
+    setDisplayFilters(newFilters);
+    fetchData(false);
+  };
+
+  // Handle page size changes
+  const handlePageSizeChange = (pageSize: number) => {
+    const newFilters = { ...filtersRef.current };
+    if (!newFilters.pagination) {
+      newFilters.pagination = { page: 1, pageSize: 50 };
+    }
+    newFilters.pagination.pageSize = pageSize;
+    newFilters.pagination.page = 1; // Reset to first page when changing page size
+    filtersRef.current = newFilters;
+    setDisplayFilters(newFilters);
+    fetchData(false);
   };
 
   // Handle exports
@@ -161,6 +202,29 @@ export default function AnalyticsPage() {
   // Refresh data
   const handleRefresh = () => {
     fetchData(true);
+    toast.success('Analytics data refreshed');
+  };
+
+  // Clear analytics cache
+  const handleClearCache = async () => {
+    try {
+      setIsRefreshing(true);
+      const response = await fetch('/api/analytics/cache', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to clear cache');
+      }
+
+      toast.success('Analytics cache cleared');
+      fetchData(true);
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      toast.error('Failed to clear cache');
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Template for empty data state
@@ -184,7 +248,7 @@ export default function AnalyticsPage() {
           </Card>
         ))}
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -215,44 +279,80 @@ export default function AnalyticsPage() {
             Track your business performance with advanced analytics
           </p>
         </div>
-        <Button 
-          onClick={handleRefresh} 
-          variant="outline" 
-          disabled={isLoading || isRefreshing}
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
-        </Button>
+        <div className="flex space-x-2">
+          <Button
+            onClick={handleClearCache}
+            variant="outline"
+            disabled={isLoading || isRefreshing}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Clear Cache
+          </Button>
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            disabled={isLoading || isRefreshing}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Loading indicator */}
+      <LoadingIndicator
+        isLoading={isLoading || isRefreshing}
+        message={isRefreshing ? 'Refreshing data...' : 'Loading analytics data...'}
+        className="my-2"
+      />
+
+      {/* Header with Notifications */}
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+        <div className="flex items-center space-x-2">
+          <NotificationsPopover />
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
+            disabled={isLoading || isRefreshing}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh Data
+          </Button>
+        </div>
       </div>
 
       {/* Filters Row */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 mb-4">
-        <AnalyticsFilters 
+        <AnalyticsFilters
           onFilterChange={handleFilterChange}
           onExport={handleExport}
           isLoading={isLoading || isRefreshing}
           data={aggregatedData}
           initialFilters={displayFilters}
         />
-        <Button 
-          onClick={() => applyFilters(filtersRef.current)} 
-          variant="default" 
-          size="sm" 
+        <Button
+          onClick={() => applyFilters(filtersRef.current)}
+          variant="default"
+          size="sm"
           disabled={isLoading || isRefreshing}
         >
           Apply Filters
         </Button>
       </div>
-      
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
           <TabsTrigger value="sales">Sales</TabsTrigger>
           <TabsTrigger value="finance">Finance</TabsTrigger>
+          <TabsTrigger value="crossModuleAnalysis">Cross-Module</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="ai">AI Assistant</TabsTrigger>
         </TabsList>
-        
+
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           {isLoading ? (
@@ -341,7 +441,7 @@ export default function AnalyticsPage() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {aggregatedData?.finance?.metrics?.netProfit >= 0 ? '+' : ''}
-                      {aggregatedData?.finance?.metrics?.netProfit / 
+                      {aggregatedData?.finance?.metrics?.netProfit /
                         (aggregatedData?.finance?.metrics?.totalIncome || 1) * 100}% margin
                     </p>
                   </CardContent>
@@ -383,15 +483,15 @@ export default function AnalyticsPage() {
               {/* to what's already in the existing analytics page */}
 
               {/* Realtime Dashboard Integration */}
-              <RealtimeDashboard 
-                data={aggregatedData} 
-                isLoading={isLoading || isRefreshing} 
-                onRefresh={handleRefresh} 
+              <RealtimeDashboard
+                data={aggregatedData}
+                isLoading={isLoading || isRefreshing}
+                onRefresh={handleRefresh}
               />
             </>
           )}
         </TabsContent>
-        
+
         {/* Inventory Tab */}
         <TabsContent value="inventory" className="space-y-4">
           {isLoading ? (
@@ -399,13 +499,15 @@ export default function AnalyticsPage() {
           ) : !hasData || !aggregatedData?.inventory?.items?.length ? (
             <EmptyState />
           ) : (
-            <div className="space-y-4">
-              {/* Inventory analytics here - similar to current analytics page */}
-              {/* For brevity, not including all components */}
-            </div>
+            <InventoryAnalytics
+              data={aggregatedData.inventory}
+              isLoading={isLoading || isRefreshing}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           )}
         </TabsContent>
-        
+
         {/* Sales Tab */}
         <TabsContent value="sales" className="space-y-4">
           {isLoading ? (
@@ -413,13 +515,15 @@ export default function AnalyticsPage() {
           ) : !hasData || !aggregatedData?.sales?.transactions?.length ? (
             <EmptyState />
           ) : (
-            <div className="space-y-4">
-              {/* Sales analytics here - similar to current analytics page */}
-              {/* For brevity, not including all components */}
-            </div>
+            <SalesAnalytics
+              data={aggregatedData.sales}
+              isLoading={isLoading || isRefreshing}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           )}
         </TabsContent>
-        
+
         {/* Finance Tab */}
         <TabsContent value="finance" className="space-y-4">
           {isLoading ? (
@@ -427,18 +531,48 @@ export default function AnalyticsPage() {
           ) : !hasData || !aggregatedData?.finance?.transactions?.length ? (
             <EmptyState />
           ) : (
-            <div className="space-y-4">
-              {/* Finance analytics here - similar to current analytics page */}
-              {/* For brevity, not including all components */}
-            </div>
+            <FinanceAnalytics
+              data={aggregatedData.finance}
+              isLoading={isLoading || isRefreshing}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           )}
         </TabsContent>
-        
+
+        {/* Cross-Module Analysis Tab */}
+        <TabsContent value="crossModuleAnalysis" className="space-y-4">
+          {isLoading ? (
+            <LoadingSkeleton />
+          ) : !hasData ? (
+            <EmptyState />
+          ) : (
+            <CrossModuleAnalytics
+              data={aggregatedData}
+              isLoading={isLoading || isRefreshing}
+            />
+          )}
+        </TabsContent>
+
+        {/* Reports Tab */}
+        <TabsContent value="reports" className="space-y-4">
+          {isLoading ? (
+            <LoadingSkeleton />
+          ) : !hasData ? (
+            <EmptyState />
+          ) : (
+            <Reporting
+              aggregatedData={aggregatedData}
+              isLoading={isLoading || isRefreshing}
+            />
+          )}
+        </TabsContent>
+
         {/* AI Assistant Tab */}
         <TabsContent value="ai" className="space-y-4">
-          <AIAssistant 
-            aggregatedData={aggregatedData} 
-            isLoading={isLoading || isRefreshing} 
+          <AIAssistant
+            aggregatedData={aggregatedData}
+            isLoading={isLoading || isRefreshing}
           />
         </TabsContent>
       </Tabs>

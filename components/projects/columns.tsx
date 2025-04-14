@@ -11,22 +11,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  AlertCircle, 
-  ArrowUpDown, 
-  Calendar, 
-  CheckCircle2, 
-  Clock, 
-  Copy, 
-  Edit, 
-  Eye, 
-  FileText, 
-  MoreHorizontal, 
-  PauseCircle, 
-  PlayCircle, 
-  Trash2, 
-  Users, 
-  XCircle 
+import {
+  AlertCircle,
+  ArrowUpDown,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Copy,
+  Edit,
+  Eye,
+  FileText,
+  MoreHorizontal,
+  PauseCircle,
+  PlayCircle,
+  Trash2,
+  Users,
+  XCircle
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -114,10 +114,10 @@ export type Project = {
 };
 
 // Component for the project details dialog
-const ProjectDetailsDialog = ({ project, isOpen, onClose }: { 
-  project: Project; 
-  isOpen: boolean; 
-  onClose: () => void 
+const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
+  project: Project;
+  isOpen: boolean;
+  onClose: () => void
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -127,10 +127,10 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
             {project.name}
             <Badge
               variant={
-                project.status === 'completed' 
-                  ? 'default' 
-                  : project.status === 'in_progress' 
-                  ? 'secondary' 
+                project.status === 'completed'
+                  ? 'default'
+                  : project.status === 'in_progress'
+                  ? 'secondary'
                   : project.status === 'on_hold'
                   ? 'outline'
                   : project.status === 'cancelled'
@@ -146,7 +146,7 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
             {project.type.charAt(0).toUpperCase() + project.type.slice(1)} Project
           </DialogDescription>
         </DialogHeader>
-        
+
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -154,38 +154,38 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
             <TabsTrigger value="milestones">Milestones ({project.milestones.length})</TabsTrigger>
             <TabsTrigger value="team">Team ({project.teamMembers.length + 1})</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="overview" className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Start Date</p>
                 <p>{formatDate(project.startDate)}</p>
               </div>
-              
+
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">End Date</p>
                 <p>{formatDate(project.endDate)}</p>
               </div>
-              
+
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Budget</p>
                 <p>{formatCurrency(project.budget)}</p>
               </div>
-              
+
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Expenses</p>
                 <p>{formatCurrency(project.expenses)}</p>
               </div>
-              
+
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Priority</p>
                 <p>
                   <Badge
                     variant={
-                      project.priority === 'high' 
-                        ? 'destructive' 
-                        : project.priority === 'medium' 
-                        ? 'secondary' 
+                      project.priority === 'high'
+                        ? 'destructive'
+                        : project.priority === 'medium'
+                        ? 'secondary'
                         : 'outline'
                     }
                   >
@@ -193,7 +193,7 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
                   </Badge>
                 </p>
               </div>
-              
+
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Completion</p>
                 <div className="flex items-center gap-2">
@@ -202,7 +202,7 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
                 </div>
               </div>
             </div>
-            
+
             {project.client && (
               <div className="pt-2">
                 <p className="text-sm font-medium text-muted-foreground mb-2">Client</p>
@@ -220,14 +220,14 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
                 </div>
               </div>
             )}
-            
+
             <div className="pt-2">
               <p className="text-sm font-medium text-muted-foreground mb-2">Description</p>
               <div className="p-3 border rounded-md">
                 <p className="text-sm whitespace-pre-line">{project.description || 'No description available'}</p>
               </div>
             </div>
-            
+
             {project.notes && (
               <div className="pt-2">
                 <p className="text-sm font-medium text-muted-foreground mb-2">Notes</p>
@@ -236,7 +236,7 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
                 </div>
               </div>
             )}
-            
+
             {project.tags.length > 0 && (
               <div className="pt-2">
                 <p className="text-sm font-medium text-muted-foreground mb-2">Tags</p>
@@ -248,7 +248,7 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="tasks" className="space-y-4">
             {project.tasks.length > 0 ? (
               <div className="space-y-3">
@@ -261,10 +261,10 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
                             {task.name}
                             <Badge
                               variant={
-                                task.status === 'completed' 
-                                  ? 'default' 
-                                  : task.status === 'in_progress' 
-                                  ? 'secondary' 
+                                task.status === 'completed'
+                                  ? 'default'
+                                  : task.status === 'in_progress'
+                                  ? 'secondary'
                                   : task.status === 'blocked'
                                   ? 'destructive'
                                   : 'outline'
@@ -280,10 +280,10 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
                         </div>
                         <Badge
                           variant={
-                            task.priority === 'urgent' 
-                              ? 'destructive' 
-                              : task.priority === 'high' 
-                              ? 'secondary' 
+                            task.priority === 'urgent'
+                              ? 'destructive'
+                              : task.priority === 'high'
+                              ? 'secondary'
                               : task.priority === 'medium'
                               ? 'outline'
                               : 'outline'
@@ -320,7 +320,7 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="milestones" className="space-y-4">
             {project.milestones.length > 0 ? (
               <div className="space-y-3">
@@ -332,10 +332,10 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
                           {milestone.name}
                           <Badge
                             variant={
-                              milestone.status === 'completed' 
-                                ? 'default' 
-                                : milestone.status === 'missed' 
-                                ? 'destructive' 
+                              milestone.status === 'completed'
+                                ? 'default'
+                                : milestone.status === 'missed'
+                                ? 'destructive'
                                 : 'outline'
                             }
                             className="ml-2"
@@ -369,7 +369,7 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="team" className="space-y-4">
             <div className="space-y-3">
               <Card>
@@ -391,7 +391,7 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {project.teamMembers.length > 0 ? (
                 <Card>
                   <CardHeader className="p-4 pb-2">
@@ -424,7 +424,7 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
             </div>
           </TabsContent>
         </Tabs>
-        
+
         <div className="flex justify-end mt-4">
           <Button variant="outline" onClick={onClose}>Close</Button>
         </div>
@@ -434,14 +434,14 @@ const ProjectDetailsDialog = ({ project, isOpen, onClose }: {
 };
 
 // Component for the delete confirmation dialog
-const DeleteConfirmationDialog = ({ 
-  project, 
-  isOpen, 
-  onClose, 
-  onDelete 
-}: { 
-  project: Project; 
-  isOpen: boolean; 
+const DeleteConfirmationDialog = ({
+  project,
+  isOpen,
+  onClose,
+  onDelete
+}: {
+  project: Project;
+  isOpen: boolean;
   onClose: () => void;
   onDelete: () => void;
 }) => {
@@ -470,7 +470,7 @@ const DeleteConfirmationDialog = ({
 const NameCell = ({ row }: { row: any }) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const project = row.original;
-  
+
   return (
     <>
       <div className="flex items-center gap-2">
@@ -478,8 +478,8 @@ const NameCell = ({ row }: { row: any }) => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button 
-                variant="link" 
+              <Button
+                variant="link"
                 className="p-0 h-auto font-medium"
                 onClick={() => setIsDetailsOpen(true)}
               >
@@ -492,11 +492,11 @@ const NameCell = ({ row }: { row: any }) => {
           </Tooltip>
         </TooltipProvider>
       </div>
-      
-      <ProjectDetailsDialog 
-        project={project} 
-        isOpen={isDetailsOpen} 
-        onClose={() => setIsDetailsOpen(false)} 
+
+      <ProjectDetailsDialog
+        project={project}
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
       />
     </>
   );
@@ -505,10 +505,10 @@ const NameCell = ({ row }: { row: any }) => {
 // Status cell component with appropriate icons
 const StatusCell = ({ row }: { row: any }) => {
   const status = row.getValue('status') as string;
-  
+
   let icon = null;
   let variant: 'default' | 'destructive' | 'outline' | 'secondary' = 'default';
-  
+
   switch (status) {
     case 'planning':
       icon = <Clock className="h-3 w-3 mr-1" />;
@@ -533,7 +533,7 @@ const StatusCell = ({ row }: { row: any }) => {
     default:
       variant = 'outline';
   }
-  
+
   return (
     <Badge variant={variant} className="flex items-center">
       {icon}
@@ -545,9 +545,9 @@ const StatusCell = ({ row }: { row: any }) => {
 // Priority cell component
 const PriorityCell = ({ row }: { row: any }) => {
   const priority = row.getValue('priority') as string;
-  
+
   let variant: 'default' | 'destructive' | 'outline' | 'secondary' = 'outline';
-  
+
   switch (priority) {
     case 'high':
       variant = 'destructive';
@@ -561,7 +561,7 @@ const PriorityCell = ({ row }: { row: any }) => {
     default:
       variant = 'outline';
   }
-  
+
   return (
     <Badge variant={variant}>
       {priority}
@@ -572,7 +572,7 @@ const PriorityCell = ({ row }: { row: any }) => {
 // Progress cell component
 const ProgressCell = ({ row }: { row: any }) => {
   const completion = parseInt(row.getValue('completionPercentage'));
-  
+
   return (
     <div className="flex items-center gap-2">
       <Progress value={completion} className="h-2 w-[60px]" />
@@ -613,6 +613,30 @@ export const columns: ColumnDef<Project>[] = [
       );
     },
     cell: StatusCell,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: 'type',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="p-0 font-medium"
+        >
+          Type
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const type = row.getValue('type') as string;
+      return (
+        <div className="capitalize">{type}</div>
+      );
+    },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -669,7 +693,7 @@ export const columns: ColumnDef<Project>[] = [
     cell: ({ row }) => {
       const manager = row.original.projectManager;
       return (
-        <div className="flex items-center gap-2 hidden md:flex">
+        <div className="items-center gap-2 hidden md:flex">
           <Avatar className="h-6 w-6">
             <AvatarFallback className="text-xs">{manager.name.charAt(0)}</AvatarFallback>
           </Avatar>
@@ -696,7 +720,7 @@ export const columns: ColumnDef<Project>[] = [
       const date = new Date(row.getValue('endDate'));
       const now = new Date();
       const isPastDue = date < now && row.getValue('status') !== 'completed';
-      
+
       return (
         <div className={`items-center ${isPastDue ? 'text-red-500' : ''} hidden md:flex`}>
           {isPastDue && <AlertCircle className="h-3 w-3 mr-1" />}
@@ -713,7 +737,7 @@ export const columns: ColumnDef<Project>[] = [
       const [isDeleteOpen, setIsDeleteOpen] = useState(false);
       const project = row.original;
       const router = useRouter();
-      
+
       const copyToClipboard = () => {
         const text = `${project.name} - ${project.type} - Due: ${formatDate(project.endDate)} - Manager: ${project.projectManager.name}`;
         navigator.clipboard.writeText(text);
@@ -723,30 +747,30 @@ export const columns: ColumnDef<Project>[] = [
           duration: 2000,
         });
       };
-      
+
       const handleDelete = async () => {
         try {
           const response = await fetch(`/api/projects?id=${project.id}`, {
             method: 'DELETE',
           });
-          
+
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Failed to delete project');
           }
-          
+
           toast({
             title: 'Success',
             description: 'Project deleted successfully',
           });
-          
+
           // Remove the item from the table
           const data = table.options.data as Project[];
           const updatedData = data.filter(d => d.id !== project.id);
-          
+
           // @ts-ignore - We know this exists but TypeScript doesn't
           table.options.meta?.updateData(updatedData);
-          
+
         } catch (error) {
           console.error('Error deleting project:', error);
           toast({
@@ -755,10 +779,10 @@ export const columns: ColumnDef<Project>[] = [
             variant: 'destructive',
           });
         }
-        
+
         setIsDeleteOpen(false);
       };
-      
+
       return (
         <>
           <div className="flex justify-end">
@@ -771,7 +795,7 @@ export const columns: ColumnDef<Project>[] = [
               <span className="sr-only">Open menu</span>
               <Eye className="h-4 w-4" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -781,7 +805,7 @@ export const columns: ColumnDef<Project>[] = [
               <span className="sr-only">Edit</span>
               <Edit className="h-4 w-4" />
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -811,14 +835,14 @@ export const columns: ColumnDef<Project>[] = [
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          
+
           {/* View Details Dialog */}
-          <ProjectDetailsDialog 
-            project={project} 
-            isOpen={isDetailsOpen} 
-            onClose={() => setIsDetailsOpen(false)} 
+          <ProjectDetailsDialog
+            project={project}
+            isOpen={isDetailsOpen}
+            onClose={() => setIsDetailsOpen(false)}
           />
-          
+
           {/* Delete Confirmation Dialog */}
           <DeleteConfirmationDialog
             project={project}

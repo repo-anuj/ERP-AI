@@ -37,7 +37,7 @@ export async function decrypt(token: string): Promise<any> {
 export async function verifyAuth(tokenOrCookies: string | ReadonlyRequestCookies) {
     try {
         let token: string;
-        
+
         // Check if we received cookies object or token string
         if (typeof tokenOrCookies === 'string') {
             token = tokenOrCookies;
@@ -47,7 +47,7 @@ export async function verifyAuth(tokenOrCookies: string | ReadonlyRequestCookies
             if (!cookieToken) return null;
             token = cookieToken;
         }
-        
+
         return await decrypt(token);
     } catch (error) {
         console.error('Failed to verify token:', error);
@@ -70,7 +70,7 @@ export function removeAuthCookie() {
 }
 
 export async function getUserCompanyId() {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const token = cookieStore.get('token')?.value
 
     if (!token) {
@@ -79,7 +79,7 @@ export async function getUserCompanyId() {
 
     try {
         const payload = await verifyAuth(token)
-        
+
         if (!payload || !payload.email || typeof payload.email !== 'string') {
             return null
         }
@@ -98,4 +98,4 @@ export async function getUserCompanyId() {
         console.error('Error getting user company ID:', error)
         return null
     }
-} 
+}

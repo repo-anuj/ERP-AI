@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Moon, Sun } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { UserButton } from "@/components/user-button"
+import { NotificationDropdown } from "./notification-dropdown"
 
 export function Header() {
   const { setTheme } = useTheme()
@@ -27,9 +28,7 @@ export function Header() {
             {/* Add navigation items here */}
           </nav>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
+            <NotificationDropdown />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">

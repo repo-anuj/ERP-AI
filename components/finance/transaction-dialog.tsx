@@ -65,17 +65,21 @@ type TransactionFormValues = z.infer<typeof transactionSchema>;
 // Default categories
 const defaultCategories = {
   expense: [
-    { id: "utilities", name: "Utilities" },
-    { id: "rent", name: "Rent" },
-    { id: "salary", name: "Salary" },
-    { id: "supplies", name: "Supplies" },
-    { id: "software", name: "Software" },
+    { id: "utilities", name: "Utilities", color: "#06B6D4", icon: "🔌" },
+    { id: "rent", name: "Rent", color: "#8B5CF6", icon: "🏠" },
+    { id: "salary", name: "Salary", color: "#10B981", icon: "💼" },
+    { id: "supplies", name: "Supplies", color: "#F59E0B", icon: "🛒" },
+    { id: "software", name: "Software", color: "#3B82F6", icon: "💻" },
+    { id: "food", name: "Food & Dining", color: "#EF4444", icon: "🍔" },
+    { id: "transportation", name: "Transportation", color: "#F97316", icon: "🚗" },
+    { id: "healthcare", name: "Healthcare", color: "#EC4899", icon: "🏥" },
   ],
   income: [
-    { id: "sales", name: "Sales" },
-    { id: "consulting", name: "Consulting" },
-    { id: "investment", name: "Investment" },
-    { id: "other", name: "Other" },
+    { id: "sales", name: "Sales", color: "#10B981", icon: "💰" },
+    { id: "consulting", name: "Consulting", color: "#3B82F6", icon: "💼" },
+    { id: "investment", name: "Investment", color: "#8B5CF6", icon: "📈" },
+    { id: "salary", name: "Salary", color: "#10B981", icon: "💸" },
+    { id: "other", name: "Other", color: "#6B7280", icon: "" },
   ],
 };
 
@@ -179,21 +183,21 @@ export function TransactionDialog({
   // Handle form submission
   const onSubmit = async (values: TransactionFormValues) => {
     setIsSubmitting(true);
-    
+
     try {
       // Format the date
       const formattedValues = {
         ...values,
         date: format(values.date, 'yyyy-MM-dd'),
       };
-      
+
       // Set the endpoint based on whether we're editing or creating
-      const url = transaction?.id 
-        ? `/api/finance/transactions?id=${transaction.id}` 
+      const url = transaction?.id
+        ? `/api/finance/transactions?id=${transaction.id}`
         : '/api/finance/transactions';
-      
+
       const method = transaction?.id ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -201,12 +205,12 @@ export function TransactionDialog({
         },
         body: JSON.stringify(formattedValues),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to save transaction');
       }
-      
+
       onSuccess();
     } catch (error: any) {
       console.error("Error saving transaction:", error);
@@ -219,8 +223,46 @@ export function TransactionDialog({
   // Handle creating a new category
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
-    
+
     try {
+      // Generate a random color from our predefined palette
+      const predefinedColors = [
+        '#EF4444', // Red
+        '#F97316', // Orange
+        '#F59E0B', // Amber
+        '#10B981', // Emerald
+        '#06B6D4', // Cyan
+        '#3B82F6', // Blue
+        '#8B5CF6', // Violet
+        '#EC4899', // Pink
+        '#6B7280', // Gray
+      ];
+
+      const randomColor = predefinedColors[Math.floor(Math.random() * predefinedColors.length)];
+
+      // Find a suitable icon based on the category name
+      let icon = '';
+      const categoryNameLower = newCategoryName.toLowerCase();
+
+      // Simple keyword matching for common categories
+      if (categoryNameLower.includes('food') || categoryNameLower.includes('dining') || categoryNameLower.includes('restaurant')) {
+        icon = '🍔';
+      } else if (categoryNameLower.includes('home') || categoryNameLower.includes('rent') || categoryNameLower.includes('mortgage')) {
+        icon = '🏠';
+      } else if (categoryNameLower.includes('car') || categoryNameLower.includes('transport') || categoryNameLower.includes('gas')) {
+        icon = '🚗';
+      } else if (categoryNameLower.includes('health') || categoryNameLower.includes('medical') || categoryNameLower.includes('doctor')) {
+        icon = '🏥';
+      } else if (categoryNameLower.includes('salary') || categoryNameLower.includes('income') || categoryNameLower.includes('wage')) {
+        icon = '💸';
+      } else if (categoryNameLower.includes('invest') || categoryNameLower.includes('stock') || categoryNameLower.includes('dividend')) {
+        icon = '📈';
+      } else if (categoryNameLower.includes('bill') || categoryNameLower.includes('utility') || categoryNameLower.includes('electric')) {
+        icon = '🧾';
+      } else if (categoryNameLower.includes('shop') || categoryNameLower.includes('store') || categoryNameLower.includes('purchase')) {
+        icon = '🛒';
+      }
+
       const response = await fetch('/api/finance/categories', {
         method: 'POST',
         headers: {
@@ -229,27 +271,28 @@ export function TransactionDialog({
         body: JSON.stringify({
           name: newCategoryName,
           type: transactionType,
-          color: '#' + Math.floor(Math.random()*16777215).toString(16), // Random color
+          color: randomColor,
+          icon: icon,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to create category');
       }
-      
+
       const newCategory = await response.json();
-      
+
       // Add the new category to the list
       setCategories([...categories, newCategory]);
-      
+
       // Set the form value
       form.setValue('category', newCategory.name);
       form.setValue('categoryId', newCategory.id);
-      
+
       // Reset new category UI
       setNewCategoryName("");
       setShowNewCategory(false);
-      
+
       toast.success('Category created successfully');
     } catch (error) {
       console.error("Error creating category:", error);
@@ -426,7 +469,19 @@ export function TransactionDialog({
                                   key={category.id || category.name}
                                   value={category.name || `category-${category.id}`}
                                 >
-                                  {category.name || `Category ${category.id}`}
+                                  <div className="flex items-center gap-2">
+                                    {category.icon ? (
+                                      <span className="text-lg">{category.icon}</span>
+                                    ) : category.color ? (
+                                      <div
+                                        className="w-4 h-4 rounded-full"
+                                        style={{ backgroundColor: category.color }}
+                                      />
+                                    ) : (
+                                      <div className="w-4 h-4 rounded-full bg-gray-400" />
+                                    )}
+                                    {category.name || `Category ${category.id}`}
+                                  </div>
                                 </SelectItem>
                               ))}
                             </div>
@@ -594,4 +649,4 @@ export function TransactionDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

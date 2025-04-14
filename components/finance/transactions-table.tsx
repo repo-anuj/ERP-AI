@@ -42,6 +42,8 @@ interface Transaction {
   amount: number;
   type: 'income' | 'expense';
   category: string;
+  categoryColor?: string;
+  categoryIcon?: string;
   account: string;
   reference?: string;
   status: string;
@@ -80,11 +82,11 @@ export function TransactionsTable({
         </TableHeader>
         <TableBody>
           {transactions.map((transaction) => (
-            <TableRow 
-              key={transaction.id} 
-              className={transaction.sourceType 
-                ? transaction.sourceType === 'sales' 
-                  ? "bg-blue-50 hover:bg-blue-100" 
+            <TableRow
+              key={transaction.id}
+              className={transaction.sourceType
+                ? transaction.sourceType === 'sales'
+                  ? "bg-blue-50 hover:bg-blue-100"
                   : "bg-amber-50 hover:bg-amber-100"
                 : undefined
               }
@@ -108,7 +110,19 @@ export function TransactionsTable({
                   </div>
                 )}
               </TableCell>
-              <TableCell>{transaction.category}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {transaction.categoryIcon ? (
+                    <span className="text-lg">{transaction.categoryIcon}</span>
+                  ) : transaction.categoryColor ? (
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: transaction.categoryColor }}
+                    />
+                  ) : null}
+                  {transaction.category}
+                </div>
+              </TableCell>
               <TableCell>{transaction.account}</TableCell>
               <TableCell className={transaction.type === 'income' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
                 {transaction.type === 'income' ? '+' : '-'}
@@ -141,7 +155,7 @@ export function TransactionsTable({
                           Duplicate
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => onDelete(transaction.id)}
                           className="text-red-600"
                         >
@@ -151,7 +165,7 @@ export function TransactionsTable({
                       </>
                     ) : (
                       <>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => onViewOriginal && onViewOriginal(transaction)}
                         >
                           <Eye className="mr-2 h-4 w-4" />
@@ -174,4 +188,4 @@ export function TransactionsTable({
       </Table>
     </div>
   );
-} 
+}

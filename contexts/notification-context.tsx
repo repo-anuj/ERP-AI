@@ -6,20 +6,32 @@ interface Notification {
   id: string
   title: string
   message: string
+  type: string
   read: boolean
+  entityId?: string
+  entityType?: string
+  actionType?: string
+  actorName?: string
+  metadata?: any
+  link?: string
   createdAt: Date
+  updatedAt: Date
 }
 
 interface NotificationContextType {
   notifications: Notification[]
   loading: boolean
   markAsRead: (id: string) => Promise<void>
+  refreshNotifications: () => Promise<void>
+  unreadCount: number
 }
 
 const NotificationContext = createContext<NotificationContextType>({
   notifications: [],
   loading: false,
   markAsRead: async () => {},
+  refreshNotifications: async () => {},
+  unreadCount: 0,
 })
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
@@ -70,12 +82,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }
 
+  // Calculate unread count
+  const unreadCount = notifications.filter(notification => !notification.read).length;
+
+  // Parse metadata if it exists
+  const processedNotifications = notifications.map(notification => {
+    if (notification.metadata && typeof notification.metadata === 'string') {
+      try {
+        return {
+          ...notification,
+          metadata: JSON.parse(notification.metadata)
+        };
+      } catch (e) {
+        return notification;
+      }
+    }
+    return notification;
+  });
+
   return (
     <NotificationContext.Provider
       value={{
-        notifications,
+        notifications: processedNotifications,
         loading,
         markAsRead,
+        refreshNotifications: fetchNotifications,
+        unreadCount,
       }}
     >
       {children}

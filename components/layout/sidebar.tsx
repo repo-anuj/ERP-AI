@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils';
 import {
   BarChart3,
   Box,
-  Building2,
+  ChevronDown,
+  ChevronRight,
   CircleDollarSign,
   ClipboardList,
   LayoutDashboard,
@@ -16,10 +17,17 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
-const routes = [
+interface RouteItem {
+  label: string;
+  icon?: any;
+  href: string;
+  submenu?: { label: string; href: string }[];
+}
+
+const routes: RouteItem[] = [
   {
     label: 'Dashboard',
     icon: LayoutDashboard,
@@ -49,6 +57,36 @@ const routes = [
     label: 'Finance',
     icon: DollarSign,
     href: '/dashboard/finance',
+    submenu: [
+      {
+        label: 'Overview',
+        href: '/dashboard/finance',
+      },
+      {
+        label: 'Transactions',
+        href: '/dashboard/finance/transactions',
+      },
+      {
+        label: 'Accounts',
+        href: '/dashboard/finance/accounts',
+      },
+      {
+        label: 'Recurring',
+        href: '/dashboard/finance/recurring',
+      },
+      {
+        label: 'Categories',
+        href: '/dashboard/finance/categories',
+      },
+      {
+        label: 'Reports',
+        href: '/dashboard/finance/reports',
+      },
+      {
+        label: 'Budgets',
+        href: '/dashboard/finance/budgets',
+      },
+    ],
   },
   {
     label: 'Analytics',
@@ -66,6 +104,30 @@ export function Sidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+
+  // Expand the menu of the active route on initial load
+  useEffect(() => {
+    const expandedState: Record<string, boolean> = {};
+
+    routes.forEach(route => {
+      if (route.submenu) {
+        const isActive = route.submenu.some(item => pathname === item.href);
+        if (isActive) {
+          expandedState[route.label] = true;
+        }
+      }
+    });
+
+    setExpandedMenus(expandedState);
+  }, [pathname]);
+
+  const toggleSubmenu = (label: string) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [label]: !prev[label]
+    }));
+  };
 
   return (
     <>
@@ -114,19 +176,63 @@ export function Sidebar() {
         <div className="flex-1 px-3 py-4 overflow-y-auto">
           <div className="space-y-1">
             {routes.map((route) => (
-              <Link
-                key={route.href}
-                href={route.href}
-                onClick={() => setIsMobileOpen(false)}
-                className={cn(
-                  'flex items-center p-3 text-sm font-medium rounded-lg transition-colors hover:text-primary hover:bg-primary/10',
-                  pathname === route.href ? 'text-primary bg-primary/10' : 'text-muted-foreground',
-                  isCollapsed && 'justify-center'
+              <div key={route.href}>
+                {route.submenu ? (
+                  <>
+                    <button
+                      onClick={() => toggleSubmenu(route.label)}
+                      className={cn(
+                        'w-full flex items-center p-3 text-sm font-medium rounded-lg transition-colors hover:text-primary hover:bg-primary/10',
+                        route.submenu.some(item => pathname === item.href) ? 'text-primary bg-primary/10' : 'text-muted-foreground',
+                        isCollapsed && 'justify-center'
+                      )}
+                    >
+                      <route.icon className={cn('h-5 w-5', isCollapsed ? 'mr-0' : 'mr-3')} />
+                      {!isCollapsed && (
+                        <>
+                          <span className="flex-1 text-left">{route.label}</span>
+                          {expandedMenus[route.label] ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </>
+                      )}
+                    </button>
+
+                    {!isCollapsed && expandedMenus[route.label] && (
+                      <div className="ml-6 mt-1 space-y-1">
+                        {route.submenu.map((subItem) => (
+                          <Link
+                            key={subItem.href}
+                            href={subItem.href}
+                            onClick={() => setIsMobileOpen(false)}
+                            className={cn(
+                              'flex items-center p-2 text-sm rounded-md transition-colors hover:text-primary hover:bg-primary/10',
+                              pathname === subItem.href ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+                            )}
+                          >
+                            <span>{subItem.label}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    href={route.href}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={cn(
+                      'flex items-center p-3 text-sm font-medium rounded-lg transition-colors hover:text-primary hover:bg-primary/10',
+                      pathname === route.href ? 'text-primary bg-primary/10' : 'text-muted-foreground',
+                      isCollapsed && 'justify-center'
+                    )}
+                  >
+                    <route.icon className={cn('h-5 w-5', isCollapsed ? 'mr-0' : 'mr-3')} />
+                    {!isCollapsed && <span>{route.label}</span>}
+                  </Link>
                 )}
-              >
-                <route.icon className={cn('h-5 w-5', !isCollapsed && 'mr-3')} />
-                {!isCollapsed && route.label}
-              </Link>
+              </div>
             ))}
           </div>
         </div>
