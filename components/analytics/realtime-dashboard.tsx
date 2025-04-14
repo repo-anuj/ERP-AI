@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  RefreshCw, 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  Package, 
+import {
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Package,
   ShoppingCart,
   Users,
   ClipboardList,
@@ -19,14 +19,14 @@ import {
   CreditCard,
   BarChart4
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -39,6 +39,9 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { websocketService, AnalyticsEventType, ConnectionState } from '@/lib/websocket-service';
+import { alertsService } from '@/lib/alerts-service';
 
 // Define color schemes for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -55,16 +58,79 @@ interface RealtimeDashboardProps {
 
 export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashboardProps) {
   const [lastUpdated, setLastUpdated] = useState<string>(new Date().toISOString());
-  
+  const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     if (data?.timestamp) {
       setLastUpdated(data.timestamp);
     }
   }, [data]);
 
+  // Initialize WebSocket connection and alerts service
+  useEffect(() => {
+    // Initialize alerts service
+    alertsService.init();
+
+    // In a real application, this would connect to a real WebSocket server
+    // For demo purposes, we'll use a mock implementation
+    // const mockWebSocketUrl = 'wss://mock-analytics-websocket.example.com';
+    // websocketService.init(mockWebSocketUrl);
+
+    // Subscribe to connection state changes
+    const handleConnectionStateChange = () => {
+      setConnectionState(websocketService.getConnectionState());
+    };
+
+    // Set up auto-refresh if enabled
+    if (autoRefresh) {
+      intervalRef.current = setInterval(() => {
+        onRefresh();
+
+        // Randomly trigger alerts (for demo purposes)
+        if (Math.random() > 0.8) {
+          const alertTypes = ['info', 'warning', 'error', 'success'];
+          const modules = ['inventory', 'sales', 'finance'];
+
+          const randomAlert = {
+            title: `${modules[Math.floor(Math.random() * modules.length)]} Alert`,
+            message: `This is a random ${alertTypes[Math.floor(Math.random() * alertTypes.length)]} alert for demonstration purposes.`,
+            type: alertTypes[Math.floor(Math.random() * alertTypes.length)] as 'info' | 'warning' | 'error' | 'success',
+            module: modules[Math.floor(Math.random() * modules.length)]
+          };
+
+          alertsService.createAlert(
+            randomAlert.title,
+            randomAlert.message,
+            randomAlert.type as any,
+            randomAlert.module
+          );
+        }
+      }, 10000); // Refresh every 10 seconds
+    }
+
+    return () => {
+      // Clean up interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      // Disconnect WebSocket in a real implementation
+      // websocketService.disconnect();
+    };
+  }, [autoRefresh, onRefresh]);
+
   const handleRefresh = () => {
     onRefresh();
     setLastUpdated(new Date().toISOString());
+    toast.success('Dashboard refreshed');
+  };
+
+  // Toggle auto-refresh
+  const toggleAutoRefresh = () => {
+    setAutoRefresh(!autoRefresh);
+    toast.success(autoRefresh ? 'Auto-refresh disabled' : 'Auto-refresh enabled');
   };
 
   // Format currency values
@@ -75,7 +141,7 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
       minimumFractionDigits: 2
     }).format(value);
   };
-  
+
   // Format date from ISO string
   const formatDate = (isoString: string): string => {
     try {
@@ -120,19 +186,19 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
             Loading...
           </Button>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCardSkeleton />
           <MetricCardSkeleton />
           <MetricCardSkeleton />
           <MetricCardSkeleton />
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <ChartSkeleton />
           <ChartSkeleton />
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <MetricCardSkeleton />
           <MetricCardSkeleton />
@@ -172,39 +238,58 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
   const totalRevenue = sales?.metrics?.totalRevenue || 0;
   const totalExpenses = finance?.metrics?.expenses || 0;
   const netProfit = (finance?.metrics?.income || 0) - totalExpenses;
-  
+
   // Sales time series data
   const salesTimeData = sales?.metrics?.salesTimeSeries || [];
-  
+
   // Financial data
   const financeTimeData = finance?.metrics?.financeTimeSeries || [];
-  
+
   // Top selling products
   const topProducts = crossModuleAnalysis?.productPerformance || [];
-  
+
   // Department distribution
   const departmentData = employees?.metrics?.departmentDistribution || [];
-  
+
   // Project status data
   const projectsByStatus = projects?.metrics?.projectsByStatus || [];
-  
+
   // Top expense categories
   const topExpenseCategories = finance?.metrics?.expensesByCategory || [];
-  
+
   // Top income categories
   const topIncomeCategories = finance?.metrics?.incomeByCategory || [];
-  
+
   // Sales by customer
   const salesByCustomer = sales?.metrics?.salesByCustomer || [];
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Real-time Analytics</h2>
-        <Button onClick={handleRefresh} variant="outline" disabled={isLoading} size="sm">
-          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div>
+          <h2 className="text-3xl font-bold">Real-time Analytics</h2>
+          <p className="text-sm text-muted-foreground">
+            Last updated: {formatDate(lastUpdated)}
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Badge variant={connectionState === ConnectionState.CONNECTED ? 'success' : 'outline'}>
+            {connectionState === ConnectionState.CONNECTED ? 'Connected' :
+             connectionState === ConnectionState.CONNECTING ? 'Connecting...' :
+             connectionState === ConnectionState.ERROR ? 'Connection Error' : 'Disconnected'}
+          </Badge>
+          <Button
+            variant={autoRefresh ? "default" : "outline"}
+            onClick={toggleAutoRefresh}
+            size="sm"
+          >
+            {autoRefresh ? 'Auto-refresh On' : 'Auto-refresh Off'}
+          </Button>
+          <Button onClick={handleRefresh} variant="outline" disabled={isLoading || autoRefresh} size="sm">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Key Metrics Cards */}
@@ -261,8 +346,8 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
-            {netProfit >= 0 ? 
-              <TrendingUp className="h-4 w-4 text-green-500" /> : 
+            {netProfit >= 0 ?
+              <TrendingUp className="h-4 w-4 text-green-500" /> :
               <TrendingDown className="h-4 w-4 text-red-500" />
             }
           </CardHeader>
@@ -300,8 +385,8 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
+                  <XAxis
+                    dataKey="date"
                     tickFormatter={(value) => {
                       try {
                         return format(new Date(value), 'MMM d');
@@ -311,7 +396,7 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
                     }}
                   />
                   <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value) => formatCurrency(Number(value))}
                     labelFormatter={(value) => {
                       try {
@@ -356,8 +441,8 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
+                  <XAxis
+                    dataKey="date"
                     tickFormatter={(value) => {
                       try {
                         return format(new Date(value), 'MMM d');
@@ -367,7 +452,7 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
                     }}
                   />
                   <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value) => formatCurrency(Number(value))}
                     labelFormatter={(value) => {
                       try {
@@ -531,9 +616,9 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
                     <span className="text-sm font-medium">{category.name}</span>
                     <span className="text-sm">{formatCurrency(category.amount)}</span>
                   </div>
-                  <Progress 
-                    value={topExpenseCategories[0]?.amount ? (category.amount / topExpenseCategories[0].amount * 100) : 0} 
-                    className="h-2" 
+                  <Progress
+                    value={topExpenseCategories[0]?.amount ? (category.amount / topExpenseCategories[0].amount * 100) : 0}
+                    className="h-2"
                   />
                 </div>
               ))}
@@ -557,8 +642,8 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
                     <span className="text-sm font-medium">{category.name}</span>
                     <span className="text-sm">{formatCurrency(category.amount)}</span>
                   </div>
-                  <Progress 
-                    value={topIncomeCategories[0]?.amount ? (category.amount / topIncomeCategories[0].amount * 100) : 0} 
+                  <Progress
+                    value={topIncomeCategories[0]?.amount ? (category.amount / topIncomeCategories[0].amount * 100) : 0}
                     className="h-2 bg-gray-100 dark:bg-gray-800"
                   >
                     <div className="h-full bg-green-500 rounded-full" style={{ width: `${topIncomeCategories[0]?.amount ? (category.amount / topIncomeCategories[0].amount * 100) : 0}%` }} />
