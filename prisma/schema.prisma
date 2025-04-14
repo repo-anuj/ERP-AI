@@ -35,6 +35,7 @@ model Company {
   email             String?
   website           String?
   logo              String?
+  defaultCurrency   String              @default("USD")
   users             User[]
   inventory         InventoryItem[]
   employees         Employee[]
@@ -44,35 +45,49 @@ model Company {
   transactions      Transaction[]
   budgetCategories  BudgetCategory[]
   financialAccounts FinancialAccount[]
+  recurringSchedules RecurringSchedule[]
+  budgets           Budget[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
 
 model Notification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  message   String
-  type      String
-  read      Boolean  @default(false)
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @db.ObjectId
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  message     String
+  type        String   // budget-alert, budget-created, sale-created, transaction-created, etc.
+  read        Boolean  @default(false)
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @db.ObjectId
+  entityId    String?  @db.ObjectId // ID of the related entity (budget, sale, etc.)
+  entityType  String?  // Type of the related entity (budget, sale, transaction, etc.)
+  actionType  String?  // created, updated, deleted, etc.
+  actorName   String?  // Name of the user who performed the action
+  metadata    String?  // Additional JSON data
+  link        String?  // Link to the related entity
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([read])
+  @@index([entityType, entityId])
 }
 
 model InventoryItem {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  sku         String
-  category    String
-  quantity    Int
-  price       Float
-  status      String
-  description String?
-  company     Company  @relation(fields: [companyId], references: [id])
-  companyId   String   @db.ObjectId
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  sku          String
+  category     String
+  quantity     Int
+  price        Float
+  status       String
+  description  String?
+  reorderPoint Int          @default(10)
+  company      Company      @relation(fields: [companyId], references: [id])
+  companyId    String       @db.ObjectId
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   @@index([companyId])
 }
@@ -236,34 +251,64 @@ model SaleItem {
 }
 
 model Transaction {
-  id          String            @id @default(auto()) @map("_id") @db.ObjectId
-  date        DateTime
-  description String
-  amount      Float
-  type        String // income, expense
-  category    BudgetCategory?   @relation(fields: [categoryId], references: [id])
-  categoryId  String?           @db.ObjectId
-  account     FinancialAccount? @relation(fields: [accountId], references: [id])
-  accountId   String?           @db.ObjectId
-  reference   String? // invoice number, receipt number
-  notes       String?
-  recurring   Boolean           @default(false)
-  status      String            @default("completed") // pending, completed, cancelled
-  relatedTo   String? // project id, customer id, invoice id
-  attachments String[]
-  tags        String[]
-  company     Company           @relation(fields: [companyId], references: [id])
-  companyId   String            @db.ObjectId
-  user        User?             @relation(fields: [userId], references: [id])
-  userId      String?           @db.ObjectId
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  date               DateTime
+  description        String
+  amount             Float
+  type               String              // income, expense
+  category           BudgetCategory?     @relation(fields: [categoryId], references: [id])
+  categoryId         String?             @db.ObjectId
+  account            FinancialAccount?   @relation(fields: [accountId], references: [id])
+  accountId          String?             @db.ObjectId
+  reference          String?             // invoice number, receipt number
+  notes              String?
+  recurring          Boolean             @default(false)
+  recurringScheduleId String?            @db.ObjectId
+  status             String              @default("completed") // pending, completed, cancelled
+  relatedTo          String?             // project id, customer id, invoice id
+  attachments        String[]
+  tags               String[]
+  company            Company             @relation(fields: [companyId], references: [id])
+  companyId          String              @db.ObjectId
+  user               User?               @relation(fields: [userId], references: [id])
+  userId             String?             @db.ObjectId
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([companyId])
   @@index([categoryId])
   @@index([accountId])
   @@index([date])
   @@index([type])
+  @@index([recurringScheduleId])
+}
+
+model RecurringSchedule {
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  description      String?
+  frequency        String            // daily, weekly, monthly, yearly
+  interval         Int               @default(1) // every X days/weeks/months/years
+  startDate        DateTime
+  endDate          DateTime?
+  nextDueDate      DateTime
+  dayOfMonth       Int?              // for monthly: which day of month
+  dayOfWeek        Int?              // for weekly: which day (0-6, 0 is Sunday)
+  monthOfYear      Int?              // for yearly: which month (1-12)
+  amount           Float
+  type             String            // income, expense
+  categoryId       String?           @db.ObjectId
+  accountId        String?           @db.ObjectId
+  lastProcessedDate DateTime?
+  status           String            @default("active") // active, paused, completed
+  company          Company           @relation(fields: [companyId], references: [id])
+  companyId        String            @db.ObjectId
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([companyId])
+  @@index([nextDueDate])
+  @@index([status])
 }
 
 model BudgetCategory {
@@ -274,6 +319,7 @@ model BudgetCategory {
   color        String?
   icon         String?
   transactions Transaction[]
+  budgetItems  BudgetItem[]
   company      Company       @relation(fields: [companyId], references: [id])
   companyId    String        @db.ObjectId
   createdAt    DateTime      @default(now())
@@ -284,20 +330,76 @@ model BudgetCategory {
 }
 
 model FinancialAccount {
-  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
   name            String
   type            String // bank, cash, credit, investment, other
   number          String?
-  balance         Float         @default(0)
-  currency        String        @default("USD")
+  balance         Float            @default(0)
+  currency        String           @default("USD")
   institutionName String?
   description     String?
   transactions    Transaction[]
-  company         Company       @relation(fields: [companyId], references: [id])
-  companyId       String        @db.ObjectId
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  auditLogs       FinanceAuditLog[]
+  company         Company          @relation(fields: [companyId], references: [id])
+  companyId       String           @db.ObjectId
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@unique([name, companyId])
   @@index([companyId])
 }
+
+model FinanceAuditLog {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  account         FinancialAccount @relation(fields: [accountId], references: [id])
+  accountId       String           @db.ObjectId
+  previousBalance Float
+  newBalance      Float
+  changeAmount    Float
+  description     String
+  performedAt     DateTime
+  createdAt       DateTime         @default(now())
+
+  @@index([accountId])
+  @@index([performedAt])
+}
+
+model Budget {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String?
+  type            String           // annual, monthly, quarterly, project
+  startDate       DateTime
+  endDate         DateTime
+  status          String           @default("active") // active, archived, draft
+  totalBudget     Float
+  totalSpent      Float            @default(0)
+  items           BudgetItem[]
+  company         Company          @relation(fields: [companyId], references: [id])
+  companyId       String           @db.ObjectId
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([companyId])
+  @@index([type])
+  @@index([status])
+}
+
+model BudgetItem {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  budget          Budget           @relation(fields: [budgetId], references: [id])
+  budgetId        String           @db.ObjectId
+  category        BudgetCategory?  @relation(fields: [categoryId], references: [id])
+  categoryId      String?          @db.ObjectId
+  name            String
+  amount          Float
+  spent           Float            @default(0)
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([budgetId])
+  @@index([categoryId])
+}
+
+
