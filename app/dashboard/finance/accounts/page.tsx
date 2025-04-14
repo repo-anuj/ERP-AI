@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { PlusIcon, Building2Icon, MoreHorizontal, Edit, Trash, RefreshCw } from 'lucide-react';
 import { AccountDialog } from '@/components/finance/account-dialog';
+import { RecalculateBalanceButton } from '@/components/finance/recalculate-balance-button';
 import { Badge } from '@/components/ui/badge';
 
 interface Account {
@@ -47,25 +48,25 @@ export default function AccountsPage() {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [totalBalance, setTotalBalance] = useState(0);
   const [isUpdatingBalances, setIsUpdatingBalances] = useState(false);
-  
+
   // Fetch accounts when component mounts
   useEffect(() => {
     fetchAccounts();
   }, []);
-  
+
   // Effect to fetch transactions only after accounts are loaded
   useEffect(() => {
     if (accounts.length > 0) {
       fetchTransactions();
     }
   }, [accounts.length]);
-  
+
   // Fetch accounts from the API
   const fetchAccounts = async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/finance/accounts');
-      
+
       if (response.ok) {
         const data = await response.json();
         // Store initialBalance for later reference
@@ -91,18 +92,18 @@ export default function AccountsPage() {
   const calculateTotalBalance = (accountsList: Account[]) => {
     const total = accountsList.reduce((sum, account) => {
       // Use currentBalance if available, otherwise fall back to balance
-      const balanceToUse = typeof account.currentBalance !== 'undefined' 
-        ? account.currentBalance 
+      const balanceToUse = typeof account.currentBalance !== 'undefined'
+        ? account.currentBalance
         : account.balance;
-        
+
       // For credit accounts, negative balance is actually good
-      const balanceValue = account.type === 'credit' 
+      const balanceValue = account.type === 'credit'
         ? -balanceToUse
         : balanceToUse;
-      
+
       return sum + balanceValue;
     }, 0);
-    
+
     setTotalBalance(total);
   };
 
@@ -124,7 +125,7 @@ export default function AccountsPage() {
       const response = await fetch(`/api/finance/accounts?id=${id}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         setAccounts(accounts.filter(a => a.id !== id));
         calculateTotalBalance(accounts.filter(a => a.id !== id));
@@ -150,10 +151,10 @@ export default function AccountsPage() {
     try {
       setIsUpdatingBalances(true);
       const response = await fetch('/api/finance/transactions');
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         // Map API data to match our expected format
         const mappedTransactions = data.map((transaction: any) => ({
           id: transaction.id,
@@ -166,10 +167,10 @@ export default function AccountsPage() {
           reference: transaction.reference,
           status: transaction.status,
         }));
-        
+
         setTransactions(mappedTransactions);
         updateAccountBalances(mappedTransactions);
-        
+
         // Also fetch related data from other modules
         fetchSalesData();
         fetchInventoryData();
@@ -187,15 +188,15 @@ export default function AccountsPage() {
   const fetchSalesData = async () => {
     try {
       const response = await fetch('/api/sales/invoices?status=paid');
-      
+
       if (response.ok) {
         const invoicesData = await response.json();
-        
+
         if (!Array.isArray(invoicesData)) {
           console.error('Invalid sales data format');
           return;
         }
-        
+
         // Map sales data to transactions
         const salesTransactions: Transaction[] = invoicesData.map((invoice: any) => ({
           id: `sales-${invoice.id}`,
@@ -210,7 +211,7 @@ export default function AccountsPage() {
           sourceType: 'sales',
           originalData: invoice
         }));
-        
+
         // Add to transactions array
         setTransactions(prev => {
           // Filter out any existing sales transactions to avoid duplicates
@@ -229,15 +230,15 @@ export default function AccountsPage() {
   const fetchInventoryData = async () => {
     try {
       const response = await fetch('/api/inventory/purchases');
-      
+
       if (response.ok) {
         const purchasesData = await response.json();
-        
+
         if (!Array.isArray(purchasesData)) {
           console.error('Invalid inventory data format');
           return;
         }
-        
+
         // Map inventory data to transactions
         const inventoryTransactions: Transaction[] = purchasesData.map((purchase: any) => ({
           id: `inventory-${purchase.id}`,
@@ -252,7 +253,7 @@ export default function AccountsPage() {
           sourceType: 'inventory',
           originalData: purchase
         }));
-        
+
         // Add to transactions array
         setTransactions(prev => {
           // Filter out any existing inventory transactions to avoid duplicates
@@ -271,24 +272,24 @@ export default function AccountsPage() {
   const updateAccountBalances = (transactionsList: Transaction[]) => {
     // Create a copy of accounts
     const updatedAccounts = [...accounts];
-    
+
     // Reset all account balances to their initial values
     updatedAccounts.forEach(account => {
       account.currentBalance = account.initialBalance || 0;
     });
-    
+
     // Only use completed transactions to update balances
     const completedTransactions = transactionsList.filter(t => t.status === 'completed');
-    
+
     // Update balances based on transactions
     completedTransactions.forEach(transaction => {
       // Find the account this transaction belongs to
       const accountIndex = updatedAccounts.findIndex(a => {
         // Match by name or by id if available
-        return a.name === transaction.account || 
+        return a.name === transaction.account ||
                (typeof transaction.account === 'object' && transaction.account?.id === a.id);
       });
-      
+
       if (accountIndex >= 0) {
         // Found the account, update its balance
         if (transaction.type === 'income') {
@@ -298,7 +299,7 @@ export default function AccountsPage() {
         }
       }
     });
-    
+
     setAccounts(updatedAccounts);
     calculateTotalBalance(updatedAccounts);
   };
@@ -356,7 +357,7 @@ export default function AccountsPage() {
             Add Account
           </Button>
         </div>
-        
+
         <Card className="p-12">
           <div className="flex flex-col items-center justify-center text-center space-y-4">
             <Building2Icon className="h-16 w-16 text-muted-foreground" />
@@ -370,7 +371,7 @@ export default function AccountsPage() {
             </Button>
           </div>
         </Card>
-        
+
         <AccountDialog
           account={selectedAccount}
           open={accountDialogOpen}
@@ -387,8 +388,8 @@ export default function AccountsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl md:text-3xl font-bold">Financial Accounts</h1>
         <div className="flex flex-wrap gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => {
               fetchAccounts();
@@ -398,13 +399,19 @@ export default function AccountsPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             {isUpdatingBalances ? 'Updating...' : 'Refresh'}
           </Button>
+          <RecalculateBalanceButton
+            onSuccess={() => {
+              fetchAccounts();
+              toast.success('Account balances recalculated successfully');
+            }}
+          />
           <Button size="sm" onClick={handleAddAccount}>
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Account
           </Button>
         </div>
       </div>
-      
+
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
@@ -422,7 +429,7 @@ export default function AccountsPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
@@ -444,7 +451,7 @@ export default function AccountsPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Your Accounts</CardTitle>
@@ -483,7 +490,7 @@ export default function AccountsPage() {
                     <TableCell>
                       <div className="space-y-1">
                         <div className={
-                          account.type === 'credit' 
+                          account.type === 'credit'
                             ? ((account.currentBalance || account.balance) > 0 ? 'text-red-600' : 'text-green-600')
                             : ((account.currentBalance || account.balance) >= 0 ? 'text-green-600' : 'text-red-600')
                         }>
@@ -515,8 +522,37 @@ export default function AccountsPage() {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              try {
+                                toast.loading('Recalculating balance...');
+                                const response = await fetch('/api/finance/accounts/recalculate', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({ accountId: account.id }),
+                                });
+
+                                if (!response.ok) {
+                                  throw new Error('Failed to recalculate balance');
+                                }
+
+                                toast.dismiss();
+                                toast.success('Balance recalculated successfully');
+                                fetchAccounts();
+                              } catch (error) {
+                                toast.dismiss();
+                                toast.error('Failed to recalculate balance');
+                                console.error('Error recalculating balance:', error);
+                              }
+                            }}
+                          >
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Recalculate Balance
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleDeleteAccount(account.id)}
                             className="text-red-600"
                           >
@@ -533,7 +569,7 @@ export default function AccountsPage() {
           </div>
         </CardContent>
       </Card>
-      
+
       <AccountDialog
         account={selectedAccount}
         open={accountDialogOpen}
@@ -542,4 +578,4 @@ export default function AccountsPage() {
       />
     </div>
   );
-} 
+}
