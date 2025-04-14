@@ -2,17 +2,19 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { createInventoryExpenseTransaction, trackInventoryQuantityChange } from '@/lib/inventory-finance-integration';
 
 export async function GET() {
   try {
-    const token = cookies().get('token')?.value;
-    
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse('Invalid token', { status: 401 });
     }
@@ -52,14 +54,15 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const token = cookies().get('token')?.value;
-    
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse('Invalid token', { status: 401 });
     }
@@ -87,6 +90,15 @@ export async function POST(req: Request) {
       }
     });
 
+    // Create a financial transaction for the initial inventory purchase
+    if (item.quantity > 0) {
+      await createInventoryExpenseTransaction(
+        item,
+        item.quantity,
+        user.id
+      );
+    }
+
     return NextResponse.json(item);
   } catch (error) {
     console.error('Error creating inventory item:', error);
@@ -97,14 +109,15 @@ export async function POST(req: Request) {
 // PUT: Update an existing inventory item
 export async function PUT(req: Request) {
   try {
-    const token = cookies().get('token')?.value;
-    
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse('Invalid token', { status: 401 });
     }
@@ -136,6 +149,10 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Product not found or access denied' }, { status: 404 });
     }
 
+    // Get the old quantity for comparison
+    const oldQuantity = existingItem.quantity;
+    const newQuantity = parseInt(data.quantity);
+
     // Update the item
     const updatedItem = await prisma.inventoryItem.update({
       where: { id: data.id },
@@ -143,12 +160,12 @@ export async function PUT(req: Request) {
         name: data.name,
         sku: data.sku,
         category: data.category,
-        quantity: parseInt(data.quantity),
+        quantity: newQuantity,
         price: parseFloat(data.price),
         status: data.status,
         description: data.description,
         // Ensure companyId is not changed
-        companyId: user.companyId, 
+        companyId: user.companyId,
       },
       select: { // Select the fields to return
         id: true,
@@ -163,6 +180,16 @@ export async function PUT(req: Request) {
         updatedAt: true
       }
     });
+
+    // Track inventory quantity changes and create financial transactions if needed
+    if (newQuantity > oldQuantity) {
+      await trackInventoryQuantityChange(
+        updatedItem,
+        oldQuantity,
+        newQuantity,
+        user.id
+      );
+    }
 
     return NextResponse.json(updatedItem);
   } catch (error) {
