@@ -29,11 +29,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
+export interface PaginationState {
+  page: number;
+  pageSize: number;
+}
+
 export interface FilterState {
   startDate?: Date;
   endDate?: Date;
   modules: string[];
   filters: Record<string, any>;
+  pagination?: PaginationState;
 }
 
 export interface FiltersProps {
@@ -46,12 +52,12 @@ export interface FiltersProps {
 
 const DEFAULT_MODULES = ['inventory', 'sales', 'finance', 'employees', 'projects', 'crossModuleAnalysis'];
 
-export function AnalyticsFilters({ 
-  onFilterChange, 
-  onExport, 
-  isLoading, 
-  data, 
-  initialFilters 
+export function AnalyticsFilters({
+  onFilterChange,
+  onExport,
+  isLoading,
+  data,
+  initialFilters
 }: FiltersProps) {
   const [startDate, setStartDate] = useState<Date | undefined>(
     initialFilters?.startDate || new Date(new Date().setMonth(new Date().getMonth() - 1))
@@ -75,7 +81,7 @@ export function AnalyticsFilters({
   const handleDatePreset = (preset: string) => {
     const now = new Date();
     let start: Date;
-    
+
     switch (preset) {
       case 'last7days':
         start = new Date(now);
@@ -100,7 +106,7 @@ export function AnalyticsFilters({
       default:
         start = new Date(now.setMonth(now.getMonth() - 1));
     }
-    
+
     setStartDate(start);
     if (preset !== 'lastYear') {
       setEndDate(now);
@@ -108,7 +114,7 @@ export function AnalyticsFilters({
   };
 
   const toggleModule = (module: string) => {
-    setSelectedModules(prev => 
+    setSelectedModules(prev =>
       prev.includes(module)
         ? prev.filter(m => m !== module)
         : [...prev, module]
@@ -227,56 +233,56 @@ export function AnalyticsFilters({
               <h4 className="font-medium">Data Modules</h4>
               <div className="grid gap-2">
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="inventory" 
+                  <Checkbox
+                    id="inventory"
                     checked={selectedModules.includes('inventory')}
                     onCheckedChange={() => toggleModule('inventory')}
                   />
                   <Label htmlFor="inventory">Inventory</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="sales" 
+                  <Checkbox
+                    id="sales"
                     checked={selectedModules.includes('sales')}
                     onCheckedChange={() => toggleModule('sales')}
                   />
                   <Label htmlFor="sales">Sales</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="finance" 
+                  <Checkbox
+                    id="finance"
                     checked={selectedModules.includes('finance')}
                     onCheckedChange={() => toggleModule('finance')}
                   />
                   <Label htmlFor="finance">Finance</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="employees" 
+                  <Checkbox
+                    id="employees"
                     checked={selectedModules.includes('employees')}
                     onCheckedChange={() => toggleModule('employees')}
                   />
                   <Label htmlFor="employees">Employees</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="projects" 
+                  <Checkbox
+                    id="projects"
                     checked={selectedModules.includes('projects')}
                     onCheckedChange={() => toggleModule('projects')}
                   />
                   <Label htmlFor="projects">Projects</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="crossModuleAnalysis" 
+                  <Checkbox
+                    id="crossModuleAnalysis"
                     checked={selectedModules.includes('crossModuleAnalysis')}
                     onCheckedChange={() => toggleModule('crossModuleAnalysis')}
                   />
                   <Label htmlFor="crossModuleAnalysis">Cross-Module Analysis</Label>
                 </div>
               </div>
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 size="sm"
                 onClick={applyFilters}
               >
