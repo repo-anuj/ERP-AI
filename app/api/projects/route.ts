@@ -45,6 +45,7 @@ const projectSchema = z.object({
 async function getUserCompanyId() {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
+  const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 
   if (!token) {
     throw new Error('Unauthorized');
@@ -52,20 +53,46 @@ async function getUserCompanyId() {
 
   const payload = await verifyAuth(token);
 
-  if (!payload.email || typeof payload.email !== 'string') {
+  if (!payload) {
     throw new Error('Invalid token');
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: payload.email },
-    include: { company: true }
-  });
+  // Handle employee tokens
+  if (isEmployee) {
+    // For employees, the company ID is directly in the token payload
+    if (payload.companyId) {
+      return payload.companyId;
+    }
 
-  if (!user?.companyId) {
-    throw new Error('Company not found');
+    // If not in the token, try to get it from the database
+    const employee = await prisma.employee.findUnique({
+      where: { id: payload.id },
+      select: { companyId: true },
+    });
+
+    if (!employee?.companyId) {
+      throw new Error('Company not found for employee');
+    }
+
+    return employee.companyId;
   }
+  // Handle regular user tokens
+  else {
+    if (!payload.email || typeof payload.email !== 'string') {
+      throw new Error('Invalid token - missing email');
+    }
 
-  return user.companyId;
+    const user = await prisma.user.findUnique({
+      where: { email: payload.email },
+      include: { company: true }
+    });
+
+    if (!user?.companyId) {
+      throw new Error('Company not found for user');
+    }
+
+    return user.companyId;
+  }
 }
 
 export async function GET(req: Request) {
