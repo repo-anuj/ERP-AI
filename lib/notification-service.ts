@@ -1,20 +1,29 @@
 import { prisma } from '@/lib/prisma';
 
 interface CreateNotificationParams {
-  userId: string;
   title: string;
   message: string;
-  type: string;
-  entityId?: string;
-  entityType?: string;
-  actionType?: string;
-  actorName?: string;
-  metadata?: any;
-  link?: string;
+  type: string; // info, success, warning, error
+  category: string; // system, task, project, sales, inventory, finance, hr
+  priority?: string; // low, normal, high, urgent
+  isActionRequired?: boolean;
+  actionType?: string; // approve, reject, review, acknowledge
+  actionUrl?: string;
+  actionData?: any;
+  recipientId?: string; // Can be either userId or employeeId
+  recipientType?: string; // user or employee
+  senderId?: string; // Can be either userId or employeeId
+  senderType?: string; // user, employee, or system
+  senderName?: string;
+  relatedItemId?: string; // ID of the related item (task, project, etc.)
+  relatedItemType?: string; // Type of the related item
+  status?: string; // pending, approved, rejected, completed
+  companyId: string;
+  expiresAt?: Date;
 }
 
 /**
- * Create a notification for a user
+ * Create a notification
  */
 export async function createNotification(params: CreateNotificationParams) {
   try {
@@ -23,18 +32,27 @@ export async function createNotification(params: CreateNotificationParams) {
         title: params.title,
         message: params.message,
         type: params.type,
-        read: false,
-        user: {
+        category: params.category,
+        priority: params.priority || 'normal',
+        isRead: false,
+        isActionRequired: params.isActionRequired || false,
+        actionType: params.actionType,
+        actionUrl: params.actionUrl,
+        actionData: params.actionData,
+        recipientId: params.recipientId,
+        recipientType: params.recipientType,
+        senderId: params.senderId,
+        senderType: params.senderType || 'system',
+        senderName: params.senderName,
+        relatedItemId: params.relatedItemId,
+        relatedItemType: params.relatedItemType,
+        status: params.status || 'pending',
+        expiresAt: params.expiresAt,
+        company: {
           connect: {
-            id: params.userId,
+            id: params.companyId,
           },
         },
-        entityId: params.entityId,
-        entityType: params.entityType,
-        actionType: params.actionType,
-        actorName: params.actorName,
-        metadata: params.metadata ? JSON.stringify(params.metadata) : undefined,
-        link: params.link,
       },
     });
 
@@ -50,7 +68,7 @@ export async function createNotification(params: CreateNotificationParams) {
  */
 export async function createCompanyNotification(
   companyId: string,
-  params: Omit<CreateNotificationParams, 'userId'>
+  params: Omit<CreateNotificationParams, 'companyId'>
 ) {
   try {
     // Get all users in the company
@@ -68,7 +86,9 @@ export async function createCompanyNotification(
       users.map((user) =>
         createNotification({
           ...params,
-          userId: user.id,
+          companyId,
+          recipientId: user.id,
+          recipientType: 'user',
         })
       )
     );
@@ -81,6 +101,224 @@ export async function createCompanyNotification(
 }
 
 /**
+ * Create a notification for all employees in a company
+ */
+export async function createEmployeeNotification(
+  companyId: string,
+  params: Omit<CreateNotificationParams, 'companyId'>
+) {
+  try {
+    // Get all employees in the company
+    const employees = await prisma.employee.findMany({
+      where: {
+        companyId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    // Create a notification for each employee
+    const notifications = await Promise.all(
+      employees.map((employee) =>
+        createNotification({
+          ...params,
+          companyId,
+          recipientId: employee.id,
+          recipientType: 'employee',
+        })
+      )
+    );
+
+    return notifications;
+  } catch (error) {
+    console.error('Error creating employee notifications:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a notification for employees in a specific department
+ */
+export async function createDepartmentNotification(
+  companyId: string,
+  department: string,
+  params: Omit<CreateNotificationParams, 'companyId'>
+) {
+  try {
+    // Get all employees in the department
+    const employees = await prisma.employee.findMany({
+      where: {
+        companyId,
+        department: {
+          equals: department,
+          mode: 'insensitive',
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    // Create a notification for each employee
+    const notifications = await Promise.all(
+      employees.map((employee) =>
+        createNotification({
+          ...params,
+          companyId,
+          recipientId: employee.id,
+          recipientType: 'employee',
+        })
+      )
+    );
+
+    return notifications;
+  } catch (error) {
+    console.error(`Error creating notifications for ${department} department:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Create a notification for a task approval request
+ */
+export async function createTaskApprovalRequest(
+  companyId: string,
+  taskId: string,
+  taskName: string,
+  assigneeId: string,
+  assigneeName: string,
+  managerId: string,
+  projectName: string
+) {
+  try {
+    const title = 'Task Approval Request';
+    const message = `${assigneeName} has completed the task "${taskName}" in project "${projectName}" and is requesting your approval.`;
+    const actionUrl = `/projects?taskId=${taskId}`;
+
+    return createNotification({
+      title,
+      message,
+      type: 'info',
+      category: 'task',
+      priority: 'high',
+      isActionRequired: true,
+      actionType: 'approve',
+      actionUrl,
+      actionData: { taskId, projectName },
+      recipientId: managerId,
+      recipientType: 'employee',
+      senderId: assigneeId,
+      senderType: 'employee',
+      senderName: assigneeName,
+      relatedItemId: taskId,
+      relatedItemType: 'task',
+      status: 'pending',
+      companyId,
+    });
+  } catch (error) {
+    console.error('Error creating task approval request:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a notification for a task approval response
+ */
+export async function createTaskApprovalResponse(
+  companyId: string,
+  taskId: string,
+  taskName: string,
+  managerId: string,
+  managerName: string,
+  assigneeId: string,
+  projectName: string,
+  approved: boolean,
+  comments?: string
+) {
+  try {
+    const title = approved ? 'Task Approved' : 'Task Rejected';
+    let message = approved
+      ? `${managerName} has approved your task "${taskName}" in project "${projectName}".`
+      : `${managerName} has rejected your task "${taskName}" in project "${projectName}".`;
+
+    if (comments) {
+      message += ` Comments: "${comments}"`;
+    }
+
+    const actionUrl = `/projects?taskId=${taskId}`;
+
+    return createNotification({
+      title,
+      message,
+      type: approved ? 'success' : 'error',
+      category: 'task',
+      priority: 'normal',
+      isActionRequired: !approved, // If rejected, action is required
+      actionType: approved ? 'acknowledge' : 'review',
+      actionUrl,
+      actionData: { taskId, projectName, approved, comments },
+      recipientId: assigneeId,
+      recipientType: 'employee',
+      senderId: managerId,
+      senderType: 'employee',
+      senderName: managerName,
+      relatedItemId: taskId,
+      relatedItemType: 'task',
+      status: 'completed',
+      companyId,
+    });
+  } catch (error) {
+    console.error('Error creating task approval response:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a notification for a new task assignment
+ */
+export async function createTaskAssignmentNotification(
+  companyId: string,
+  taskId: string,
+  taskName: string,
+  assigneeId: string,
+  managerId: string,
+  managerName: string,
+  projectName: string,
+  dueDate: Date
+) {
+  try {
+    const title = 'New Task Assignment';
+    const message = `${managerName} has assigned you a new task "${taskName}" in project "${projectName}". Due date: ${dueDate.toLocaleDateString()}.`;
+    const actionUrl = `/projects?taskId=${taskId}`;
+
+    return createNotification({
+      title,
+      message,
+      type: 'info',
+      category: 'task',
+      priority: 'high',
+      isActionRequired: true,
+      actionType: 'acknowledge',
+      actionUrl,
+      actionData: { taskId, projectName, dueDate },
+      recipientId: assigneeId,
+      recipientType: 'employee',
+      senderId: managerId,
+      senderType: 'employee',
+      senderName: managerName,
+      relatedItemId: taskId,
+      relatedItemType: 'task',
+      status: 'pending',
+      companyId,
+    });
+  } catch (error) {
+    console.error('Error creating task assignment notification:', error);
+    throw error;
+  }
+}
+
+/**
  * Create a notification for a budget-related action
  */
 export async function createBudgetNotification(
@@ -88,12 +326,14 @@ export async function createBudgetNotification(
   budgetId: string,
   budgetName: string,
   actionType: 'created' | 'updated' | 'deleted',
-  actorName: string
+  actorId: string,
+  actorName: string,
+  actorType: 'user' | 'employee'
 ) {
   try {
     let title = '';
     let message = '';
-    const link = `/dashboard/finance/budgets?id=${budgetId}`;
+    const actionUrl = `/dashboard/finance/budgets?id=${budgetId}`;
 
     switch (actionType) {
       case 'created':
@@ -110,15 +350,19 @@ export async function createBudgetNotification(
         break;
     }
 
-    return createCompanyNotification(companyId, {
+    return createDepartmentNotification(companyId, 'finance', {
       title,
       message,
-      type: 'budget',
-      entityId: budgetId,
-      entityType: 'budget',
-      actionType,
-      actorName,
-      link,
+      type: 'info',
+      category: 'finance',
+      priority: 'normal',
+      isActionRequired: false,
+      actionUrl,
+      senderId: actorId,
+      senderType: actorType,
+      senderName: actorName,
+      relatedItemId: budgetId,
+      relatedItemType: 'budget',
     });
   } catch (error) {
     console.error('Error creating budget notification:', error);
@@ -134,13 +378,15 @@ export async function createSaleNotification(
   saleId: string,
   invoiceNumber: string,
   actionType: 'created' | 'updated' | 'deleted',
+  actorId: string,
   actorName: string,
+  actorType: 'user' | 'employee',
   amount: number
 ) {
   try {
     let title = '';
     let message = '';
-    const link = `/dashboard/sales?id=${saleId}`;
+    const actionUrl = `/sales?id=${saleId}`;
 
     switch (actionType) {
       case 'created':
@@ -157,17 +403,41 @@ export async function createSaleNotification(
         break;
     }
 
-    return createCompanyNotification(companyId, {
+    // Notify HR and admin about the sale
+    const hrNotification = createDepartmentNotification(companyId, 'hr', {
       title,
       message,
-      type: 'sale',
-      entityId: saleId,
-      entityType: 'sale',
-      actionType,
-      actorName,
-      link,
-      metadata: { amount },
+      type: 'info',
+      category: 'sales',
+      priority: 'normal',
+      isActionRequired: false,
+      actionUrl,
+      senderId: actorId,
+      senderType: actorType,
+      senderName: actorName,
+      relatedItemId: saleId,
+      relatedItemType: 'sale',
+      actionData: { amount, invoiceNumber },
     });
+
+    // Also notify finance department
+    const financeNotification = createDepartmentNotification(companyId, 'finance', {
+      title,
+      message,
+      type: 'info',
+      category: 'sales',
+      priority: 'normal',
+      isActionRequired: false,
+      actionUrl,
+      senderId: actorId,
+      senderType: actorType,
+      senderName: actorName,
+      relatedItemId: saleId,
+      relatedItemType: 'sale',
+      actionData: { amount, invoiceNumber },
+    });
+
+    return Promise.all([hrNotification, financeNotification]);
   } catch (error) {
     console.error('Error creating sale notification:', error);
     throw error;
@@ -182,14 +452,16 @@ export async function createTransactionNotification(
   transactionId: string,
   description: string,
   actionType: 'created' | 'updated' | 'deleted',
+  actorId: string,
   actorName: string,
+  actorType: 'user' | 'employee',
   amount: number,
   type: 'income' | 'expense'
 ) {
   try {
     let title = '';
     let message = '';
-    const link = `/dashboard/finance/transactions?id=${transactionId}`;
+    const actionUrl = `/dashboard/finance/transactions?id=${transactionId}`;
 
     switch (actionType) {
       case 'created':
@@ -206,16 +478,21 @@ export async function createTransactionNotification(
         break;
     }
 
-    return createCompanyNotification(companyId, {
+    // Notify finance department
+    return createDepartmentNotification(companyId, 'finance', {
       title,
       message,
-      type: 'transaction',
-      entityId: transactionId,
-      entityType: 'transaction',
-      actionType,
-      actorName,
-      link,
-      metadata: { amount, transactionType: type },
+      type: 'info',
+      category: 'finance',
+      priority: type === 'expense' && amount > 1000 ? 'high' : 'normal',
+      isActionRequired: false,
+      actionUrl,
+      senderId: actorId,
+      senderType: actorType,
+      senderName: actorName,
+      relatedItemId: transactionId,
+      relatedItemType: 'transaction',
+      actionData: { amount, transactionType: type, description },
     });
   } catch (error) {
     console.error('Error creating transaction notification:', error);
@@ -231,13 +508,17 @@ export async function createInventoryNotification(
   itemId: string,
   itemName: string,
   actionType: 'created' | 'updated' | 'deleted' | 'low-stock',
+  actorId: string,
   actorName: string,
+  actorType: 'user' | 'employee',
   quantity?: number
 ) {
   try {
     let title = '';
     let message = '';
-    const link = `/dashboard/inventory?id=${itemId}`;
+    const actionUrl = `/inventory?id=${itemId}`;
+    let priority = 'normal';
+    let isActionRequired = false;
 
     switch (actionType) {
       case 'created':
@@ -255,22 +536,100 @@ export async function createInventoryNotification(
       case 'low-stock':
         title = 'Low Stock Alert';
         message = `Inventory item ${itemName} is running low (${quantity} remaining)`;
+        priority = 'high';
+        isActionRequired = true;
         break;
     }
 
-    return createCompanyNotification(companyId, {
-      title,
-      message,
-      type: 'inventory',
-      entityId: itemId,
-      entityType: 'inventory',
-      actionType,
-      actorName,
-      link,
-      metadata: { quantity },
-    });
+    // Determine which departments to notify
+    const departments = ['inventory'];
+
+    // For low stock, also notify sales department
+    if (actionType === 'low-stock') {
+      departments.push('sales');
+    }
+
+    // Create notifications for each department
+    const notifications = departments.map(dept =>
+      createDepartmentNotification(companyId, dept, {
+        title,
+        message,
+        type: actionType === 'low-stock' ? 'warning' : 'info',
+        category: 'inventory',
+        priority,
+        isActionRequired,
+        actionUrl,
+        senderId: actorId,
+        senderType: actorType,
+        senderName: actorName,
+        relatedItemId: itemId,
+        relatedItemType: 'inventory',
+        actionData: { quantity, itemName },
+      })
+    );
+
+    return Promise.all(notifications);
   } catch (error) {
     console.error('Error creating inventory notification:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a notification for an employee-related action
+ */
+export async function createEmployeeActionNotification(
+  companyId: string,
+  employeeId: string,
+  employeeName: string,
+  actionType: 'hired' | 'updated' | 'terminated' | 'role_changed',
+  actorId: string,
+  actorName: string,
+  actorType: 'user' | 'employee',
+  details?: any
+) {
+  try {
+    let title = '';
+    let message = '';
+    const actionUrl = `/hr?employeeId=${employeeId}`;
+
+    switch (actionType) {
+      case 'hired':
+        title = 'New Employee Hired';
+        message = `${actorName} added a new employee: ${employeeName}`;
+        break;
+      case 'updated':
+        title = 'Employee Information Updated';
+        message = `${actorName} updated information for employee: ${employeeName}`;
+        break;
+      case 'terminated':
+        title = 'Employee Terminated';
+        message = `${actorName} terminated employee: ${employeeName}`;
+        break;
+      case 'role_changed':
+        title = 'Employee Role Changed';
+        message = `${actorName} changed the role of ${employeeName} to ${details?.newRole || 'a new role'}`;
+        break;
+    }
+
+    // Notify HR department
+    return createDepartmentNotification(companyId, 'hr', {
+      title,
+      message,
+      type: 'info',
+      category: 'hr',
+      priority: actionType === 'terminated' ? 'high' : 'normal',
+      isActionRequired: false,
+      actionUrl,
+      senderId: actorId,
+      senderType: actorType,
+      senderName: actorName,
+      relatedItemId: employeeId,
+      relatedItemType: 'employee',
+      actionData: details,
+    });
+  } catch (error) {
+    console.error('Error creating employee action notification:', error);
     throw error;
   }
 }
