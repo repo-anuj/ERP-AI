@@ -17,6 +17,7 @@ export async function GET() {
   try {
     console.log("Company API route called");
     const token = cookies().get('token')?.value;
+    const isEmployee = cookies().get('isEmployee')?.value === 'true';
 
     if (!token) {
       console.log("No token found");
@@ -26,26 +27,57 @@ export async function GET() {
     console.log("Verifying token...");
     const payload = await verifyAuth(token);
 
-    if (!payload.email) {
+    if (!payload) {
       console.log("Invalid token payload");
       return new NextResponse("Invalid token", { status: 401 });
     }
 
-    console.log("Finding user with email:", payload.email);
-    const user = await prisma.user.findUnique({
-      where: { email: payload.email },
-      include: {
-        company: true,
-      },
-    });
+    let company;
 
-    if (!user || !user.company) {
-      console.log("Company not found");
-      return new NextResponse("Company not found", { status: 404 });
+    // Handle employee tokens
+    if (isEmployee) {
+      console.log("Processing employee token for ID:", payload.id);
+
+      // Get employee with company
+      const employee = await prisma.employee.findUnique({
+        where: { id: payload.id },
+        include: {
+          company: true,
+        },
+      });
+
+      if (!employee || !employee.company) {
+        console.log("Company not found for employee");
+        return new NextResponse("Company not found", { status: 404 });
+      }
+
+      company = employee.company;
+    }
+    // Handle regular user tokens
+    else {
+      if (!payload.email) {
+        console.log("Invalid token payload - missing email");
+        return new NextResponse("Invalid token", { status: 401 });
+      }
+
+      console.log("Finding user with email:", payload.email);
+      const user = await prisma.user.findUnique({
+        where: { email: payload.email },
+        include: {
+          company: true,
+        },
+      });
+
+      if (!user || !user.company) {
+        console.log("Company not found for user");
+        return new NextResponse("Company not found", { status: 404 });
+      }
+
+      company = user.company;
     }
 
-    console.log("Company found:", { ...user.company });
-    return NextResponse.json(user.company);
+    console.log("Company found:", { id: company.id, name: company.name });
+    return NextResponse.json(company);
   } catch (error) {
     console.error("[COMPANY_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
@@ -55,6 +87,7 @@ export async function GET() {
 export async function PATCH(request: Request) {
   try {
     const token = cookies().get('token')?.value;
+    const isEmployee = cookies().get('isEmployee')?.value === 'true';
 
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -62,26 +95,51 @@ export async function PATCH(request: Request) {
 
     const payload = await verifyAuth(token);
 
-    if (!payload.email) {
+    if (!payload) {
       return new NextResponse("Invalid token", { status: 401 });
     }
 
     const body = await request.json();
     const validatedData = updateCompanySchema.parse(body);
 
-    const user = await prisma.user.findUnique({
-      where: { email: payload.email },
-      include: {
-        company: true,
-      },
-    });
+    let companyId;
 
-    if (!user || !user.company) {
-      return new NextResponse("Company not found", { status: 404 });
+    // Handle employee tokens
+    if (isEmployee) {
+      // Get employee's company ID
+      const employee = await prisma.employee.findUnique({
+        where: { id: payload.id },
+        select: { companyId: true },
+      });
+
+      if (!employee?.companyId) {
+        return new NextResponse("Company not found for employee", { status: 404 });
+      }
+
+      companyId = employee.companyId;
+    }
+    // Handle regular user tokens
+    else {
+      if (!payload.email) {
+        return new NextResponse("Invalid token - missing email", { status: 401 });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { email: payload.email },
+        include: {
+          company: true,
+        },
+      });
+
+      if (!user || !user.company) {
+        return new NextResponse("Company not found for user", { status: 404 });
+      }
+
+      companyId = user.company.id;
     }
 
     const updatedCompany = await prisma.company.update({
-      where: { id: user.company.id },
+      where: { id: companyId },
       data: validatedData,
     });
 
