@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hashPassword } from "@/lib/password";
 import { z } from "zod";
 
 const employeeSchema = z.object({
@@ -13,18 +14,20 @@ const employeeSchema = z.object({
   department: z.string().min(2),
   startDate: z.string(),
   salary: z.number().optional(),
+  password: z.string().min(6).optional(),
+  role: z.enum(["employee", "manager", "admin"]).default("employee"),
 });
 
 export async function POST(request: Request) {
   try {
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse("Invalid token", { status: 401 });
     }
@@ -43,12 +46,21 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = employeeSchema.parse(body);
 
+    // Prepare data for employee creation
+    let employeeData = {
+      ...validatedData,
+      startDate: new Date(validatedData.startDate),
+      companyId: user.company.id,
+    };
+
+    // Hash password if provided
+    if (employeeData.password) {
+      employeeData.password = await hashPassword(employeeData.password);
+    }
+
+    // Create the employee
     const employee = await prisma.employee.create({
-      data: {
-        ...validatedData,
-        startDate: new Date(validatedData.startDate),
-        companyId: user.company.id,
-      },
+      data: employeeData,
     });
 
     return NextResponse.json(employee);
@@ -61,13 +73,13 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse("Invalid token", { status: 401 });
     }
@@ -105,7 +117,7 @@ export async function GET() {
     projects.forEach(project => {
       // Ensure project.members exists before trying to iterate
       if (project.members && Array.isArray(project.members)) {
-        project.members.forEach((member: ProjectMember) => { 
+        project.members.forEach((member: ProjectMember) => {
           if (!employeeProjectMap.has(member.employeeId)) {
             employeeProjectMap.set(member.employeeId, []);
           }
