@@ -14,17 +14,21 @@ import {
   Users,
   X,
   DollarSign,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { usePermissionContext } from '@/contexts/permission-context';
+import { PERMISSIONS } from '@/lib/permissions';
 
 interface RouteItem {
   label: string;
   icon?: any;
   href: string;
-  submenu?: { label: string; href: string }[];
+  submenu?: { label: string; href: string; permission?: string }[];
+  permission?: string;
 }
 
 const routes: RouteItem[] = [
@@ -32,59 +36,72 @@ const routes: RouteItem[] = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     href: '/',
+    permission: PERMISSIONS.VIEW_DASHBOARD,
   },
   {
     label: 'Inventory',
     icon: Box,
     href: '/inventory',
+    permission: PERMISSIONS.VIEW_INVENTORY,
   },
   {
     label: 'Sales',
     icon: CircleDollarSign,
     href: '/sales',
+    permission: PERMISSIONS.VIEW_SALES,
   },
   {
     label: 'HR',
     icon: Users,
     href: '/hr',
+    permission: PERMISSIONS.VIEW_EMPLOYEES,
   },
   {
     label: 'Projects',
     icon: ClipboardList,
     href: '/projects',
+    permission: PERMISSIONS.VIEW_PROJECTS,
   },
   {
     label: 'Finance',
     icon: DollarSign,
     href: '/dashboard/finance',
+    permission: PERMISSIONS.VIEW_FINANCE,
     submenu: [
       {
         label: 'Overview',
         href: '/dashboard/finance',
+        permission: PERMISSIONS.VIEW_FINANCE,
       },
       {
         label: 'Transactions',
         href: '/dashboard/finance/transactions',
+        permission: PERMISSIONS.VIEW_TRANSACTIONS,
       },
       {
         label: 'Accounts',
         href: '/dashboard/finance/accounts',
+        permission: PERMISSIONS.VIEW_FINANCE,
       },
       {
         label: 'Recurring',
         href: '/dashboard/finance/recurring',
+        permission: PERMISSIONS.VIEW_FINANCE,
       },
       {
         label: 'Categories',
         href: '/dashboard/finance/categories',
+        permission: PERMISSIONS.VIEW_FINANCE,
       },
       {
         label: 'Reports',
         href: '/dashboard/finance/reports',
+        permission: PERMISSIONS.VIEW_FINANCE,
       },
       {
         label: 'Budgets',
         href: '/dashboard/finance/budgets',
+        permission: PERMISSIONS.VIEW_FINANCE,
       },
     ],
   },
@@ -92,11 +109,13 @@ const routes: RouteItem[] = [
     label: 'Analytics',
     icon: BarChart3,
     href: '/analytics',
+    permission: PERMISSIONS.VIEW_ANALYTICS,
   },
   {
     label: 'Settings',
     icon: Settings,
     href: '/settings',
+    permission: PERMISSIONS.VIEW_SETTINGS,
   },
 ];
 
@@ -105,6 +124,7 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+  const { can, loading } = usePermissionContext();
 
   // Expand the menu of the active route on initial load
   useEffect(() => {
@@ -138,7 +158,7 @@ export function Sidebar() {
         className="fixed top-4 left-4 z-50 md:hidden"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
-        {isMobileOpen ? [] : <Menu className="h-5 w-5" />}
+        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
       {/* Sidebar */}
@@ -174,67 +194,87 @@ export function Sidebar() {
         </div>
 
         <div className="flex-1 px-3 py-4 overflow-y-auto">
-          <div className="space-y-1">
-            {routes.map((route) => (
-              <div key={route.href}>
-                {route.submenu ? (
-                  <>
-                    <button
-                      onClick={() => toggleSubmenu(route.label)}
-                      className={cn(
-                        'w-full flex items-center p-3 text-sm font-medium rounded-lg transition-colors hover:text-primary hover:bg-primary/10',
-                        route.submenu.some(item => pathname === item.href) ? 'text-primary bg-primary/10' : 'text-muted-foreground',
-                        isCollapsed && 'justify-center'
-                      )}
-                    >
-                      <route.icon className={cn('h-5 w-5', isCollapsed ? 'mr-0' : 'mr-3')} />
-                      {!isCollapsed && (
-                        <>
-                          <span className="flex-1 text-left">{route.label}</span>
-                          {expandedMenus[route.label] ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
+          {loading ? (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {routes.map((route) => {
+                // Only show routes the user has permission to access
+                return can(route.permission || '') ? (
+                  <div key={route.href}>
+                    {route.submenu ? (
+                      <>
+                        <button
+                          onClick={() => toggleSubmenu(route.label)}
+                          className={cn(
+                            'w-full flex items-center p-3 text-sm font-medium rounded-lg transition-colors hover:text-primary hover:bg-primary/10',
+                            route.submenu.some(item => pathname === item.href) ? 'text-primary bg-primary/10' : 'text-muted-foreground',
+                            isCollapsed && 'justify-center'
                           )}
-                        </>
-                      )}
-                    </button>
+                        >
+                          <route.icon className={cn('h-5 w-5', isCollapsed ? 'mr-0' : 'mr-3')} />
+                          {!isCollapsed && (
+                            <>
+                              <span className="flex-1 text-left">{route.label}</span>
+                              {expandedMenus[route.label] ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </>
+                          )}
+                        </button>
 
-                    {!isCollapsed && expandedMenus[route.label] && (
-                      <div className="ml-6 mt-1 space-y-1">
-                        {route.submenu.map((subItem) => (
-                          <Link
-                            key={subItem.href}
-                            href={subItem.href}
-                            onClick={() => setIsMobileOpen(false)}
-                            className={cn(
-                              'flex items-center p-2 text-sm rounded-md transition-colors hover:text-primary hover:bg-primary/10',
-                              pathname === subItem.href ? 'text-primary bg-primary/10' : 'text-muted-foreground'
-                            )}
-                          >
-                            <span>{subItem.label}</span>
-                          </Link>
-                        ))}
-                      </div>
+                        {!isCollapsed && expandedMenus[route.label] && (
+                          <div className="ml-6 mt-1 space-y-1">
+                            {route.submenu.map((subItem) => {
+                              // Only show submenu items the user has permission to access
+                              return can(subItem.permission || '') ? (
+                                <Link
+                                  key={subItem.href}
+                                  href={subItem.href}
+                                  onClick={() => setIsMobileOpen(false)}
+                                  className={cn(
+                                    'flex items-center p-2 text-sm rounded-md transition-colors hover:text-primary hover:bg-primary/10',
+                                    pathname === subItem.href ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+                                  )}
+                                >
+                                  <span>{subItem.label}</span>
+                                </Link>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <Link
+                        href={route.href}
+                        onClick={() => setIsMobileOpen(false)}
+                        className={cn(
+                          'flex items-center p-3 text-sm font-medium rounded-lg transition-colors hover:text-primary hover:bg-primary/10',
+                          pathname === route.href ? 'text-primary bg-primary/10' : 'text-muted-foreground',
+                          isCollapsed && 'justify-center'
+                        )}
+                      >
+                        <route.icon className={cn('h-5 w-5', isCollapsed ? 'mr-0' : 'mr-3')} />
+                        {!isCollapsed && <span>{route.label}</span>}
+                      </Link>
                     )}
-                  </>
-                ) : (
-                  <Link
-                    href={route.href}
-                    onClick={() => setIsMobileOpen(false)}
-                    className={cn(
-                      'flex items-center p-3 text-sm font-medium rounded-lg transition-colors hover:text-primary hover:bg-primary/10',
-                      pathname === route.href ? 'text-primary bg-primary/10' : 'text-muted-foreground',
-                      isCollapsed && 'justify-center'
-                    )}
-                  >
-                    <route.icon className={cn('h-5 w-5', isCollapsed ? 'mr-0' : 'mr-3')} />
-                    {!isCollapsed && <span>{route.label}</span>}
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
+                  </div>
+                ) : null;
+              })}
+
+              {/* No Access Message */}
+              {routes.every(route => !can(route.permission || '')) && (
+                <div className="p-4 text-center">
+                  <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500 mb-2" />
+                  <p className="text-sm text-muted-foreground">You don't have access to any modules.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

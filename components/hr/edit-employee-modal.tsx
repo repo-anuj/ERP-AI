@@ -33,7 +33,10 @@ const employeeUpdateSchema = z.object({
     (val) => (val === "" || val === null || val === undefined) ? null : parseFloat(String(val)),
     z.number().positive("Salary must be positive").optional().nullable()
   ),
-  status: z.string().optional(), 
+  status: z.string().optional(),
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  role: z.enum(["employee", "admin", "manager"]).optional(),
+  permissions: z.array(z.string()).optional(),
 });
 
 type EmployeeUpdateFormData = z.infer<typeof employeeUpdateSchema>;
@@ -66,6 +69,8 @@ export function EditEmployeeModal({ employee, isOpen, onClose, onSuccess }: Edit
         department: employee.department || '',
         salary: employee.salary || null,
         status: employee.status || '',
+        role: employee.role || 'employee',
+        // Don't set password - it will be entered by admin if needed
       });
     } else if (!isOpen) {
        form.reset({}); // Clear form when closed
@@ -104,8 +109,8 @@ export function EditEmployeeModal({ employee, isOpen, onClose, onSuccess }: Edit
     } catch (error: any) {
       console.error("Failed to update employee:", error);
       const errorMsg = error.message || "Failed to update employee details.";
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: errorMsg,
         variant: "destructive",
       });
@@ -185,7 +190,36 @@ export function EditEmployeeModal({ employee, isOpen, onClose, onSuccess }: Edit
             {/* Consider using a Select component for status */}
             <Input id="status" {...form.register("status")} className="col-span-3" />
           </div>
-        
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="password" className="text-right">
+              Password
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Leave blank to keep current password"
+              {...form.register("password")}
+              className="col-span-3"
+            />
+            {form.formState.errors.password && <p className="col-span-4 text-red-500 text-sm">{form.formState.errors.password.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="role" className="text-right">
+              Role
+            </Label>
+            <select
+              id="role"
+              {...form.register("role")}
+              className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="employee">Employee</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
           <DialogFooter>
              <DialogClose asChild>
                 <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
