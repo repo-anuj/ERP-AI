@@ -4,7 +4,7 @@ import { createNotification } from '@/lib/notification-service';
 
 /**
  * Create a budget for a project
- * 
+ *
  * @param project The project to create a budget for
  * @param userId The user who is creating the budget
  * @returns The created budget or null if failed
@@ -18,7 +18,11 @@ export async function createProjectBudget(
     const existingBudget = await prisma.budget.findFirst({
       where: {
         companyId: project.companyId,
-        relatedTo: project.id,
+        type: 'project',
+        OR: [
+          { name: { contains: project.name, mode: 'insensitive' } },
+          { description: { contains: project.id, mode: 'insensitive' } }
+        ]
       },
     });
 
@@ -31,7 +35,6 @@ export async function createProjectBudget(
     const budget = await prisma.budget.create({
       data: {
         name: `Budget for ${project.name}`,
-        description: `Automatically generated budget for project: ${project.name}`,
         type: 'project',
         startDate: project.startDate,
         endDate: project.endDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // Default to 1 year if no end date
@@ -47,8 +50,8 @@ export async function createProjectBudget(
             id: userId,
           },
         },
-        // Store the original project ID for reference
-        relatedTo: project.id,
+        // Include project ID in description for reference
+        description: `Automatically generated budget for project: ${project.name} (ID: ${project.id})`,
       },
     });
 
@@ -74,7 +77,7 @@ export async function createProjectBudget(
 
 /**
  * Update a project's budget when the project is updated
- * 
+ *
  * @param project The updated project
  * @param userId The user who is updating the project
  * @returns The updated budget or null if failed
@@ -88,7 +91,11 @@ export async function updateProjectBudget(
     const existingBudget = await prisma.budget.findFirst({
       where: {
         companyId: project.companyId,
-        relatedTo: project.id,
+        type: 'project',
+        OR: [
+          { name: { contains: project.name, mode: 'insensitive' } },
+          { description: { contains: project.id, mode: 'insensitive' } }
+        ]
       },
     });
 
@@ -104,7 +111,7 @@ export async function updateProjectBudget(
       },
       data: {
         name: `Budget for ${project.name}`,
-        description: `Automatically updated budget for project: ${project.name}`,
+        description: `Automatically updated budget for project: ${project.name} (ID: ${project.id})`,
         startDate: project.startDate,
         endDate: project.endDate || existingBudget.endDate,
         totalBudget: project.budget || existingBudget.totalBudget,
@@ -120,7 +127,7 @@ export async function updateProjectBudget(
 
 /**
  * Link a transaction to a project
- * 
+ *
  * @param transactionId The ID of the transaction to link
  * @param projectId The ID of the project to link to
  * @param userId The user who is creating the link
@@ -174,7 +181,7 @@ export async function linkTransactionToProject(
 
 /**
  * Get all transactions linked to a project
- * 
+ *
  * @param projectId The ID of the project
  * @param companyId The company ID
  * @returns Array of transactions or empty array if none found
@@ -214,7 +221,7 @@ export async function getProjectTransactions(
 
 /**
  * Get financial summary for a project
- * 
+ *
  * @param projectId The ID of the project
  * @param companyId The company ID
  * @returns Financial summary object
@@ -225,12 +232,25 @@ export async function getProjectFinancialSummary(
 ) {
   try {
     // Get the project budget
-    const budget = await prisma.budget.findFirst({
-      where: {
-        companyId,
-        relatedTo: projectId,
-      },
+    // Look for a budget with the project name or a budget that mentions the project ID in its name or description
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { name: true }
     });
+
+    let budget = null;
+    if (project) {
+      budget = await prisma.budget.findFirst({
+        where: {
+          companyId,
+          type: 'project',
+          OR: [
+            { name: { contains: project.name, mode: 'insensitive' } },
+            { description: { contains: projectId, mode: 'insensitive' } }
+          ]
+        },
+      });
+    }
 
     // Get all transactions linked to the project
     const transactions = await getProjectTransactions(projectId, companyId);
