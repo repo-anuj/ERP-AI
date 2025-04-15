@@ -50,9 +50,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const response = await fetch("/api/notifications")
       if (!response.ok) throw new Error("Failed to fetch notifications")
       const data = await response.json()
-      setNotifications(data)
+
+      // Check if the response has a notifications property (new API format)
+      if (data && data.notifications) {
+        setNotifications(data.notifications)
+      } else {
+        // Fallback to the old format or empty array if neither format is valid
+        setNotifications(Array.isArray(data) ? data : [])
+      }
     } catch (error) {
       console.error("Failed to fetch notifications:", error)
+      setNotifications([])
     } finally {
       setLoading(false)
     }
@@ -82,11 +90,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }
 
+  // Make sure notifications is an array
+  const notificationsArray = Array.isArray(notifications) ? notifications : [];
+
   // Calculate unread count
-  const unreadCount = notifications.filter(notification => !notification.read).length;
+  const unreadCount = notificationsArray.filter(notification => !notification.read).length;
 
   // Parse metadata if it exists
-  const processedNotifications = notifications.map(notification => {
+  const processedNotifications = notificationsArray.map(notification => {
     if (notification.metadata && typeof notification.metadata === 'string') {
       try {
         return {

@@ -47,6 +47,8 @@ model Company {
   financialAccounts FinancialAccount[]
   recurringSchedules RecurringSchedule[]
   budgets           Budget[]
+  attendance        Attendance[]
+  approvalWorkflows ApprovalWorkflow[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -103,13 +105,38 @@ model Employee {
   startDate  DateTime
   salary     Float?
   status     String   @default("active")
+  password   String?  // Added for employee login
+  role       String   @default("employee") // employee, admin, manager
+  permissions String[] // Array of permissions
+  lastLogin  DateTime?
   company    Company  @relation(fields: [companyId], references: [id])
   companyId  String   @db.ObjectId
   sales      Sale[]
+  attendance Attendance[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@index([companyId])
+  @@index([role])
+}
+
+model Attendance {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String   @db.ObjectId
+  date       DateTime @default(now())
+  checkIn    DateTime @default(now())
+  checkOut   DateTime?
+  status     String   @default("present") // present, absent, late, half-day, leave
+  notes      String?
+  company    Company  @relation(fields: [companyId], references: [id])
+  companyId  String   @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([companyId])
+  @@index([date])
 }
 
 model Customer {
@@ -197,7 +224,7 @@ model Task {
   projectId            String   @db.ObjectId
   name                 String
   description          String?
-  status               String // not_started, in_progress, completed, blocked
+  status               String // not_started, in_progress, completed, blocked, awaiting_approval
   priority             String // low, medium, high, urgent
   assigneeId           String
   assigneeName         String
@@ -208,6 +235,12 @@ model Task {
   completionPercentage Int
   dependencies         String[] @db.ObjectId
   notes                String?
+  approvalRequired     Boolean  @default(false)
+  approvalStatus       String?  // pending, approved, rejected
+  approvedById         String?  @db.ObjectId
+  approvedByName       String?
+  approvedAt           DateTime?
+  rejectionReason      String?
   companyId            String   @db.ObjectId
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -402,4 +435,48 @@ model BudgetItem {
   @@index([categoryId])
 }
 
+// Enhanced notification model will be implemented in a future update
 
+model ApprovalWorkflow {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String?
+  itemType        String    // task, project, sale, purchase, expense, etc.
+  itemId          String    @db.ObjectId
+  status          String    @default("pending") // pending, approved, rejected, canceled
+  currentStepIndex Int       @default(0)
+  steps           WorkflowStep[]
+  initiatorId     String    @db.ObjectId // Can be either userId or employeeId
+  initiatorType   String    // user or employee
+  initiatorName   String
+  company         Company   @relation(fields: [companyId], references: [id])
+  companyId       String    @db.ObjectId
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  completedAt     DateTime?
+
+  @@index([itemId, itemType])
+  @@index([companyId])
+  @@index([status])
+}
+
+model WorkflowStep {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  workflow          ApprovalWorkflow @relation(fields: [workflowId], references: [id])
+  workflowId        String          @db.ObjectId
+  stepNumber        Int
+  approverId        String          @db.ObjectId // Can be either userId or employeeId
+  approverType      String          // user or employee
+  approverName      String
+  status            String          @default("pending") // pending, approved, rejected, skipped
+  comments          String?
+  actionDate        DateTime?
+  notificationSent  Boolean         @default(false)
+  reminderSent      Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([workflowId])
+  @@index([approverId])
+  @@index([status])
+}

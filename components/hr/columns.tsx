@@ -23,6 +23,10 @@ export type Employee = {
   startDate: string;
   salary?: number;
   status: string;
+  role?: string;
+  password?: string;
+  permissions?: string[];
+  lastLogin?: string;
   createdAt: string;
   updatedAt: string;
   // Add the assignments field based on the API response

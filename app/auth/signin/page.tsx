@@ -23,9 +23,10 @@ export default function SignInPage() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    isEmployee: false
   })
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -47,14 +48,20 @@ export default function SignInPage() {
         return
       }
 
-      console.log("Attempting to sign in...")
+      console.log("Attempting to sign in...", formData.isEmployee ? "as employee" : "as admin")
 
-      const response = await fetch("/api/auth/signin", {
+      // Determine which endpoint to use based on user type
+      const endpoint = formData.isEmployee ? "/api/auth/employee-signin" : "/api/auth/signin"
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        }),
       })
 
       const data = await response.json()
@@ -127,10 +134,23 @@ export default function SignInPage() {
                 disabled={isLoading}
               />
             </div>
+            <div className="flex items-center space-x-2 mt-4">
+              <input
+                type="checkbox"
+                id="isEmployee"
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                checked={formData.isEmployee}
+                onChange={(e) => handleInputChange("isEmployee", e.target.checked)}
+                disabled={isLoading}
+              />
+              <Label htmlFor="isEmployee" className="text-sm font-medium text-gray-700">
+                Sign in as employee
+              </Label>
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full"
               disabled={isLoading}
             >
@@ -147,4 +167,4 @@ export default function SignInPage() {
       </Card>
     </div>
   )
-} 
+}

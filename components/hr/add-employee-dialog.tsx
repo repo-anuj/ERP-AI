@@ -20,6 +20,8 @@ const employeeFormSchema = z.object({
   department: z.string().min(2, "Department is required"),
   startDate: z.string().min(2, "Start date is required"),
   salary: z.number().optional(),
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  role: z.enum(["employee", "manager", "admin"]).default("employee"),
 })
 
 type EmployeeFormValues = z.infer<typeof employeeFormSchema>
@@ -39,6 +41,7 @@ export function AddEmployeeDialog() {
       position: "",
       department: "",
       startDate: new Date().toISOString().split("T")[0],
+      role: "employee",
     },
   })
 
@@ -57,16 +60,16 @@ export function AddEmployeeDialog() {
       }
 
       const employee = await response.json()
-      
+
       setOpen(false)
       form.reset()
-      
+
       toast({
         title: "Employee Added",
         description: `${employee.firstName} ${employee.lastName} has been added successfully.`,
         variant: "default",
       })
-      
+
       // Refresh the page to show the new employee
       window.location.reload()
     } catch (error) {
@@ -90,7 +93,7 @@ export function AddEmployeeDialog() {
         <DialogHeader>
           <DialogTitle>Add New Employee</DialogTitle>
           <DialogDescription>
-            Fill in the employee details below. All required fields are marked with an asterisk (*).          
+            Fill in the employee details below. All required fields are marked with an asterisk (*).
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -206,6 +209,41 @@ export function AddEmployeeDialog() {
                   <FormControl>
                     <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} placeholder="Set initial password for employee" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="employee">Employee</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

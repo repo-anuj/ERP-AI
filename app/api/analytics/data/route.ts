@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma';
 import { withRetry } from '@/lib/db-utils';
 import { Sale, SaleItem, Employee, InventoryItem } from '@prisma/client';
 import { analyticsCache } from '@/lib/analytics-cache';
-import { generateMockAnalyticsData } from './mock-data';
 
 export const runtime = 'nodejs';
 
@@ -61,22 +60,38 @@ export async function POST(req: Request) {
     // Parse request data first to check cache
     const requestData = await req.json();
 
-    // For development, use mock data instead of real database queries
-    console.log('Using mock analytics data');
-    const mockData = generateMockAnalyticsData();
+    // Generate cache key from request data
+    const cacheKey = analyticsCache.generateKey(requestData);
 
-    // Add metadata
-    const responseData = {
-      ...mockData,
-      _meta: {
-        cached: false,
-        cacheTimestamp: null,
-        generatedAt: new Date().toISOString()
-      }
-    };
+    // Check if we have cached data for this request
+    const cachedData = analyticsCache.get(cacheKey);
+    if (cachedData) {
+      console.log('Using cached analytics data');
+      // Update the cached flag and timestamp
+      const updatedCachedData = {
+        ...cachedData,
+        _meta: {
+          ...cachedData._meta,
+          cached: true,
+          cacheTimestamp: new Date().toISOString()
+        }
+      };
+      return NextResponse.json(updatedCachedData);
+    }
 
-    // Return the mock data
-    return NextResponse.json(responseData);
+    console.log('Fetching fresh analytics data');
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (!token) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const payload = await verifyAuth(token);
+
+    if (!payload.email) {
+      return new NextResponse('Invalid token', { status: 401 });
+    }
 
     // Use retry logic for user lookup
     const user = await withRetry(async () => {

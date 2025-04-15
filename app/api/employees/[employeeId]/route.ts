@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/auth";
 import { z } from "zod";
-
 import { prisma } from "@/lib/prisma";
+import { hashPassword } from "@/lib/password";
 
 // Define Zod schema for validation (adjust fields as needed)
 const employeeUpdateSchema = z.object({
@@ -14,6 +15,9 @@ const employeeUpdateSchema = z.object({
   department: z.string().optional(),
   salary: z.number().positive("Salary must be positive").optional().nullable(),
   status: z.string().optional(), // Consider enum: active, inactive, on_leave etc.
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  role: z.enum(["employee", "admin", "manager"]).optional(),
+  permissions: z.array(z.string()).optional(),
 });
 
 export async function PATCH(
@@ -21,13 +25,29 @@ export async function PATCH(
   { params }: { params: { employeeId: string } }
 ) {
   try {
-    const { userId } = auth();
-    const body = await req.json();
-    const { employeeId } = params;
+    const token = cookies().get('token')?.value;
 
-    if (!userId) {
+    if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const payload = await verifyAuth(token);
+
+    if (!payload.email) {
+      return new NextResponse("Invalid token", { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: payload.email },
+      include: { company: true }
+    });
+
+    if (!user?.companyId) {
+      return new NextResponse("Company not found", { status: 404 });
+    }
+
+    const body = await req.json();
+    const { employeeId } = params;
 
     if (!employeeId) {
       return new NextResponse("Employee ID is required", { status: 400 });
@@ -43,16 +63,35 @@ export async function PATCH(
 
     const validatedData = validationResult.data;
 
-    // TODO: Add authorization check - Ensure user belongs to the same company as the employee
+    // Check if employee belongs to the user's company
+    const employee = await prisma.employee.findFirst({
+      where: {
+        id: employeeId,
+        companyId: user.companyId
+      }
+    });
+
+    if (!employee) {
+      return new NextResponse("Employee not found or you don't have permission", { status: 404 });
+    }
+
+    // Handle password hashing if provided
+    let dataToUpdate = { ...validatedData };
+
+    if (dataToUpdate.password) {
+      dataToUpdate.password = await hashPassword(dataToUpdate.password);
+    } else {
+      // Remove password field if not provided to avoid overwriting with null
+      delete dataToUpdate.password;
+    }
 
     // Update the employee in the database
     const updatedEmployee = await prisma.employee.update({
       where: {
         id: employeeId,
-        // Optional: Add companyId check for security
-        // companyId: user.company.id, // Assuming you fetch user's company ID
+        companyId: user.companyId // Add companyId check for security
       },
-      data: validatedData,
+      data: dataToUpdate,
     });
 
     return NextResponse.json(updatedEmployee);
