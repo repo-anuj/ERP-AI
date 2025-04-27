@@ -16,7 +16,7 @@ import {
   DollarSign,
   AlertTriangle,
 } from 'lucide-react';
-import Link from 'next/link';
+import { RestrictedLink } from './restricted-link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -61,6 +61,18 @@ const routes: RouteItem[] = [
     icon: ClipboardList,
     href: '/projects',
     permission: PERMISSIONS.VIEW_PROJECTS,
+    submenu: [
+      {
+        label: 'All Projects',
+        href: '/projects',
+        permission: PERMISSIONS.VIEW_PROJECTS,
+      },
+      {
+        label: 'Task Approvals',
+        href: '/projects/approvals',
+        permission: PERMISSIONS.APPROVE_TASKS,
+      },
+    ],
   },
   {
     label: 'Finance',
@@ -117,6 +129,7 @@ const routes: RouteItem[] = [
     href: '/settings',
     permission: PERMISSIONS.VIEW_SETTINGS,
   },
+
 ];
 
 export function Sidebar() {
@@ -201,8 +214,8 @@ export function Sidebar() {
           ) : (
             <div className="space-y-1">
               {routes.map((route) => {
-                // Only show routes the user has permission to access
-                return can(route.permission || '') ? (
+                // Show all routes but restrict access with toast notifications
+                return (
                   <div key={route.href}>
                     {route.submenu ? (
                       <>
@@ -229,48 +242,46 @@ export function Sidebar() {
 
                         {!isCollapsed && expandedMenus[route.label] && (
                           <div className="ml-6 mt-1 space-y-1">
-                            {route.submenu.map((subItem) => {
-                              // Only show submenu items the user has permission to access
-                              return can(subItem.permission || '') ? (
-                                <Link
-                                  key={subItem.href}
-                                  href={subItem.href}
-                                  onClick={() => setIsMobileOpen(false)}
-                                  className={cn(
-                                    'flex items-center p-2 text-sm rounded-md transition-colors hover:text-primary hover:bg-primary/10',
-                                    pathname === subItem.href ? 'text-primary bg-primary/10' : 'text-muted-foreground'
-                                  )}
-                                >
-                                  <span>{subItem.label}</span>
-                                </Link>
-                              ) : null;
-                            })}
+                            {route.submenu.map((subItem) => (
+                              <RestrictedLink
+                                key={subItem.href}
+                                href={subItem.href}
+                                permission={subItem.permission || ''}
+                                onClick={() => setIsMobileOpen(false)}
+                                isActive={pathname === subItem.href}
+                                className="flex items-center p-2 text-sm rounded-md transition-colors"
+                              >
+                                <span>{subItem.label}</span>
+                              </RestrictedLink>
+                            ))}
                           </div>
                         )}
                       </>
                     ) : (
-                      <Link
+                      <RestrictedLink
                         href={route.href}
+                        permission={route.permission || ''}
                         onClick={() => setIsMobileOpen(false)}
+                        isActive={pathname === route.href}
                         className={cn(
-                          'flex items-center p-3 text-sm font-medium rounded-lg transition-colors hover:text-primary hover:bg-primary/10',
-                          pathname === route.href ? 'text-primary bg-primary/10' : 'text-muted-foreground',
+                          'flex items-center p-3 text-sm font-medium rounded-lg transition-colors',
                           isCollapsed && 'justify-center'
                         )}
                       >
                         <route.icon className={cn('h-5 w-5', isCollapsed ? 'mr-0' : 'mr-3')} />
                         {!isCollapsed && <span>{route.label}</span>}
-                      </Link>
+                      </RestrictedLink>
                     )}
                   </div>
-                ) : null;
+                );
               })}
 
-              {/* No Access Message */}
+              {/* No Access Message - Only show when user has absolutely no permissions */}
               {routes.every(route => !can(route.permission || '')) && (
                 <div className="p-4 text-center">
                   <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500 mb-2" />
                   <p className="text-sm text-muted-foreground">You don't have access to any modules.</p>
+                  <p className="text-xs text-muted-foreground mt-2">Please contact your administrator for assistance.</p>
                 </div>
               )}
             </div>

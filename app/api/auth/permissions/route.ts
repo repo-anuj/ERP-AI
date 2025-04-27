@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const token = cookies().get('token')?.value;
     const isEmployee = cookies().get('isEmployee')?.value === 'true';
-    
+
     if (!token) {
       return NextResponse.json({
         permissions: [],
@@ -19,7 +19,7 @@ export async function GET() {
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload) {
       return NextResponse.json({
         permissions: [],
@@ -48,7 +48,10 @@ export async function GET() {
       // Get combined permissions based on role and department
       const role = employee.role || 'employee';
       const department = employee.department || '';
-      const permissions = getCombinedPermissions(role, department);
+
+      // Special handling for managers and admins - they can access everything
+      // For regular employees, access is based on their department
+      const permissions = getCombinedPermissions(role, department, false); // false indicates this is an employee, not a user
 
       // If employee has custom permissions, use those instead
       if (employee.permissions && employee.permissions.length > 0) {
@@ -66,7 +69,7 @@ export async function GET() {
         department,
         isEmployee: true
       });
-    } 
+    }
     // Handle admin/user permissions
     else {
       // Admin users have all permissions
@@ -83,12 +86,13 @@ export async function GET() {
         }, { status: 404 });
       }
 
-      // For now, all regular users are considered admins
-      const permissions = getCombinedPermissions('admin', '');
+      // Regular users (owners) have unrestricted access to everything
+      const role = 'admin';
+      const permissions = getCombinedPermissions(role, '', true); // true indicates this is a user (owner)
 
       return NextResponse.json({
         permissions,
-        role: 'admin',
+        role,
         department: null,
         isEmployee: false
       });
