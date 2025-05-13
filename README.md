@@ -12,7 +12,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-blue?style=for-the-badge&logo=tailwind-css&logoColor=white&color=06B6D4)](https://tailwindcss.com/)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/repo-anuj/ERP-AI/main/assets/illustration/dashboard-preview.png" alt="ERP-AI Dashboard Preview" width="80%">
+  <img src="https://media-hosting.imagekit.io/0cad8538f65f4c2d/WhatsApp%20Image%202025-04-11%20at%2010.37.38_b28d971c.jpg?Expires=1841748008&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=nZP9eJVL6OAo2eggzQ2mtR6R4yOzvilufK~d0qcLtliMlaja0RkX0DTZuH1iHBNSn1bhLnQoRdK3lgvDI4-tZciBhULY-0UPgG6YVMEXHzPQm2li4nawNZU8Qoj40QR0WVJaJ2RYn1AS4xLuKwBJtqtAc5lxF2Tli~egAMrwf9G-LLzusaoPFcoy0ReWwMd8Ym~PLzRmcuGDNOBToaY9vwPN4zkhFm2CqjSEBLVjWB9vR4f-mI1cQ7VWg2yPBmmaTQyMbhX~9SGppZAPXjB5~3C1IiTjAWZ-~Y24g9ehrEzG7qEw3rn-oj2TdOToovxBUVCwp67cT58liLO4ySly~w__" alt="ERP-AI Dashboard Preview" width="80%">
 </p>
 
 </div>
