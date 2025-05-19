@@ -52,13 +52,7 @@ async function requestTaskApproval(req: Request) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
-        project: {
-          select: {
-            name: true,
-            managerId: true,
-            managerName: true,
-          },
-        },
+        project: true,
       },
     });
 
@@ -93,7 +87,7 @@ async function requestTaskApproval(req: Request) {
       task.name,
       payload.id,
       `${payload.firstName} ${payload.lastName}`,
-      task.project.managerId,
+      task.project.projectManager.employeeId,
       task.project.name
     );
 
@@ -139,12 +133,7 @@ async function respondToTaskApproval(req: Request) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
-        project: {
-          select: {
-            name: true,
-            managerId: true,
-          },
-        },
+        project: true,
       },
     });
 
@@ -153,7 +142,7 @@ async function respondToTaskApproval(req: Request) {
     }
 
     // Check if the employee is the project manager or has approval permissions
-    const isManager = isEmployee && task.project.managerId === payload.id;
+    const isManager = isEmployee && task.project.projectManager.employeeId === payload.id;
     const hasApprovalPermission = !isEmployee || (isEmployee && payload.role === 'admin' || payload.role === 'manager');
 
     if (!isManager && !hasApprovalPermission) {
@@ -203,7 +192,7 @@ async function respondToTaskApproval(req: Request) {
 }
 
 // Get tasks awaiting approval
-async function getTasksAwaitingApproval(req: Request) {
+async function getTasksAwaitingApproval(_req: Request) {
   try {
     const token = cookies().get('token')?.value;
     const isEmployee = cookies().get('isEmployee')?.value === 'true';
@@ -251,70 +240,117 @@ async function getTasksAwaitingApproval(req: Request) {
     let tasks;
 
     if (isEmployee) {
-      // Get projects where the employee is a manager
-      const managedProjects = await prisma.project.findMany({
+      // Get all projects for the company
+      const allProjects = await prisma.project.findMany({
         where: {
-          companyId,
-          managerId: payload.id,
+          companyId: companyId || undefined,
         },
         select: {
           id: true,
+          projectManager: true,
         },
       });
+
+      // Filter to find projects where the employee is the manager
+      const managedProjects = allProjects.filter(
+        project => project.projectManager.employeeId === payload.id
+      );
 
       const managedProjectIds = managedProjects.map(project => project.id);
 
       // Get tasks awaiting approval from managed projects
       tasks = await prisma.task.findMany({
         where: {
-          companyId,
+          companyId: companyId || undefined,
           projectId: {
             in: managedProjectIds,
           },
           status: 'awaiting_approval',
         },
-        include: {
-          project: {
-            select: {
-              name: true,
-            },
-          },
-          assignee: {
-            select: {
-              firstName: true,
-              lastName: true,
-            },
-          },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          status: true,
+          priority: true,
+          assigneeId: true,
+          assigneeName: true,
+          dueDate: true,
+          completionPercentage: true,
+          projectId: true,
+          updatedAt: true,
         },
         orderBy: {
           updatedAt: 'desc',
         },
       });
+
+      // Project names will be handled later
     } else {
       // Admin or regular user - get all tasks awaiting approval
       tasks = await prisma.task.findMany({
         where: {
-          companyId,
+          companyId: companyId || undefined,
           status: 'awaiting_approval',
         },
-        include: {
-          project: {
-            select: {
-              name: true,
-            },
-          },
-          assignee: {
-            select: {
-              firstName: true,
-              lastName: true,
-            },
-          },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          status: true,
+          priority: true,
+          assigneeId: true,
+          assigneeName: true,
+          dueDate: true,
+          completionPercentage: true,
+          projectId: true,
+          updatedAt: true,
         },
         orderBy: {
           updatedAt: 'desc',
         },
       });
+
+      // Get project names for the tasks
+      const projectIds = tasks.map(task => task.projectId).filter(id => id !== null);
+      const projects = await prisma.project.findMany({
+        where: {
+          id: {
+            in: projectIds,
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+      // Project names will be handled later
     }
+
+    // Combine both project name maps
+    const projectNameMap = new Map();
+
+    // Get all project IDs from tasks
+    const allProjectIds = tasks.map(task => task.projectId);
+
+    // Get all projects for these IDs
+    const allProjects = await prisma.project.findMany({
+      where: {
+        id: {
+          in: allProjectIds,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    // Create a map of project IDs to names
+    allProjects.forEach(project => {
+      projectNameMap.set(project.id, project.name);
+    });
 
     // Format the tasks for the response
     const formattedTasks = tasks.map(task => ({
@@ -323,8 +359,8 @@ async function getTasksAwaitingApproval(req: Request) {
       description: task.description,
       status: task.status,
       priority: task.priority,
-      assigneeName: `${task.assignee.firstName} ${task.assignee.lastName}`,
-      projectName: task.project.name,
+      assigneeName: task.assigneeName,
+      projectName: projectNameMap.get(task.projectId) || 'Unknown Project',
       completionPercentage: task.completionPercentage || 0,
       dueDate: task.dueDate,
       requestedAt: task.updatedAt,

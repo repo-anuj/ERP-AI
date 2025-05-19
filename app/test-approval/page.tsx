@@ -10,6 +10,24 @@ import { TaskApprovalModal } from "@/components/projects/task-approval-modal";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
+// Define Task interface
+interface Task {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  priority: string;
+  assigneeName: string;
+  projectName: string;
+  completionPercentage: number;
+  dueDate: Date;
+  approvalStatus?: string;
+  requestedAt?: Date;
+  approvedByName?: string;
+  approvedAt?: Date;
+  rejectionReason?: string;
+}
+
 // Mock task data
 const mockTasks = [
   {
@@ -68,95 +86,95 @@ const mockTasks = [
 ];
 
 export default function TestApprovalPage() {
-  const [tasks, setTasks] = useState(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | null>(null);
   const { toast } = useToast();
-  
+
   // Request approval for a task
   const handleRequestApproval = async (taskId: string, message: string) => {
     // In a real app, this would be an API call
     // For demo purposes, we'll just update the local state
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { 
-            ...task, 
+    setTasks(tasks.map(task =>
+      task.id === taskId
+        ? {
+            ...task,
             status: 'awaiting_approval',
             approvalStatus: 'pending',
             requestedAt: new Date(),
-          } 
+          }
         : task
     ));
-    
+
     toast({
       title: "Approval Requested",
       description: "Your task has been submitted for approval.",
     });
   };
-  
+
   // Approve a task
   const handleApprove = async (taskId: string, comments?: string) => {
     // In a real app, this would be an API call
     // For demo purposes, we'll just update the local state
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { 
-            ...task, 
+    setTasks(tasks.map(task =>
+      task.id === taskId
+        ? {
+            ...task,
             status: 'completed',
             approvalStatus: 'approved',
             approvedByName: 'Manager',
             approvedAt: new Date(),
-          } 
+          }
         : task
     ));
-    
+
     toast({
       title: "Task Approved",
       description: "The task has been approved successfully.",
     });
   };
-  
+
   // Reject a task
   const handleReject = async (taskId: string, comments?: string) => {
     // In a real app, this would be an API call
     // For demo purposes, we'll just update the local state
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { 
-            ...task, 
+    setTasks(tasks.map(task =>
+      task.id === taskId
+        ? {
+            ...task,
             status: 'in_progress',
             approvalStatus: 'rejected',
             approvedByName: 'Manager',
             approvedAt: new Date(),
             rejectionReason: comments,
-          } 
+          }
         : task
     ));
-    
+
     toast({
       title: "Task Rejected",
       description: "The task has been rejected and sent back to the assignee.",
     });
   };
-  
+
   // Open approval modal
   const openApprovalModal = (taskId: string, action: 'approve' | 'reject') => {
     setSelectedTask(taskId);
     setApprovalAction(action);
     setIsApprovalModalOpen(true);
   };
-  
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-6">Test Approval Workflow</h1>
-      
+
       <Tabs defaultValue="employee" className="mb-8">
         <TabsList>
           <TabsTrigger value="employee">Employee View</TabsTrigger>
           <TabsTrigger value="manager">Manager View</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="employee" className="space-y-6 mt-4">
           <h2 className="text-xl font-semibold">My Tasks</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -165,7 +183,7 @@ export default function TestApprovalPage() {
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle>{task.name}</CardTitle>
-                    <TaskApprovalStatus 
+                    <TaskApprovalStatus
                       status={task.status}
                       approvalStatus={task.approvalStatus}
                       approvedByName={task.approvedByName}
@@ -185,7 +203,7 @@ export default function TestApprovalPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="pt-2">
-                  <TaskRequestApproval 
+                  <TaskRequestApproval
                     taskId={task.id}
                     taskName={task.name}
                     onRequestApproval={handleRequestApproval}
@@ -196,7 +214,7 @@ export default function TestApprovalPage() {
             ))}
           </div>
         </TabsContent>
-        
+
         <TabsContent value="manager" className="space-y-6 mt-4">
           <h2 className="text-xl font-semibold">Tasks Awaiting Approval</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -228,16 +246,16 @@ export default function TestApprovalPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="pt-2 flex justify-between">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="text-destructive hover:bg-destructive/10"
                       onClick={() => openApprovalModal(task.id, 'reject')}
                     >
                       Reject
                     </Button>
-                    <Button 
-                      variant="default" 
+                    <Button
+                      variant="default"
                       size="sm"
                       onClick={() => openApprovalModal(task.id, 'approve')}
                     >
@@ -246,14 +264,14 @@ export default function TestApprovalPage() {
                   </CardFooter>
                 </Card>
               ))}
-            
+
             {tasks.filter(task => task.status === 'awaiting_approval').length === 0 && (
               <div className="col-span-2 text-center py-8">
                 <p className="text-muted-foreground">No tasks awaiting approval</p>
               </div>
             )}
           </div>
-          
+
           <h2 className="text-xl font-semibold mt-8">Recently Approved/Rejected</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tasks
@@ -263,7 +281,7 @@ export default function TestApprovalPage() {
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <CardTitle>{task.name}</CardTitle>
-                      <TaskApprovalStatus 
+                      <TaskApprovalStatus
                         status={task.status}
                         approvalStatus={task.approvalStatus}
                         approvedByName={task.approvedByName}
@@ -286,7 +304,7 @@ export default function TestApprovalPage() {
                   </CardContent>
                 </Card>
               ))}
-              
+
             {tasks.filter(task => task.approvalStatus === 'approved' || task.approvalStatus === 'rejected').length === 0 && (
               <div className="col-span-2 text-center py-8">
                 <p className="text-muted-foreground">No recently approved or rejected tasks</p>
@@ -295,7 +313,7 @@ export default function TestApprovalPage() {
           </div>
         </TabsContent>
       </Tabs>
-      
+
       {/* Approval Modal */}
       {selectedTask && (
         <TaskApprovalModal

@@ -147,7 +147,8 @@ export default function ApprovalsPage() {
   });
 
   // Get unique project names for the filter dropdown
-  const projectNames = [...new Set([...tasks, ...recentlyApproved].map(task => task.projectName))];
+  const allProjectNames = [...tasks, ...recentlyApproved].map(task => task.projectName);
+  const projectNames = Array.from(new Set(allProjectNames));
 
   // Handle task approval
   const handleApprove = async (taskId: string, comments?: string) => {

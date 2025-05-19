@@ -7,14 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
-import { 
-  BarChart, 
-  FileText, 
-  Download, 
-  Calendar, 
-  RefreshCw, 
-  TrendingUp, 
-  DollarSign, 
+import {
+  BarChart,
+  FileText,
+  Download,
+  Calendar,
+  RefreshCw,
+  TrendingUp,
+  DollarSign,
   CreditCard,
   ArrowDownUp
 } from 'lucide-react';
@@ -24,14 +24,22 @@ import { ProfitLossReport } from '@/components/finance/reports/profit-loss-repor
 import { BalanceSheetReport } from '@/components/finance/reports/balance-sheet-report';
 import { ExpensesByCategoryReport } from '@/components/finance/reports/expenses-by-category-report';
 import { addDays, subDays, startOfMonth, endOfMonth, format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
 export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('cash-flow');
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
+
+  // Handle date range changes, ensuring we never set undefined
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    if (range) {
+      setDateRange(range);
+    }
+  };
   const [reportData, setReportData] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -87,7 +95,7 @@ export default function ReportsPage() {
 
     try {
       let csvContent = '';
-      
+
       // Different CSV format based on report type
       if (activeTab === 'cash-flow') {
         csvContent = 'Date,Income,Expenses,Net Cash Flow\n';
@@ -122,18 +130,18 @@ export default function ReportsPage() {
         });
         csvContent += `\nTotal Expenses,${reportData.totalExpenses}\n`;
       }
-      
+
       // Create and download the CSV file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `${activeTab}-report-${format(dateRange.from, 'yyyy-MM-dd')}-to-${format(dateRange.to, 'yyyy-MM-dd')}.csv`);
+      link.setAttribute('download', `${activeTab}-report-${dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : 'start'}-to-${dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : 'end'}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast.success('Report downloaded successfully');
     } catch (error) {
       console.error('Error downloading report:', error);
@@ -143,43 +151,48 @@ export default function ReportsPage() {
 
   // Quick date range selectors
   const setThisMonth = () => {
-    setDateRange({
+    const range: DateRange = {
       from: startOfMonth(new Date()),
       to: endOfMonth(new Date()),
-    });
+    };
+    setDateRange(range);
   };
 
   const setLastMonth = () => {
     const today = new Date();
     const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    setDateRange({
+    const range: DateRange = {
       from: startOfMonth(lastMonth),
       to: endOfMonth(lastMonth),
-    });
+    };
+    setDateRange(range);
   };
 
   const setLast30Days = () => {
     const today = new Date();
-    setDateRange({
+    const range: DateRange = {
       from: subDays(today, 30),
       to: today,
-    });
+    };
+    setDateRange(range);
   };
 
   const setLast90Days = () => {
     const today = new Date();
-    setDateRange({
+    const range: DateRange = {
       from: subDays(today, 90),
       to: today,
-    });
+    };
+    setDateRange(range);
   };
 
   const setThisYear = () => {
     const today = new Date();
-    setDateRange({
+    const range: DateRange = {
       from: new Date(today.getFullYear(), 0, 1),
       to: new Date(today.getFullYear(), 11, 31),
-    });
+    };
+    setDateRange(range);
   };
 
   return (
@@ -227,7 +240,7 @@ export default function ReportsPage() {
         </div>
         <DateRangePicker
           value={dateRange}
-          onChange={setDateRange}
+          onChange={handleDateRangeChange}
         />
       </div>
 
@@ -250,7 +263,7 @@ export default function ReportsPage() {
             <span>Expenses</span>
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="cash-flow" className="mt-4">
           <Card>
             <CardHeader>
@@ -278,7 +291,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="profit-loss" className="mt-4">
           <Card>
             <CardHeader>
@@ -306,7 +319,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="balance-sheet" className="mt-4">
           <Card>
             <CardHeader>
@@ -334,7 +347,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="expenses-by-category" className="mt-4">
           <Card>
             <CardHeader>

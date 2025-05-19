@@ -166,18 +166,6 @@ export async function PUT(req: Request) {
         description: data.description,
         // Ensure companyId is not changed
         companyId: user.companyId,
-      },
-      select: { // Select the fields to return
-        id: true,
-        name: true,
-        sku: true,
-        category: true,
-        quantity: true,
-        price: true,
-        status: true,
-        description: true,
-        createdAt: true,
-        updatedAt: true
       }
     });
 

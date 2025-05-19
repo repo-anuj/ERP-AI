@@ -27,6 +27,20 @@ import { AccountDialog } from '@/components/finance/account-dialog';
 import { RecalculateBalanceButton } from '@/components/finance/recalculate-balance-button';
 import { Badge } from '@/components/ui/badge';
 
+interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  account: string | { id: string; name: string; [key: string]: any };
+  reference?: string;
+  status: string;
+  sourceType?: 'finance' | 'sales' | 'inventory';
+  originalData?: any;
+}
+
 interface Account {
   id: string;
   name: string;
