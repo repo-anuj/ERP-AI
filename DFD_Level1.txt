@@ -1,0 +1,110 @@
+```
++----------------+                                                +----------------+
+|                |                                                |                |
+|     ADMIN      |                                                |    EMPLOYEE    |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | MANAGE USERS                                                    | MANAGE ATTENDANCE
+        | MANAGE COMPANY                                                  | VIEW ASSIGNMENTS
+        | VIEW REPORTS                                                    |
+        v                                                                 v
++----------------+                                                +----------------+
+|                |                                                |                |
+|     USER       |                                                |   EMPLOYEE     |
+|   MANAGEMENT   |                                                |   MANAGEMENT   |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | STORE USER DATA                                                 | STORE EMPLOYEE DATA
+        v                                                                 v
++----------------+                                                +----------------+
+|                |                                                |                |
+|      USER      |                                                |    EMPLOYEE    |
+|    DATABASE    |                                                |    DATABASE    |
+|                |                                                |                |
++----------------+                                                +----------------+
+
++----------------+                                                +----------------+
+|                |                                                |                |
+|    MANAGER     |                                                |    CUSTOMER    |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | MANAGE INVENTORY                                                | PLACE ORDERS
+        | MANAGE SALES                                                    | VIEW PRODUCTS
+        v                                                                 v
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|   INVENTORY    |<-------->|     SALES     |<-------->|    CUSTOMER    |
+|   MANAGEMENT   |          |   MANAGEMENT  |          |   MANAGEMENT   |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+        |                           |                           |
+        | STORE INVENTORY           | STORE SALES               | STORE CUSTOMER DATA
+        v                           v                           v
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|   INVENTORY    |          |     SALES      |          |    CUSTOMER    |
+|    DATABASE    |          |    DATABASE    |          |    DATABASE    |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+
++----------------+                                                +----------------+
+|                |                                                |                |
+|    FINANCE     |                                                |    PROJECT     |
+|    MANAGER     |                                                |    MANAGER     |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | MANAGE TRANSACTIONS                                             | MANAGE PROJECTS
+        | MANAGE BUDGETS                                                  | MANAGE TASKS
+        v                                                                 v
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|    FINANCE     |<-------->|    BUDGET     |<-------->|    PROJECT     |
+|   MANAGEMENT   |          |   MANAGEMENT  |          |   MANAGEMENT   |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+        |                           |                           |
+        | STORE TRANSACTIONS        | STORE BUDGETS             | STORE PROJECTS
+        v                           v                           v
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|  TRANSACTION   |          |     BUDGET     |          |    PROJECT     |
+|    DATABASE    |          |    DATABASE    |          |    DATABASE    |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+
++----------------+
+|                |
+|    ANALYTICS   |<---------+
+|     ENGINE     |          |
+|                |          |
++----------------+          |
+        |                   |
+        | GENERATE REPORTS  |
+        v                   |
++----------------+          |
+|                |          |
+|    REPORTS     |          |
+|                |          |
++----------------+          |
+                            |
+                            |
++----------------+          |
+|                |          |
+|  NOTIFICATION  |----------+
+|     SYSTEM     |
+|                |
++----------------+
+        |
+        | SEND NOTIFICATIONS
+        v
++----------------+
+|                |
+| NOTIFICATION   |
+|   DATABASE     |
+|                |
++----------------+
+```

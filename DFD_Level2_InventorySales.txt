@@ -1,0 +1,63 @@
+```
++----------------+                                                +----------------+
+|                |                                                |                |
+|    INVENTORY   |                                                |     SALES      |
+|     MANAGER    |                                                |     MANAGER    |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | ADD/EDIT PRODUCTS                                               | CREATE SALES
+        | MANAGE STOCK                                                    | MANAGE CUSTOMERS
+        v                                                                 v
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|    PRODUCT     |<-------->|    INVENTORY   |<-------->|     SALES      |
+|   MANAGEMENT   |          |    TRACKING    |          |   PROCESSING   |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+        |                           |                           |
+        | STORE PRODUCT DATA        | UPDATE INVENTORY          | STORE SALES DATA
+        v                           v                           v
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|    PRODUCT     |<-------->|   INVENTORY    |<-------->|     SALES      |
+|    DATABASE    |          |    DATABASE    |          |    DATABASE    |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+                                    ^                           ^
+                                    |                           |
+                                    |                           |
+                            +----------------+          +----------------+
+                            |                |          |                |
+                            |   INVENTORY    |          |    CUSTOMER    |
+                            |    ANALYTICS   |          |   MANAGEMENT   |
+                            |                |          |                |
+                            +----------------+          +----------------+
+                                    |                           |
+                                    | GENERATE REPORTS          | STORE CUSTOMER DATA
+                                    v                           v
+                            +----------------+          +----------------+
+                            |                |          |                |
+                            |    REPORTS     |          |    CUSTOMER    |
+                            |    DATABASE    |          |    DATABASE    |
+                            |                |          |                |
+                            +----------------+          +----------------+
+                                                                ^
+                                                                |
+                                                                |
+                                                        +----------------+
+                                                        |                |
+                                                        |    INVOICE     |
+                                                        |   GENERATION   |
+                                                        |                |
+                                                        +----------------+
+                                                                |
+                                                                | STORE INVOICES
+                                                                v
+                                                        +----------------+
+                                                        |                |
+                                                        |    INVOICE     |
+                                                        |    DATABASE    |
+                                                        |                |
+                                                        +----------------+
+```
