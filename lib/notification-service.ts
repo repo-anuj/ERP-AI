@@ -27,33 +27,45 @@ interface CreateNotificationParams {
  */
 export async function createNotification(params: CreateNotificationParams) {
   try {
-    const notification = await prisma.notification.create({
-      data: {
-        title: params.title,
-        message: params.message,
-        type: params.type,
-        category: params.category,
-        priority: params.priority || 'normal',
-        isRead: false,
-        isActionRequired: params.isActionRequired || false,
-        actionType: params.actionType,
-        actionUrl: params.actionUrl,
-        actionData: params.actionData,
-        recipientId: params.recipientId,
-        recipientType: params.recipientType,
-        senderId: params.senderId,
-        senderType: params.senderType || 'system',
-        senderName: params.senderName,
-        relatedItemId: params.relatedItemId,
-        relatedItemType: params.relatedItemType,
-        status: params.status || 'pending',
-        expiresAt: params.expiresAt,
-        company: {
-          connect: {
-            id: params.companyId,
-          },
+    // Store additional fields in metadata as they're not direct fields in the Notification model
+    const metadata = {
+      category: params.category,
+      priority: params.priority || 'normal',
+      isActionRequired: params.isActionRequired || false,
+      actionData: params.actionData,
+      actionUrl: params.actionUrl,
+      status: params.status || 'pending',
+      expiresAt: params.expiresAt,
+      recipientType: params.recipientType,
+      senderId: params.senderId,
+      senderType: params.senderType || 'system',
+    };
+
+    // Create the notification with the correct schema
+    const notificationData: any = {
+      title: params.title,
+      message: params.message,
+      type: params.type,
+      read: false,
+      entityId: params.relatedItemId,
+      entityType: params.relatedItemType,
+      actionType: params.actionType,
+      actorName: params.senderName,
+      metadata: JSON.stringify(metadata),
+      link: params.actionUrl, // Store actionUrl in link field
+    };
+
+    // Only add user connection if recipientId is provided
+    if (params.recipientId) {
+      notificationData.user = {
+        connect: {
+          id: params.recipientId,
         },
-      },
+      };
+    }
+
+    const notification = await prisma.notification.create({
+      data: notificationData,
     });
 
     return notification;
