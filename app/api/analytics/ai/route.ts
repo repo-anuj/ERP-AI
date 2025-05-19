@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth';
-import { cookies } from 'next/headers';
 
 export const runtime = 'nodejs'; // Need this for Prisma
 

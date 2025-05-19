@@ -46,24 +46,9 @@ export async function POST(req: Request) {
             const company = await prisma.company.create({
                 data: {
                     name: companyName,
-                    industry,
-                    size: otherData.companySize,
-                    description: otherData.description,
                     address: otherData.address,
-                    city: otherData.city,
-                    state: otherData.state,
-                    zipCode: otherData.zipCode,
-                    country: otherData.country,
                     phone: otherData.phone,
-                    businessType: otherData.businessType,
-                    operatingHours: otherData.operatingHours,
-                    mainProducts: otherData.mainProducts,
-                    technologyStack: otherData.technologyStack || [],
-                    certifications: otherData.certifications || [],
-                    manufacturingCapacity: otherData.manufacturingCapacity,
-                    retailLocations: otherData.retailLocations ? parseInt(otherData.retailLocations) : null,
-                    departments: otherData.departments,
-                    additionalInfo: otherData.additionalInfo,
+                    email: userEmail, // Use the user's email as the company email initially
                     users: {
                         connect: {
                             id: user.id
@@ -96,4 +81,4 @@ export async function POST(req: Request) {
             details: error instanceof Error ? error.message : "Unknown error"
         }, { status: 500 })
     }
-} 
+}

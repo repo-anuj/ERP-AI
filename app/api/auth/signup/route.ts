@@ -48,9 +48,6 @@ export async function POST(req: Request) {
             const hashedPassword = await hashPassword(password)
             console.log("Password hashed successfully")
 
-            // Generate a unique clerkId
-            const clerkId = uuidv4()
-
             // Create user
             const user = await prisma.user.create({
                 data: {
@@ -58,7 +55,6 @@ export async function POST(req: Request) {
                     password: hashedPassword,
                     firstName,
                     lastName,
-                    clerkId,
                 },
             })
             console.log("User created successfully:", { id: user.id, email: user.email })

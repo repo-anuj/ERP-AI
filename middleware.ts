@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyAuth } from '@/lib/auth'
 
+// Define department types
+type DepartmentType = 'admin' | 'manager' | 'hr' | 'sales' | 'engineering' | 'finance' | 'employee';
+
 // Define department access permissions
-const departmentAccess = {
+const departmentAccess: Record<DepartmentType, string[]> = {
   admin: ['dashboard', 'inventory', 'sales', 'hr', 'projects', 'finance', 'analytics', 'settings'],
   manager: ['dashboard', 'inventory', 'sales', 'projects', 'analytics', 'settings'],
   hr: ['hr', 'analytics', 'settings'],
@@ -14,7 +17,7 @@ const departmentAccess = {
 }
 
 // Define department home pages
-const departmentHomePage = {
+const departmentHomePage: Record<DepartmentType, string> = {
   admin: '/',
   manager: '/',
   hr: '/hr',
@@ -46,12 +49,12 @@ export async function middleware(request: NextRequest) {
         if (isEmployee && verifiedToken) {
             // Get employee role and department
             const role = verifiedToken.role || 'employee'
-            const department = verifiedToken.department?.toLowerCase() || 'employee'
+            const department = (verifiedToken.department?.toLowerCase() || 'employee') as DepartmentType
 
             // Determine home page based on role and department
             const homePage = role === 'admin' || role === 'manager'
                 ? departmentHomePage.admin
-                : departmentHomePage[department as keyof typeof departmentHomePage] || '/'
+                : departmentHomePage[department] || '/'
 
             return NextResponse.redirect(new URL(homePage, request.url))
         } else {
@@ -72,7 +75,7 @@ export async function middleware(request: NextRequest) {
 
         // Get employee role and department
         const role = verifiedToken.role || 'employee'
-        const department = verifiedToken.department?.toLowerCase() || 'employee'
+        const department = (verifiedToken.department?.toLowerCase() || 'employee') as DepartmentType
 
         // Determine allowed sections based on role and department
         let allowedSections = []
@@ -82,9 +85,18 @@ export async function middleware(request: NextRequest) {
             allowedSections = departmentAccess.admin
         } else if (role === 'manager') {
             // Managers get manager access plus their department access
-            allowedSections = [
-                ...new Set([...departmentAccess.manager, ...departmentAccess[department] || []])
-            ]
+            // Combine arrays and remove duplicates without using Set spread
+            const combinedAccess = [...departmentAccess.manager];
+            const deptAccess = departmentAccess[department] || [];
+
+            // Add items from department access if they don't already exist
+            for (const item of deptAccess) {
+                if (!combinedAccess.includes(item)) {
+                    combinedAccess.push(item);
+                }
+            }
+
+            allowedSections = combinedAccess;
         } else {
             // Regular employees get their department access
             allowedSections = departmentAccess[department] || departmentAccess.employee
@@ -93,7 +105,7 @@ export async function middleware(request: NextRequest) {
         // Check if the current path is allowed
         if (!allowedSections.includes(pathSegment) && pathSegment !== '') {
             // Redirect to department home page if trying to access unauthorized section
-            const homePage = departmentHomePage[department as keyof typeof departmentHomePage] || '/settings'
+            const homePage = departmentHomePage[department] || '/settings'
             return NextResponse.redirect(new URL(homePage, request.url))
         }
 
@@ -101,7 +113,7 @@ export async function middleware(request: NextRequest) {
         if (pathSegment === '' && request.nextUrl.pathname === '/') {
             // Don't redirect admins and managers from dashboard
             if (role !== 'admin' && role !== 'manager') {
-                const homePage = departmentHomePage[department as keyof typeof departmentHomePage] || '/settings'
+                const homePage = departmentHomePage[department] || '/settings'
                 return NextResponse.redirect(new URL(homePage, request.url))
             }
         }
