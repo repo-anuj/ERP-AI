@@ -42,7 +42,7 @@ const INCOME_COLORS = ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5'];
 const EXPENSE_COLORS = ['#ef4444', '#f87171', '#fca5a5', '#fecaca', '#fee2e2'];
 
 export function ProfitLossReport({ data }: ProfitLossReportProps) {
-  if (!data) {
+  if (!data || !data.income || !data.expenses) {
     return (
       <div className="flex items-center justify-center h-[400px]">
         <p className="text-muted-foreground">No data available</p>
@@ -50,14 +50,18 @@ export function ProfitLossReport({ data }: ProfitLossReportProps) {
     );
   }
 
+  // Ensure categories exist before mapping
+  const incomeCategories = data.income.categories || [];
+  const expenseCategories = data.expenses.categories || [];
+
   // Prepare data for the pie charts
-  const incomeData = data.income.categories.map((category, index) => ({
+  const incomeData = incomeCategories.map((category, index) => ({
     name: category.name,
     value: category.amount,
     color: category.color || INCOME_COLORS[index % INCOME_COLORS.length],
   }));
 
-  const expenseData = data.expenses.categories.map((category, index) => ({
+  const expenseData = expenseCategories.map((category, index) => ({
     name: category.name,
     value: category.amount,
     color: category.color || EXPENSE_COLORS[index % EXPENSE_COLORS.length],
@@ -189,12 +193,12 @@ export function ProfitLossReport({ data }: ProfitLossReportProps) {
               </tr>
             </thead>
             <tbody>
-              {data.income.categories.map((category, index) => (
+              {incomeCategories.map((category, index) => (
                 <tr key={index} className="border-b hover:bg-muted/50">
                   <td className="py-2 px-4">
                     <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
+                      <div
+                        className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: category.color || INCOME_COLORS[index % INCOME_COLORS.length] }}
                       />
                       {category.name}
@@ -227,12 +231,12 @@ export function ProfitLossReport({ data }: ProfitLossReportProps) {
               </tr>
             </thead>
             <tbody>
-              {data.expenses.categories.map((category, index) => (
+              {expenseCategories.map((category, index) => (
                 <tr key={index} className="border-b hover:bg-muted/50">
                   <td className="py-2 px-4">
                     <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
+                      <div
+                        className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: category.color || EXPENSE_COLORS[index % EXPENSE_COLORS.length] }}
                       />
                       {category.name}

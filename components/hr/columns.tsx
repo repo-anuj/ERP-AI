@@ -95,9 +95,15 @@ export const columns = (
       return (
         <div className="flex flex-wrap gap-1">
           {assignments.map((assignment) => (
-            <Badge key={assignment.project.id} variant="outline">
-              {assignment.project.name}
-            </Badge>
+            assignment.project ? (
+              <Badge key={assignment.project.id} variant="outline">
+                {assignment.project.name}
+              </Badge>
+            ) : (
+              <Badge key={`unknown-${Math.random()}`} variant="outline" className="text-muted-foreground">
+                Unknown Project
+              </Badge>
+            )
           ))}
         </div>
       );

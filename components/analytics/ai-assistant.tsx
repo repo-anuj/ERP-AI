@@ -20,7 +20,8 @@ import {
   Download,
   History,
   Sparkles,
-  Lightbulb
+  Lightbulb,
+  Trash2
 } from 'lucide-react';
 import {
   DropdownMenu,

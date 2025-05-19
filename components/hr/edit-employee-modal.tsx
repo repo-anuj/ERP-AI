@@ -69,7 +69,10 @@ export function EditEmployeeModal({ employee, isOpen, onClose, onSuccess }: Edit
         department: employee.department || '',
         salary: employee.salary || null,
         status: employee.status || '',
-        role: employee.role || 'employee',
+        // Cast the role to the expected enum type or default to 'employee'
+        role: (employee.role === 'admin' || employee.role === 'manager' || employee.role === 'employee')
+          ? employee.role as 'admin' | 'manager' | 'employee'
+          : 'employee',
         // Don't set password - it will be entered by admin if needed
       });
     } else if (!isOpen) {
