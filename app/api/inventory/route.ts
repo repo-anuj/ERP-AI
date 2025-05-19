@@ -4,6 +4,8 @@ import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { createInventoryExpenseTransaction, trackInventoryQuantityChange } from '@/lib/inventory-finance-integration';
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     const cookieStore = await cookies();

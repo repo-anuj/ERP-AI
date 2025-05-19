@@ -4,6 +4,8 @@ import { verifyAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
+export const runtime = 'nodejs';
+
 const updateCompanySchema = z.object({
   name: z.string().min(1).optional(),
   address: z.string().min(1).optional(),

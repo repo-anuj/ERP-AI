@@ -4,6 +4,8 @@ import { verifyAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCombinedPermissions } from "@/lib/permissions";
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;

@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { z } from "zod";
 
+export const runtime = 'nodejs';
+
 const employeeSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),

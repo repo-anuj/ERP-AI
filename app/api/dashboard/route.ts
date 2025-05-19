@@ -3,16 +3,18 @@ import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse('Invalid token', { status: 401 });
     }
@@ -40,7 +42,7 @@ export async function GET() {
 
     // Get active sales count (excluding returns)
     const activeSalesCount = await prisma.sale.count({
-      where: { 
+      where: {
         companyId,
         status: { not: 'returned' }
       }
@@ -48,7 +50,7 @@ export async function GET() {
 
     // Get sales data
     const sales = await prisma.sale.findMany({
-      where: { 
+      where: {
         companyId,
         status: { not: 'returned' } // Exclude returns
       },
@@ -112,7 +114,7 @@ export async function GET() {
     // Calculate monthly sales for the current year
     const currentYear = new Date().getFullYear();
     const monthlySalesMap = new Map();
-    
+
     // Initialize with zero values for all months
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     months.forEach((month, index) => {
@@ -125,9 +127,9 @@ export async function GET() {
       if (saleDate.getFullYear() === currentYear) {
         const month = saleDate.getMonth();
         const currentTotal = monthlySalesMap.get(month).total;
-        monthlySalesMap.set(month, { 
-          name: months[month], 
-          total: currentTotal + sale.total 
+        monthlySalesMap.set(month, {
+          name: months[month],
+          total: currentTotal + sale.total
         });
       }
     });

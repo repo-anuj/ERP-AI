@@ -3,17 +3,19 @@ import { cookies } from "next/headers";
 import { verifyAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;
     const isEmployee = cookies().get('isEmployee')?.value === 'true';
-    
+
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
@@ -50,7 +52,7 @@ export async function GET() {
 
       // Get attendance records
       const attendanceRecords = await prisma.attendance.findMany({
-        where: { 
+        where: {
           employeeId: employee.id,
           date: {
             gte: new Date(new Date().setDate(new Date().getDate() - 30)) // Last 30 days
@@ -65,7 +67,7 @@ export async function GET() {
         isEmployee: true,
         attendanceRecords
       });
-    } 
+    }
     // If it's a regular user token
     else {
       const user = await prisma.user.findUnique({

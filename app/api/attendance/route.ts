@@ -4,6 +4,8 @@ import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
+export const runtime = 'nodejs';
+
 const attendanceSchema = z.object({
   employeeId: z.string(),
   date: z.string(),
@@ -16,13 +18,13 @@ const attendanceSchema = z.object({
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse('Invalid token', { status: 401 });
     }
@@ -50,13 +52,13 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse('Invalid token', { status: 401 });
     }
