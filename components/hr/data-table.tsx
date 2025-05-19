@@ -25,9 +25,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState, useMemo } from 'react';
 
-interface Employee {
-  // Add properties of Employee interface
-}
+// Import the Employee type from columns.tsx
+import { Employee } from './columns';
 
 interface DataTableProps<TData extends Employee, TValue> {
   columns: (onEdit: (employee: Employee) => void) => ColumnDef<TData, TValue>[]; // Update columns prop to receive onEdit handler

@@ -35,11 +35,12 @@ type MilestoneFormValues = z.infer<typeof milestoneFormSchema>
 
 interface AddMilestoneDialogProps {
   projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onMilestoneAdded?: () => void;
 }
 
-export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestoneDialogProps) {
-  const [open, setOpen] = useState(false)
+export function AddMilestoneDialog({ projectId, open, onOpenChange, onMilestoneAdded }: AddMilestoneDialogProps) {
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
@@ -83,17 +84,17 @@ export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestone
       }
 
       const milestone = await response.json()
-      
+
       // Reset form and close dialog
-      setOpen(false)
+      onOpenChange(false)
       form.reset()
-      
+
       toast({
         title: "Milestone Added",
         description: `${milestone.name} has been added successfully.`,
         variant: "default",
       })
-      
+
       // Notify parent component
       if (onMilestoneAdded) {
         onMilestoneAdded()
@@ -111,7 +112,7 @@ export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestone
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 gap-1">
           <PlusCircle className="h-3.5 w-3.5" />
@@ -140,7 +141,7 @@ export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestone
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="description"
@@ -154,7 +155,7 @@ export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestone
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -194,7 +195,7 @@ export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestone
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="status"
@@ -218,7 +219,7 @@ export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestone
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="deliverables"
@@ -226,8 +227,8 @@ export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestone
                 <FormItem>
                   <FormLabel>Deliverables</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      {...field} 
+                    <Textarea
+                      {...field}
                       placeholder="List the deliverables expected for this milestone"
                     />
                   </FormControl>
@@ -235,7 +236,7 @@ export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestone
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="notes"
@@ -249,7 +250,7 @@ export function AddMilestoneDialog({ projectId, onMilestoneAdded }: AddMilestone
                 </FormItem>
               )}
             />
-            
+
             <DialogFooter>
               <Button type="submit" disabled={loading}>
                 {loading ? "Adding..." : "Add Milestone"}

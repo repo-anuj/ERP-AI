@@ -8,6 +8,11 @@ interface User {
   firstName: string | null
   lastName: string | null
   image: string | null
+  bio: string | null
+  role: string | null
+  location: string | null
+  darkMode: boolean
+  compactView: boolean
 }
 
 interface UserContextType {
@@ -31,11 +36,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setLoading(true)
       setError(null)
       const response = await fetch("/api/user")
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch user data")
       }
-      
+
       const userData = await response.json()
       setUser(userData)
     } catch (error) {
@@ -67,7 +72,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       const updatedUser = await response.json()
       setUser(updatedUser)
-      
+
       toast({
         title: "Success",
         description: "Profile updated successfully",
@@ -88,11 +93,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <UserContext.Provider 
-      value={{ 
-        user, 
-        loading, 
-        error, 
+    <UserContext.Provider
+      value={{
+        user,
+        loading,
+        error,
         updateUser,
         refreshUser: fetchUser
       }}
