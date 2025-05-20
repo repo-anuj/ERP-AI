@@ -232,7 +232,9 @@ export async function POST(request: NextRequest) {
         budget.id,
         budget.name,
         'created',
-        'System User' // In a real app, you would get the current user's name
+        'system_user', // In a real app, you would get the current user's ID
+        'System User', // In a real app, you would get the current user's name
+        'user' // Actor type (user or employee)
       );
     } catch (error) {
       console.error('Error creating budget notification:', error);
@@ -355,30 +357,43 @@ export async function PUT(request: NextRequest) {
           }
         } else {
           // This is a new item - create it
-          await prisma.budgetItem.create({
-            data: {
-              name: item.name,
-              amount: item.amount,
-              notes: item.notes,
-              spent: item.spent || 0,
-              budget: {
-                connect: {
-                  id,
+          if (item.categoryId && item.categoryId !== '' && item.categoryId !== 'empty' && item.categoryId !== 'none') {
+            // Create with category connection
+            await prisma.budgetItem.create({
+              data: {
+                name: item.name,
+                amount: item.amount,
+                notes: item.notes,
+                spent: item.spent || 0,
+                budget: {
+                  connect: {
+                    id,
+                  },
                 },
-              },
-              ...(item.categoryId && item.categoryId !== '' && item.categoryId !== 'empty' && item.categoryId !== 'none' ? {
                 category: {
                   connect: {
                     id: item.categoryId,
                   },
                 },
-              } : {
-                category: {
-                  disconnect: true,
+              },
+            });
+          } else {
+            // Create without category connection
+            await prisma.budgetItem.create({
+              data: {
+                name: item.name,
+                amount: item.amount,
+                notes: item.notes,
+                spent: item.spent || 0,
+                budget: {
+                  connect: {
+                    id,
+                  },
                 },
-              }),
-            },
-          });
+                // No category connection
+              },
+            });
+          }
         }
       }
 
@@ -419,7 +434,9 @@ export async function PUT(request: NextRequest) {
         budget.id,
         budget.name,
         'updated',
-        'System User' // In a real app, you would get the current user's name
+        'system_user', // In a real app, you would get the current user's ID
+        'System User', // In a real app, you would get the current user's name
+        'user' // Actor type (user or employee)
       );
     } catch (error) {
       console.error('Error creating budget notification:', error);
@@ -501,7 +518,9 @@ export async function DELETE(request: NextRequest) {
         id,
         existingBudget.name,
         'deleted',
-        'System User' // In a real app, you would get the current user's name
+        'system_user', // In a real app, you would get the current user's ID
+        'System User', // In a real app, you would get the current user's name
+        'user' // Actor type (user or employee)
       );
     } catch (error) {
       console.error('Error creating budget notification:', error);

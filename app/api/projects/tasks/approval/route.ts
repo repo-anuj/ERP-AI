@@ -25,24 +25,24 @@ async function requestTaskApproval(req: Request) {
   try {
     const token = cookies().get('token')?.value;
     const isEmployee = cookies().get('isEmployee')?.value === 'true';
-    
+
     if (!token || !isEmployee) {
       return NextResponse.json({ error: "Unauthorized - Only employees can request task approval" }, { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     const body = await req.json();
     const validationResult = taskApprovalRequestSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
-      return NextResponse.json({ 
-        error: "Invalid input", 
-        details: validationResult.error.errors 
+      return NextResponse.json({
+        error: "Invalid input",
+        details: validationResult.error.errors
       }, { status: 400 });
     }
 
@@ -52,13 +52,7 @@ async function requestTaskApproval(req: Request) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
-        project: {
-          select: {
-            name: true,
-            managerId: true,
-            managerName: true,
-          },
-        },
+        project: true,
       },
     });
 
@@ -93,7 +87,7 @@ async function requestTaskApproval(req: Request) {
       task.name,
       payload.id,
       `${payload.firstName} ${payload.lastName}`,
-      task.project.managerId,
+      task.project.projectManager.employeeId,
       task.project.name
     );
 
@@ -112,24 +106,24 @@ async function respondToTaskApproval(req: Request) {
   try {
     const token = cookies().get('token')?.value;
     const isEmployee = cookies().get('isEmployee')?.value === 'true';
-    
+
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     const body = await req.json();
     const validationResult = taskApprovalResponseSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
-      return NextResponse.json({ 
-        error: "Invalid input", 
-        details: validationResult.error.errors 
+      return NextResponse.json({
+        error: "Invalid input",
+        details: validationResult.error.errors
       }, { status: 400 });
     }
 
@@ -139,12 +133,7 @@ async function respondToTaskApproval(req: Request) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
-        project: {
-          select: {
-            name: true,
-            managerId: true,
-          },
-        },
+        project: true,
       },
     });
 
@@ -153,9 +142,9 @@ async function respondToTaskApproval(req: Request) {
     }
 
     // Check if the employee is the project manager or has approval permissions
-    const isManager = isEmployee && task.project.managerId === payload.id;
+    const isManager = isEmployee && task.project.projectManager.employeeId === payload.id;
     const hasApprovalPermission = !isEmployee || (isEmployee && payload.role === 'admin' || payload.role === 'manager');
-    
+
     if (!isManager && !hasApprovalPermission) {
       return NextResponse.json({ error: "You don't have permission to approve/reject this task" }, { status: 403 });
     }
@@ -202,6 +191,191 @@ async function respondToTaskApproval(req: Request) {
   }
 }
 
+// Get tasks awaiting approval
+async function getTasksAwaitingApproval(_req: Request) {
+  try {
+    const token = cookies().get('token')?.value;
+    const isEmployee = cookies().get('isEmployee')?.value === 'true';
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const payload = await verifyAuth(token);
+
+    if (!payload) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    // Get the company ID
+    let companyId;
+
+    if (isEmployee) {
+      const employee = await prisma.employee.findUnique({
+        where: { id: payload.id },
+        select: { companyId: true },
+      });
+
+      if (!employee) {
+        return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      }
+
+      companyId = employee.companyId;
+    } else {
+      const user = await prisma.user.findUnique({
+        where: { email: payload.email },
+        select: { companyId: true },
+      });
+
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      companyId = user.companyId;
+    }
+
+    // Get tasks awaiting approval
+    // If employee is a manager, get tasks from their projects
+    // If user is admin, get all tasks awaiting approval
+    let tasks;
+
+    if (isEmployee) {
+      // Get all projects for the company
+      const allProjects = await prisma.project.findMany({
+        where: {
+          companyId: companyId || undefined,
+        },
+        select: {
+          id: true,
+          projectManager: true,
+        },
+      });
+
+      // Filter to find projects where the employee is the manager
+      const managedProjects = allProjects.filter(
+        project => project.projectManager.employeeId === payload.id
+      );
+
+      const managedProjectIds = managedProjects.map(project => project.id);
+
+      // Get tasks awaiting approval from managed projects
+      tasks = await prisma.task.findMany({
+        where: {
+          companyId: companyId || undefined,
+          projectId: {
+            in: managedProjectIds,
+          },
+          status: 'awaiting_approval',
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          status: true,
+          priority: true,
+          assigneeId: true,
+          assigneeName: true,
+          dueDate: true,
+          completionPercentage: true,
+          projectId: true,
+          updatedAt: true,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      });
+
+      // Project names will be handled later
+    } else {
+      // Admin or regular user - get all tasks awaiting approval
+      tasks = await prisma.task.findMany({
+        where: {
+          companyId: companyId || undefined,
+          status: 'awaiting_approval',
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          status: true,
+          priority: true,
+          assigneeId: true,
+          assigneeName: true,
+          dueDate: true,
+          completionPercentage: true,
+          projectId: true,
+          updatedAt: true,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      });
+
+      // Get project names for the tasks
+      const projectIds = tasks.map(task => task.projectId).filter(id => id !== null);
+      const projects = await prisma.project.findMany({
+        where: {
+          id: {
+            in: projectIds,
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+      // Project names will be handled later
+    }
+
+    // Combine both project name maps
+    const projectNameMap = new Map();
+
+    // Get all project IDs from tasks
+    const allProjectIds = tasks.map(task => task.projectId);
+
+    // Get all projects for these IDs
+    const allProjects = await prisma.project.findMany({
+      where: {
+        id: {
+          in: allProjectIds,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    // Create a map of project IDs to names
+    allProjects.forEach(project => {
+      projectNameMap.set(project.id, project.name);
+    });
+
+    // Format the tasks for the response
+    const formattedTasks = tasks.map(task => ({
+      id: task.id,
+      name: task.name,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      assigneeName: task.assigneeName,
+      projectName: projectNameMap.get(task.projectId) || 'Unknown Project',
+      completionPercentage: task.completionPercentage || 0,
+      dueDate: task.dueDate,
+      requestedAt: task.updatedAt,
+    }));
+
+    return NextResponse.json({
+      tasks: formattedTasks,
+    });
+  } catch (error) {
+    console.error("[GET_TASKS_AWAITING_APPROVAL]", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 // Export the handlers with permission checks
+export const GET = withPermission(getTasksAwaitingApproval, PERMISSIONS.APPROVE_TASKS);
 export const POST = requestTaskApproval;
 export const PATCH = withPermission(respondToTaskApproval, PERMISSIONS.APPROVE_TASKS);

@@ -5,7 +5,7 @@ import { createNotification } from '@/lib/notification-service';
 
 /**
  * Create a financial transaction for inventory purchase
- * 
+ *
  * @param inventoryItem The inventory item that was purchased/added
  * @param quantity The quantity that was added
  * @param userId The user who made the purchase
@@ -87,15 +87,17 @@ export async function createInventoryExpenseTransaction(
     // Create a notification about the transaction
     if (userId) {
       await createNotification({
-        userId,
         title: 'Inventory Expense Recorded',
         message: `A transaction of ${totalAmount} has been created for inventory purchase: ${inventoryItem.name}`,
-        type: 'transaction',
-        entityId: transaction.id,
-        entityType: 'transaction',
-        actionType: 'created',
-        actorName: 'System',
-        link: `/dashboard/finance/transactions?id=${transaction.id}`,
+        type: 'info',
+        category: 'finance',
+        recipientId: userId,
+        recipientType: 'user',
+        senderName: 'System',
+        relatedItemId: transaction.id,
+        relatedItemType: 'transaction',
+        actionUrl: `/dashboard/finance/transactions?id=${transaction.id}`,
+        companyId: inventoryItem.companyId
       });
     }
 
@@ -108,7 +110,7 @@ export async function createInventoryExpenseTransaction(
 
 /**
  * Track inventory value changes when quantities are updated
- * 
+ *
  * @param inventoryItem The inventory item that was updated
  * @param oldQuantity The previous quantity
  * @param newQuantity The new quantity
@@ -123,12 +125,12 @@ export async function trackInventoryQuantityChange(
 ) {
   // Calculate the quantity difference
   const quantityDifference = newQuantity - oldQuantity;
-  
+
   // If there's no change or the quantity decreased, no expense transaction needed
   if (quantityDifference <= 0) {
     return null;
   }
-  
+
   // Create an expense transaction for the added inventory
   return createInventoryExpenseTransaction(
     inventoryItem,

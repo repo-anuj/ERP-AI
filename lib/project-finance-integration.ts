@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Project, Transaction } from '@prisma/client';
+import { Project } from '@prisma/client';
 import { createNotification } from '@/lib/notification-service';
 
 /**
@@ -45,27 +45,25 @@ export async function createProjectBudget(
             id: project.companyId,
           },
         },
-        user: {
-          connect: {
-            id: userId,
-          },
-        },
         // Include project ID in description for reference
-        description: `Automatically generated budget for project: ${project.name} (ID: ${project.id})`,
+        description: `Automatically generated budget for project: ${project.name} (ID: ${project.id}) - Created by user ${userId}`,
       },
     });
 
     // Create a notification about the budget
     await createNotification({
-      userId,
       title: 'Project Budget Created',
       message: `A budget has been created for project: ${project.name}`,
-      type: 'budget',
-      entityId: budget.id,
-      entityType: 'budget',
+      type: 'info',
+      category: 'finance',
+      recipientId: userId,
+      recipientType: 'user',
+      senderName: 'System',
+      relatedItemId: budget.id,
+      relatedItemType: 'budget',
       actionType: 'created',
-      actorName: 'System',
-      link: `/dashboard/finance/budgets?id=${budget.id}`,
+      actionUrl: `/dashboard/finance/budgets?id=${budget.id}`,
+      companyId: project.companyId,
     });
 
     return budget;
@@ -160,15 +158,18 @@ export async function linkTransactionToProject(
     if (project) {
       // Create a notification about the linked transaction
       await createNotification({
-        userId,
         title: 'Transaction Linked to Project',
         message: `A transaction of ${transaction.amount} has been linked to project: ${project.name}`,
-        type: 'transaction',
-        entityId: transaction.id,
-        entityType: 'transaction',
+        type: 'info',
+        category: 'finance',
+        recipientId: userId,
+        recipientType: 'user',
+        senderName: 'System',
+        relatedItemId: transaction.id,
+        relatedItemType: 'transaction',
         actionType: 'updated',
-        actorName: 'System',
-        link: `/dashboard/finance/transactions?id=${transaction.id}`,
+        actionUrl: `/dashboard/finance/transactions?id=${transaction.id}`,
+        companyId: project.companyId,
       });
     }
 
@@ -202,7 +203,8 @@ export async function getProjectTransactions(
         user: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
           },
         },

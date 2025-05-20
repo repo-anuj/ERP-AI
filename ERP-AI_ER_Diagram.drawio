@@ -1,0 +1,555 @@
+<mxfile host="app.diagrams.net" modified="2023-11-15T14:23:12.742Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" etag="YQnJJJJJJJJJJJJJJJJJ" version="21.8.2" type="device">
+  <diagram name="Page-1" id="c7558073-3199-34d8-9f00-42111426c3f3">
+    <mxGraphModel dx="1050" dy="541" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="826" pageHeight="1169" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Employee Entity -->
+        <mxCell id="2" value="Employee" style="whiteSpace=wrap;align=center;verticalAlign=middle;fontStyle=1;strokeWidth=3;fillColor=#FFFFFF;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="140" y="200" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Employee Attributes -->
+        <mxCell id="3" value="Name" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="40" y="100" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Email" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="50" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Address" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="170" y="50" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Phone" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="260" y="50" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Position" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="40" y="280" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Department" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="40" y="370" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="Start Date" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="540" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Salary" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="240" y="540" width="80" height="40" as="geometry" />
+        </mxCell>
+        <!-- Connect Employee to its attributes -->
+        <mxCell id="11" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="2" target="4" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="12" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="2" target="5" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="13" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="2" target="6" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="14" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="2" target="3" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="15" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="2" target="7" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="16" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" source="2" target="8" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Inventory Entity -->
+        <mxCell id="17" value="Inventory" style="whiteSpace=wrap;align=center;verticalAlign=middle;fontStyle=1;strokeWidth=3;fillColor=#FFFFFF;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="560" y="200" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Inventory Attributes -->
+        <mxCell id="18" value="SKU" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="680" y="50" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="19" value="Email" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="590" y="50" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="20" value="Category" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="500" y="100" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="Quantity" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="680" y="100" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="Product" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="500" y="280" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="23" value="Price" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="680" y="280" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="24" value="Status" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="500" y="340" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="25" value="Quality" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="680" y="340" width="80" height="40" as="geometry" />
+        </mxCell>
+        <!-- Connect Inventory to its attributes -->
+        <mxCell id="26" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="17" target="19" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="27" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="17" target="18" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="28" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="17" target="20" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="29" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="17" target="21" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="30" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="17" target="22" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="31" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="17" target="23" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="32" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" source="17" target="24" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="33" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" parent="1" source="17" target="25" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Company Relationship -->
+        <mxCell id="34" value="Company" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="350" y="200" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Connect Employee and Inventory through Company relationship -->
+        <mxCell id="35" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="2" target="34" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="36" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="34" target="17" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="300" as="sourcePoint" />
+            <mxPoint x="550" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Add cardinality to the Company relationship -->
+        <mxCell id="37" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="260" y="200" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="38" value="N" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="530" y="200" width="30" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Sales Entity -->
+        <mxCell id="39" value="Sales" style="whiteSpace=wrap;align=center;verticalAlign=middle;fontStyle=1;strokeWidth=3;fillColor=#FFFFFF;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="560" y="680" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Sales Attributes -->
+        <mxCell id="40" value="Date" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="680" y="540" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="41" value="Employs" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="590" y="540" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="42" value="Employ" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="500" y="760" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="43" value="Sales to" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="680" y="760" width="80" height="40" as="geometry" />
+        </mxCell>
+        <!-- Connect Sales to its attributes -->
+        <mxCell id="44" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="39" target="40" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="45" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="39" target="41" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="46" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" source="39" target="42" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="47" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" parent="1" source="39" target="43" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Employee Entity (for the relationship with Sales) -->
+        <mxCell id="48" value="Employee" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="140" y="450" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Connect Employee entity to Employee relationship -->
+        <mxCell id="49" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="2" target="48" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- Connect Employee relationship to Start Date and Salary attributes -->
+        <mxCell id="50" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="48" target="9" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="51" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="48" target="10" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Sales Relationship -->
+        <mxCell id="52" value="Sales" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="560" y="450" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Connect Inventory to Sales relationship -->
+        <mxCell id="53" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="17" target="52" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- Connect Sales relationship to Sales entity -->
+        <mxCell id="54" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="52" target="39" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Belongs To Relationship -->
+        <mxCell id="55" value="Belongs To" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="350" y="450" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Connect Employee relationship to Belongs To relationship -->
+        <mxCell id="56" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="48" target="55" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- Connect Belongs To relationship to Sales relationship -->
+        <mxCell id="57" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="55" target="52" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Applies In Relationship -->
+        <mxCell id="58" value="Applies In" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="370" y="510" width="80" height="40" as="geometry" />
+        </mxCell>
+        <!-- Connect Belongs To relationship to Applies In attribute -->
+        <mxCell id="59" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="55" target="58" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="500" as="sourcePoint" />
+            <mxPoint x="550" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Project Entity -->
+        <mxCell id="60" value="Project" style="whiteSpace=wrap;align=center;verticalAlign=middle;fontStyle=1;strokeWidth=3;fillColor=#FFFFFF;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="140" y="880" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Project Attributes -->
+        <mxCell id="61" value="Stats" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="40" y="940" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="62" value="Employe" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="240" y="940" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="63" value="Burnout" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="1000" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="64" value="Name" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="200" y="1000" width="80" height="40" as="geometry" />
+        </mxCell>
+        <!-- Connect Project to its attributes -->
+        <mxCell id="65" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="60" target="61" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="66" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="60" target="62" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="67" value="" style="endArrow=none;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="60" target="63" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="68" value="" style="endArrow=none;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="60" target="64" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Customer Entity -->
+        <mxCell id="69" value="Customer" style="whiteSpace=wrap;align=center;verticalAlign=middle;fontStyle=1;strokeWidth=3;fillColor=#FFFFFF;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="560" y="880" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Customer Attributes -->
+        <mxCell id="70" value="Nname" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="500" y="970" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="71" value="Invoice" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="660" y="970" width="80" height="40" as="geometry" />
+        </mxCell>
+        <!-- Connect Customer to its attributes -->
+        <mxCell id="72" value="" style="endArrow=none;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="69" target="70" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="73" value="" style="endArrow=none;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="69" target="71" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Work on Relationship -->
+        <mxCell id="74" value="Work on" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="350" y="680" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Connect Employee to Work on relationship -->
+        <mxCell id="75" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" parent="1" source="48" target="74" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="200" y="600" />
+              <mxPoint x="350" y="650" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- Connect Sales to Work on relationship -->
+        <mxCell id="76" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" source="39" target="74" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="500" y="680" />
+              <mxPoint x="470" y="650" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Project Relationship -->
+        <mxCell id="77" value="Project" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="350" y="880" width="120" height="60" as="geometry" />
+        </mxCell>
+        <!-- Connect Work on to Project relationship -->
+        <mxCell id="78" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="74" target="77" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- Connect Project entity to Project relationship -->
+        <mxCell id="79" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="60" target="77" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- Connect Customer to Project relationship -->
+        <mxCell id="80" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="69" target="77" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Add cardinality to relationships -->
+        <mxCell id="81" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="200" y="420" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="82" value="N" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="530" y="420" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="83" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="260" y="880" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="84" value="N" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="530" y="880" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="85" value="M" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="200" y="510" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="86" value="N" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="530" y="650" width="30" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Add key attributes (underlined) -->
+        <mxCell id="87" value="&lt;u&gt;ID&lt;/u&gt;" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="130" y="140" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="88" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="2" target="87" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="89" value="&lt;u&gt;ID&lt;/u&gt;" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="630" y="140" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="90" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="17" target="89" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="91" value="&lt;u&gt;ID&lt;/u&gt;" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="500" y="620" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="92" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" parent="1" source="39" target="91" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="93" value="&lt;u&gt;ID&lt;/u&gt;" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="80" y="830" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="94" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" parent="1" source="60" target="93" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="95" value="&lt;u&gt;ID&lt;/u&gt;" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="680" y="830" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="96" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" parent="1" source="69" target="95" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Add a weak entity example (double rectangle) -->
+        <mxCell id="97" value="Order Item" style="shape=ext;margin=3;double=1;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="680" y="620" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="98" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="39" target="97" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="99" value="Contains" style="shape=rhombus;double=1;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="620" y="620" width="60" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Add a multi-valued attribute example (double ellipse) -->
+        <mxCell id="100" value="Phone Numbers" style="ellipse;shape=doubleEllipse;margin=3;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="210" y="100" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="101" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="2" target="100" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Add a composite attribute example -->
+        <mxCell id="102" value="Address" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=1;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="300" y="140" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="103" value="Street" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=0;strokeWidth=1;fillColor=#FFFFFF;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="260" y="100" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="104" value="City" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=0;strokeWidth=1;fillColor=#FFFFFF;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="320" y="100" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="105" value="State" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=0;strokeWidth=1;fillColor=#FFFFFF;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="380" y="100" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="106" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="2" target="102" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="107" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="102" target="103" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="108" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="102" target="104" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="109" value="" style="endArrow=none;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="102" target="105" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="700" as="sourcePoint" />
+            <mxPoint x="550" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Title -->
+        <mxCell id="110" value="ER DIAGRAM - ERP-AI SYSTEM" style="text;spacingTop=-5;align=center;fontSize=20;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="230" y="20" width="340" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

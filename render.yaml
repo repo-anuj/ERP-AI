@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: erp-ai
+    env: node
+    plan: free
+    buildCommand: npm run build:render
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: DATABASE_URL
+        sync: false
+    buildFilter:
+      paths:
+        - app/**
+        - components/**
+        - contexts/**
+        - hooks/**
+        - lib/**
+        - prisma/**
+        - public/**
+        - styles/**
+        - next.config.js
+        - package.json
+        - package-lock.json
+        - tsconfig.json
+        - tailwind.config.ts
+        - postcss.config.js

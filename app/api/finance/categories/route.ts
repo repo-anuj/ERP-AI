@@ -16,13 +16,13 @@ const categorySchema = z.object({
 // Helper function to check user authorization and get company ID
 async function getUserCompanyId() {
   const token = cookies().get('token')?.value;
-  
+
   if (!token) {
     throw new Error('Unauthorized');
   }
 
   const payload = await verifyAuth(token);
-  
+
   if (!payload.email || typeof payload.email !== 'string') {
     throw new Error('Invalid token');
   }
@@ -45,9 +45,9 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
     const type = url.searchParams.get('type');
-    
+
     const companyId = await getUserCompanyId();
-    
+
     // If ID is provided, fetch a single category
     if (id) {
       const category = await prisma.budgetCategory.findFirst({
@@ -56,20 +56,20 @@ export async function GET(req: Request) {
           companyId
         }
       });
-      
+
       if (!category) {
         return NextResponse.json(
           { error: "Category not found or you don't have permission to access it" },
           { status: 404 }
         );
       }
-      
+
       return NextResponse.json(category);
     }
-    
+
     // Otherwise, build filter conditions for listing categories
     const where: any = { companyId };
-    
+
     if (type) {
       where.type = type;
     }
@@ -97,10 +97,10 @@ export async function POST(req: Request) {
   try {
     const companyId = await getUserCompanyId();
     const data = await req.json();
-    
+
     // Validate input data
     const validatedData = categorySchema.parse(data);
-    
+
     // Check if a category with the same name already exists
     const existingCategory = await prisma.budgetCategory.findFirst({
       where: {
@@ -108,14 +108,14 @@ export async function POST(req: Request) {
         companyId
       }
     });
-    
+
     if (existingCategory) {
       return NextResponse.json(
         { error: "A category with this name already exists" },
         { status: 400 }
       );
     }
-    
+
     // Create the category
     const category = await prisma.budgetCategory.create({
       data: {
@@ -147,7 +147,7 @@ export async function PUT(req: Request) {
   try {
     const companyId = await getUserCompanyId();
     const data = await req.json();
-    
+
     // Ensure ID is provided
     if (!data.id) {
       return NextResponse.json(
@@ -155,11 +155,11 @@ export async function PUT(req: Request) {
         { status: 400 }
       );
     }
-    
+
     // Validate input data (excluding id)
     const { id, ...updateData } = data;
     const validatedData = categorySchema.parse(updateData);
-    
+
     // Check if category exists and belongs to the company
     const existingCategory = await prisma.budgetCategory.findFirst({
       where: {
@@ -167,14 +167,14 @@ export async function PUT(req: Request) {
         companyId
       }
     });
-    
+
     if (!existingCategory) {
       return NextResponse.json(
         { error: "Category not found or you don't have permission to update it" },
         { status: 404 }
       );
     }
-    
+
     // Check if the new name would conflict with another category
     if (validatedData.name !== existingCategory.name) {
       const nameConflict = await prisma.budgetCategory.findFirst({
@@ -184,7 +184,7 @@ export async function PUT(req: Request) {
           id: { not: id }
         }
       });
-      
+
       if (nameConflict) {
         return NextResponse.json(
           { error: "A category with this name already exists" },
@@ -222,14 +222,14 @@ export async function DELETE(req: Request) {
     const companyId = await getUserCompanyId();
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json(
         { error: "Category ID is required" },
         { status: 400 }
       );
     }
-    
+
     // Check if category exists and belongs to the company
     const existingCategory = await prisma.budgetCategory.findFirst({
       where: {
@@ -237,29 +237,29 @@ export async function DELETE(req: Request) {
         companyId
       }
     });
-    
+
     if (!existingCategory) {
       return NextResponse.json(
         { error: "Category not found or you don't have permission to delete it" },
         { status: 404 }
       );
     }
-    
+
     // Check if the category is in use by any transactions
     const transactionsUsingCategory = await prisma.transaction.findFirst({
       where: {
-        category: existingCategory.name,
+        categoryId: id,
         companyId
       }
     });
-    
+
     if (transactionsUsingCategory) {
       return NextResponse.json(
         { error: "Cannot delete category that is being used by transactions" },
         { status: 400 }
       );
     }
-    
+
     // Delete the category
     await prisma.budgetCategory.delete({
       where: { id }
@@ -276,4 +276,4 @@ export async function DELETE(req: Request) {
     }
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}

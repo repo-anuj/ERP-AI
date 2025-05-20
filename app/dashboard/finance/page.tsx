@@ -36,7 +36,9 @@ interface Transaction {
   amount: number;
   type: 'income' | 'expense';
   category: string;
-  account: string;
+  categoryColor?: string;
+  categoryIcon?: string;
+  account: string | { id: string; name: string; [key: string]: any };
   reference?: string;
   status: string;
   sourceType?: 'finance' | 'sales' | 'inventory';
@@ -74,7 +76,7 @@ export default function FinancePage() {
   });
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [availableStatuses, setAvailableStatuses] = useState<string[]>([]);
-  
+
   // Filter, search and pagination states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -82,12 +84,12 @@ export default function FinancePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [activeFilterTab, setActiveFilterTab] = useState('all');
-  
+
   // Fetch data when component mounts
   useEffect(() => {
     fetchAccounts();
   }, []);
-  
+
   // Effect to fetch transactions only after accounts are loaded
   useEffect(() => {
     if (hasAccounts) {
@@ -102,7 +104,7 @@ export default function FinancePage() {
     try {
       setIsLoading(true);
       const response = await fetch('/api/finance/accounts');
-      
+
       if (response.ok) {
         const data = await response.json();
         // Store initialBalance for later reference
@@ -131,10 +133,10 @@ export default function FinancePage() {
     try {
       setIsLoading(true);
       const response = await fetch('/api/finance/transactions');
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         // Map API data to match our expected format, ensuring category is a string
         const mappedTransactions = data.map((transaction: any) => ({
           id: transaction.id,
@@ -148,15 +150,15 @@ export default function FinancePage() {
           status: transaction.status,
           sourceType: 'finance',
         }));
-        
+
         setTransactions(mappedTransactions);
-        
+
         // Extract categories and statuses for filtering
-        const uniqueCategories = Array.from(new Set(mappedTransactions.map(t => t.category))).filter(Boolean);
-        const uniqueStatuses = Array.from(new Set(mappedTransactions.map(t => t.status))).filter(Boolean);
+        const uniqueCategories = Array.from(new Set(mappedTransactions.map((t: Transaction) => t.category))).filter(Boolean);
+        const uniqueStatuses = Array.from(new Set(mappedTransactions.map((t: Transaction) => t.status))).filter(Boolean);
         setAvailableCategories(uniqueCategories as string[]);
         setAvailableStatuses(uniqueStatuses as string[]);
-        
+
         // Calculate stats will be called after all data is fetched
       } else {
         toast.error('Failed to fetch transactions');
@@ -174,59 +176,59 @@ export default function FinancePage() {
     try {
       // Fetch main sales data
       const salesResponse = await fetch('/api/sales');
-      
+
       if (!salesResponse.ok) {
         toast.error('Failed to fetch sales data');
         return;
       }
-      
+
       const salesData = await salesResponse.json();
-      
+
       if (!salesData.data || !Array.isArray(salesData.data)) {
         console.error('Invalid sales data format');
         return;
       }
-      
+
       // Fetch customers for additional details
       const customersResponse = await fetch('/api/sales/customers');
       let customersData: any[] = [];
-      
+
       if (customersResponse.ok) {
         const customerResult = await customersResponse.json();
         if (customerResult && Array.isArray(customerResult.data)) {
           customersData = customerResult.data;
         }
       }
-      
+
       // Create a lookup map for customers
       const customersMap = new Map();
       customersData.forEach(customer => {
         customersMap.set(customer.id, customer);
       });
-      
+
       // Fetch products for item details
       const productsResponse = await fetch('/api/sales/products');
       let productsData: any[] = [];
-      
+
       if (productsResponse.ok) {
         const productResult = await productsResponse.json();
         if (productResult && Array.isArray(productResult.data)) {
           productsData = productResult.data;
         }
       }
-      
+
       // Create a lookup map for products
       const productsMap = new Map();
       productsData.forEach(product => {
         productsMap.set(product.id, product);
       });
-      
+
       // Map sales data to transactions with enhanced details
       const salesTransactions: Transaction[] = salesData.data.map((sale: any) => {
         // Get customer details
         const customerDetails = sale.customerId ? customersMap.get(sale.customerId) : null;
         const customerName = sale.customer?.name || (customerDetails?.name || 'Customer');
-        
+
         // Build details about items in the sale
         let itemsList = '';
         if (sale.items && Array.isArray(sale.items) && sale.items.length > 0) {
@@ -236,16 +238,16 @@ export default function FinancePage() {
             const quantity = item.quantity || 1;
             return `${quantity}x ${productName}`;
           }).join(', ');
-          
+
           if (itemDetails) {
             itemsList = ` (${itemDetails})`;
           }
         }
-        
+
         // Create a detailed description
         const description = `Sale to ${customerName}${itemsList}`;
         const paymentMethod = sale.paymentMethod || customerDetails?.preferredPaymentMethod || 'Sales Account';
-        
+
         return {
           id: `sales-${sale.id}`,
           date: sale.date,
@@ -263,7 +265,7 @@ export default function FinancePage() {
           }
         };
       });
-      
+
       // Add to transactions array
       setTransactions(prev => {
         // Filter out any existing sales transactions to avoid duplicates
@@ -283,27 +285,27 @@ export default function FinancePage() {
     try {
       // First fetch all inventory purchases
       const purchasesResponse = await fetch('/api/inventory/purchases');
-      
+
       if (!purchasesResponse.ok) {
         toast.error('Failed to fetch inventory purchases');
         return;
       }
-      
+
       const purchasesData = await purchasesResponse.json();
-      
+
       if (!Array.isArray(purchasesData)) {
         console.error('Invalid inventory data format');
         return;
       }
-      
+
       // Then fetch inventory items to get more details
       const itemsResponse = await fetch('/api/inventory/items');
       let itemsData: any[] = [];
-      
+
       if (itemsResponse.ok) {
         itemsData = await itemsResponse.json();
       }
-      
+
       // Create a lookup map for inventory items
       const itemsMap = new Map();
       if (Array.isArray(itemsData)) {
@@ -311,15 +313,15 @@ export default function FinancePage() {
           itemsMap.set(item.id, item);
         });
       }
-      
+
       // Fetch suppliers if available
       const suppliersResponse = await fetch('/api/inventory/suppliers');
       let suppliersData: any[] = [];
-      
+
       if (suppliersResponse.ok) {
         suppliersData = await suppliersResponse.json();
       }
-      
+
       // Create a lookup map for suppliers
       const suppliersMap = new Map();
       if (Array.isArray(suppliersData)) {
@@ -327,19 +329,19 @@ export default function FinancePage() {
           suppliersMap.set(supplier.id, supplier);
         });
       }
-      
+
       // Map inventory data to transactions with enhanced details
       const inventoryTransactions: Transaction[] = purchasesData.map((purchase: any) => {
         // Get item details if available
         const itemDetails = purchase.itemId ? itemsMap.get(purchase.itemId) : null;
         const supplierDetails = purchase.supplierId ? suppliersMap.get(purchase.supplierId) : null;
-        
+
         // Build a more detailed description
         let itemName = purchase.itemName || (itemDetails?.name || 'Unknown Item');
         let supplierName = purchase.supplierName || (supplierDetails?.name || 'Unknown Supplier');
         let quantityInfo = purchase.quantity ? `${purchase.quantity} units` : '';
         let unitPrice = purchase.unitPrice ? `@ ${formatCurrency(purchase.unitPrice)}` : '';
-        
+
         // Format the description to include more details
         let description = `Inventory: ${itemName}`;
         if (quantityInfo && unitPrice) {
@@ -348,7 +350,7 @@ export default function FinancePage() {
         if (supplierName !== 'Unknown Supplier') {
           description += ` from ${supplierName}`;
         }
-        
+
         return {
           id: `inventory-${purchase.id}`,
           date: purchase.date,
@@ -367,7 +369,7 @@ export default function FinancePage() {
           }
         };
       });
-      
+
       // Add to transactions array
       setTransactions(prev => {
         // Filter out any existing inventory transactions to avoid duplicates
@@ -390,42 +392,42 @@ export default function FinancePage() {
     const pendingTransactions = transactionsList.filter(
       t => t.status === 'pending'
     );
-    
+
     // Group income by source type
     const totalIncome = completedTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
-    
+
     const salesIncome = completedTransactions
       .filter(t => t.type === 'income' && t.sourceType === 'sales')
       .reduce((sum, t) => sum + t.amount, 0);
-    
+
     const regularIncome = completedTransactions
       .filter(t => t.type === 'income' && t.sourceType !== 'sales')
       .reduce((sum, t) => sum + t.amount, 0);
-      
+
     // Group expenses by source type
     const totalExpenses = completedTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
-    
+
     const inventoryExpenses = completedTransactions
       .filter(t => t.type === 'expense' && t.sourceType === 'inventory')
       .reduce((sum, t) => sum + t.amount, 0);
-    
+
     const regularExpenses = completedTransactions
       .filter(t => t.type === 'expense' && t.sourceType !== 'inventory')
       .reduce((sum, t) => sum + t.amount, 0);
-      
+
     // Pending transactions
     const pendingIncome = pendingTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
-      
+
     const pendingExpenses = pendingTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
-    
+
     setStats({
       totalIncome,
       salesIncome,
@@ -446,21 +448,21 @@ export default function FinancePage() {
   const updateAccountBalances = (completedTransactions: Transaction[]) => {
     // Create a copy of accounts
     const updatedAccounts = [...accounts];
-    
+
     // Reset all account balances to their initial values
     updatedAccounts.forEach(account => {
       account.currentBalance = account.initialBalance || 0;
     });
-    
+
     // Update balances based on transactions
     completedTransactions.forEach(transaction => {
       // Find the account this transaction belongs to
       const accountIndex = updatedAccounts.findIndex(a => {
         // Match by name or by id if available
-        return a.name === transaction.account || 
-               (typeof transaction.account === 'object' && transaction.account?.id === a.id);
+        return a.name === transaction.account ||
+               (typeof transaction.account === 'object' && 'id' in transaction.account && transaction.account.id === a.id);
       });
-      
+
       if (accountIndex >= 0) {
         // Found the account, update its balance
         if (transaction.type === 'income') {
@@ -470,7 +472,7 @@ export default function FinancePage() {
         }
       }
     });
-    
+
     setAccounts(updatedAccounts);
   };
 
@@ -510,12 +512,12 @@ export default function FinancePage() {
       toast.error('Cannot delete integrated transactions from this view');
       return;
     }
-    
+
     try {
       const response = await fetch(`/api/finance/transactions?id=${id}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         setTransactions(transactions.filter(t => t.id !== id));
         toast.success('Transaction deleted successfully');
@@ -558,7 +560,7 @@ export default function FinancePage() {
     if (activeFilterTab !== 'all' && transaction.type !== activeFilterTab) {
       return false;
     }
-    
+
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -566,31 +568,31 @@ export default function FinancePage() {
       const categoryMatch = transaction.category.toLowerCase().includes(query);
       const accountMatch = transaction.account.toLowerCase().includes(query);
       const referenceMatch = transaction.reference ? transaction.reference.toLowerCase().includes(query) : false;
-      
+
       if (!descriptionMatch && !categoryMatch && !accountMatch && !referenceMatch) {
         return false;
       }
     }
-    
+
     // Apply category filter
     if (selectedCategory && transaction.category !== selectedCategory) {
       return false;
     }
-    
+
     // Apply status filter
     if (selectedStatus && transaction.status.toLowerCase() !== selectedStatus.toLowerCase()) {
       return false;
     }
-    
+
     return true;
   });
-  
+
   // Get current page of transactions
   const indexOfLastTransaction = currentPage * itemsPerPage;
   const indexOfFirstTransaction = indexOfLastTransaction - itemsPerPage;
   const currentTransactions = filteredTransactions.slice(indexOfFirstTransaction, indexOfLastTransaction);
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
-  
+
   // Clear all filters
   const handleClearFilters = () => {
     setSearchQuery('');
@@ -598,7 +600,7 @@ export default function FinancePage() {
     setSelectedStatus('');
     setCurrentPage(1);
   };
-  
+
   // Apply filters and sync with ative tabs
   useEffect(() => {
     // Make sure we reset to page 1 when filters change
@@ -649,7 +651,7 @@ export default function FinancePage() {
             </Button>
           </CardContent>
         </Card>
-        
+
         <AccountDialog
           account={null}
           open={accountDialogOpen}
@@ -677,16 +679,16 @@ export default function FinancePage() {
             </Button>
           </div>
         </div>
-        
+
         <EmptyState onAddTransaction={handleAddTransaction} />
-        
+
         <TransactionDialog
           transaction={selectedTransaction}
           open={transactionDialogOpen}
           onOpenChange={setTransactionDialogOpen}
           onSuccess={handleTransactionSuccess}
         />
-        
+
         <AccountDialog
           account={null}
           open={accountDialogOpen}
@@ -703,8 +705,8 @@ export default function FinancePage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl md:text-3xl font-bold">Finance Dashboard</h1>
         <div className="flex flex-wrap gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => {
               fetchTransactions();
@@ -725,7 +727,7 @@ export default function FinancePage() {
           </Button>
         </div>
       </div>
-      
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -742,7 +744,7 @@ export default function FinancePage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -769,7 +771,7 @@ export default function FinancePage() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -796,7 +798,7 @@ export default function FinancePage() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -820,7 +822,7 @@ export default function FinancePage() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Filter and search bar */}
       <Card className="mb-4">
         <CardHeader className="pb-3">
@@ -838,7 +840,7 @@ export default function FinancePage() {
                 className="pl-8"
               />
             </div>
-            
+
             {/* Category filter */}
             <div className="w-full sm:w-48">
               <Select
@@ -860,7 +862,7 @@ export default function FinancePage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {/* Status filter */}
             <div className="w-full sm:w-48">
               <Select
@@ -882,10 +884,10 @@ export default function FinancePage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {/* Clear filters button */}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="icon"
               onClick={handleClearFilters}
               className="whitespace-nowrap h-10 w-10"
@@ -896,7 +898,7 @@ export default function FinancePage() {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle>Transactions</CardTitle>
@@ -917,13 +919,13 @@ export default function FinancePage() {
               ) : (
                 <>
                   <TransactionsTable
-                    transactions={currentTransactions}
+                    transactions={currentTransactions as any}
                     onEdit={handleEditTransaction}
                     onDelete={handleDeleteTransaction}
                     onDuplicate={handleDuplicateTransaction}
                     onViewOriginal={handleViewOriginal}
                   />
-                  
+
                   {/* Pagination */}
                   {filteredTransactions.length > 0 && (
                     <div className="flex justify-between items-center mt-4 px-2">
@@ -931,7 +933,7 @@ export default function FinancePage() {
                         Showing {Math.min(filteredTransactions.length, (currentPage - 1) * itemsPerPage + 1)}-
                         {Math.min(filteredTransactions.length, currentPage * itemsPerPage)} of {filteredTransactions.length} transactions
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <Button
                           variant="outline"
@@ -942,11 +944,11 @@ export default function FinancePage() {
                           <ChevronLeft className="h-4 w-4" />
                           <span className="sr-only">Previous</span>
                         </Button>
-                        
+
                         <div className="text-sm">
                           Page {currentPage} of {totalPages}
                         </div>
-                        
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -956,7 +958,7 @@ export default function FinancePage() {
                           <ChevronRight className="h-4 w-4" />
                           <span className="sr-only">Next</span>
                         </Button>
-                        
+
                         <Select
                           value={itemsPerPage.toString()}
                           onValueChange={(value) => {
@@ -983,14 +985,14 @@ export default function FinancePage() {
           </Tabs>
         </CardContent>
       </Card>
-      
+
       <TransactionDialog
         transaction={selectedTransaction}
         open={transactionDialogOpen}
         onOpenChange={setTransactionDialogOpen}
         onSuccess={handleTransactionSuccess}
       />
-      
+
       <AccountDialog
         account={null}
         open={accountDialogOpen}
@@ -999,4 +1001,4 @@ export default function FinancePage() {
       />
     </div>
   );
-} 
+}

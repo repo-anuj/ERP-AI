@@ -1,0 +1,63 @@
+```
++----------------+                                                +----------------+
+|                |                                                |                |
+|    FINANCE     |                                                |    PROJECT     |
+|     MANAGER    |                                                |     MANAGER    |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | MANAGE TRANSACTIONS                                             | CREATE PROJECTS
+        | MANAGE BUDGETS                                                  | ASSIGN TASKS
+        v                                                                 v
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|  TRANSACTION   |<-------->|     BUDGET     |<-------->|    PROJECT     |
+|   PROCESSING   |          |   MANAGEMENT   |          |   MANAGEMENT   |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+        |                           |                           |
+        | STORE TRANSACTIONS        | STORE BUDGETS             | STORE PROJECTS
+        v                           v                           v
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|  TRANSACTION   |<-------->|     BUDGET     |<-------->|    PROJECT     |
+|    DATABASE    |          |    DATABASE    |          |    DATABASE    |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+        ^                           ^                           ^
+        |                           |                           |
+        |                           |                           |
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|   FINANCIAL    |          |    BUDGET      |          |     TASK       |
+|    ACCOUNTS    |          |   CATEGORIES   |          |   MANAGEMENT   |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+        |                           |                           |
+        | STORE ACCOUNT DATA        | STORE CATEGORIES          | STORE TASKS
+        v                           v                           v
++----------------+          +----------------+          +----------------+
+|                |          |                |          |                |
+|    ACCOUNT     |          |   CATEGORY     |          |     TASK       |
+|    DATABASE    |          |    DATABASE    |          |    DATABASE    |
+|                |          |                |          |                |
++----------------+          +----------------+          +----------------+
+                                                                ^
+                                                                |
+                                                                |
+                                                        +----------------+
+                                                        |                |
+                                                        |   MILESTONE    |
+                                                        |   MANAGEMENT   |
+                                                        |                |
+                                                        +----------------+
+                                                                |
+                                                                | STORE MILESTONES
+                                                                v
+                                                        +----------------+
+                                                        |                |
+                                                        |   MILESTONE    |
+                                                        |    DATABASE    |
+                                                        |                |
+                                                        +----------------+
+```

@@ -57,13 +57,13 @@ export default function CategoriesPage() {
     try {
       setIsLoading(true);
       const response = await fetch('/api/finance/categories');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch categories');
       }
-      
+
       const data = await response.json();
-      
+
       // Fetch transaction counts for each category
       const categoriesWithCounts = await Promise.all(
         data.map(async (category: Category) => {
@@ -75,7 +75,7 @@ export default function CategoriesPage() {
           return { ...category, transactionCount: 0 };
         })
       );
-      
+
       setCategories(categoriesWithCounts);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -103,12 +103,12 @@ export default function CategoriesPage() {
       const response = await fetch(`/api/finance/categories?id=${id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to delete category');
       }
-      
+
       toast.success('Category deleted successfully');
       fetchCategories();
     } catch (error) {
@@ -127,13 +127,13 @@ export default function CategoriesPage() {
     if (activeTab !== 'all' && category.type !== activeTab) {
       return false;
     }
-    
+
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return category.name.toLowerCase().includes(query);
     }
-    
+
     return true;
   });
 
@@ -174,7 +174,7 @@ export default function CategoriesPage() {
           <TabsTrigger value="income">Income</TabsTrigger>
           <TabsTrigger value="expense">Expense</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value={activeTab} className="mt-4">
           <Card>
             <CardHeader>
@@ -228,8 +228,8 @@ export default function CategoriesPage() {
                             {category.icon ? (
                               <span className="text-lg">{category.icon}</span>
                             ) : (
-                              <div 
-                                className="w-4 h-4 rounded-full" 
+                              <div
+                                className="w-4 h-4 rounded-full"
                                 style={{ backgroundColor: category.color || '#888888' }}
                               />
                             )}
@@ -246,8 +246,8 @@ export default function CategoriesPage() {
                         <TableCell>
                           {category.color ? (
                             <div className="flex items-center gap-2">
-                              <div 
-                                className="w-6 h-6 rounded-full" 
+                              <div
+                                className="w-6 h-6 rounded-full"
                                 style={{ backgroundColor: category.color }}
                               />
                               <span className="text-xs text-muted-foreground">
@@ -259,10 +259,10 @@ export default function CategoriesPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {category.transactionCount || 0}
+                          {category.transactionCount !== undefined ? category.transactionCount : 0}
                         </TableCell>
                         <TableCell>
-                          {category.limit 
+                          {category.limit
                             ? `$${category.limit.toFixed(2)}`
                             : <span className="text-muted-foreground">No limit</span>
                           }
@@ -285,7 +285,7 @@ export default function CategoriesPage() {
                               <DropdownMenuItem
                                 onClick={() => handleDeleteCategory(category.id)}
                                 className="text-red-600"
-                                disabled={category.transactionCount > 0}
+                                disabled={(category.transactionCount !== undefined && category.transactionCount > 0)}
                               >
                                 <Trash className="mr-2 h-4 w-4" />
                                 Delete

@@ -1,0 +1,62 @@
+```
++----------------+                                                +----------------+
+|                |                                                |                |
+|    INITIATOR   |                                                |    APPROVER    |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | CREATE APPROVAL REQUEST                                         | REVIEW REQUEST
+        | SUBMIT DOCUMENTS                                                | APPROVE/REJECT
+        v                                                                 v
++----------------+                                                +----------------+
+|                |                                                |                |
+|   WORKFLOW     |                                                |   APPROVAL     |
+|   INITIATION   |<---------------------------------------------->|   PROCESSING   |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | STORE WORKFLOW                                                  | UPDATE WORKFLOW
+        v                                                                 v
++----------------+                                                +----------------+
+|                |                                                |                |
+|   WORKFLOW     |<---------------------------------------------->|   WORKFLOW     |
+|    DATABASE    |                                                |     STEPS      |
+|                |                                                |                |
++----------------+                                                +----------------+
+        ^                                                                 ^
+        |                                                                 |
+        |                                                                 |
++----------------+                                                +----------------+
+|                |                                                |                |
+|   WORKFLOW     |                                                |  NOTIFICATION  |
+|    STATUS      |                                                |     SYSTEM     |
+|   TRACKING     |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | UPDATE STATUS                                                   | SEND NOTIFICATIONS
+        v                                                                 v
++----------------+                                                +----------------+
+|                |                                                |                |
+|    STATUS      |                                                | NOTIFICATION   |
+|    DATABASE    |                                                |   DATABASE     |
+|                |                                                |                |
++----------------+                                                +----------------+
+        ^
+        |
+        |
++----------------+
+|                |
+|    DOCUMENT    |
+|   MANAGEMENT   |
+|                |
++----------------+
+        |
+        | STORE DOCUMENTS
+        v
++----------------+
+|                |
+|   DOCUMENT     |
+|    DATABASE    |
+|                |
++----------------+
+```

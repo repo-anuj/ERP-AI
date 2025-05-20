@@ -133,21 +133,24 @@ export async function POST(request: NextRequest) {
 
     // Create a notification for the user
     const notification = await createNotification({
-      userId,
+      recipientId: userId,
+      recipientType: 'user',
       title: `Budget Alert: ${severity === 'critical' ? 'Critical' : 'Warning'}`,
       message,
       type: 'budget-alert',
-      entityId: budgetId,
-      entityType: 'budget',
+      category: 'finance',
       actionType: 'alert',
-      actorName: 'System',
-      metadata: {
+      senderName: 'System',
+      relatedItemId: budgetId,
+      relatedItemType: 'budget',
+      actionData: {
         alertId,
         budgetId,
         itemId,
         severity,
       },
-      link: `/dashboard/finance/budgets?id=${budgetId}`,
+      actionUrl: `/dashboard/finance/budgets?id=${budgetId}`,
+      companyId,
     });
 
     return NextResponse.json(notification);
@@ -165,8 +168,14 @@ async function getUserId(): Promise<string | null> {
   try {
     // In a real application, you would get the current user ID from the session
     // For now, we'll get the first user in the company
+    const companyId = await getUserCompanyId();
+
+    if (!companyId) {
+      return null;
+    }
+
     const company = await prisma.company.findFirst({
-      where: { id: await getUserCompanyId() },
+      where: { id: companyId },
       include: {
         users: {
           take: 1,

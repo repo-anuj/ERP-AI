@@ -1,34 +1,42 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  FileText, 
-  Download, 
-  Trash2, 
-  Calendar, 
-  Plus, 
-  Clock, 
-  Mail, 
+import {
+  FileText,
+  Download,
+  Trash2,
+  Calendar,
+  Plus,
+  Clock,
+  Mail,
   FileSpreadsheet,
-  FileJson,
-  FileCsv,
-  FilePdf,
   Check,
   X
 } from 'lucide-react';
+// Use FileText as base for custom file type icons
+import { FileJson } from 'lucide-react';
+
+// Custom icons for file types not available in lucide-react
+const FileCsv = (props: any) => (
+  <FileText {...props} />
+);
+
+const FilePdf = (props: any) => (
+  <FileText {...props} />
+);
 import { Button } from '@/components/ui/button';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -39,21 +47,21 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { 
-  useReportingStore, 
-  reportingService, 
-  ReportFormat, 
-  ReportFrequency 
+import {
+  useReportingStore,
+  reportingService,
+  ReportFormat,
+  ReportFrequency
 } from '@/lib/reporting-service';
 
 interface ReportingProps {
@@ -63,7 +71,7 @@ interface ReportingProps {
 
 export function Reporting({ aggregatedData, isLoading = false }: ReportingProps) {
   const [activeTab, setActiveTab] = useState('reports');
-  
+
   return (
     <Card className="col-span-full">
       <CardHeader className="pb-3">
@@ -84,15 +92,15 @@ export function Reporting({ aggregatedData, isLoading = false }: ReportingProps)
             <TabsTrigger value="scheduled">Scheduled Reports</TabsTrigger>
             <TabsTrigger value="generated">Generated Reports</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="reports" className="space-y-4">
             <ReportDefinitions aggregatedData={aggregatedData} isLoading={isLoading} />
           </TabsContent>
-          
+
           <TabsContent value="scheduled" className="space-y-4">
             <ScheduledReports aggregatedData={aggregatedData} isLoading={isLoading} />
           </TabsContent>
-          
+
           <TabsContent value="generated" className="space-y-4">
             <GeneratedReports />
           </TabsContent>
@@ -104,14 +112,14 @@ export function Reporting({ aggregatedData, isLoading = false }: ReportingProps)
 
 function ReportDefinitions({ aggregatedData, isLoading }: ReportingProps) {
   const { reportDefinitions, addReportDefinition, updateReportDefinition, removeReportDefinition } = useReportingStore();
-  
+
   const handleGenerateReport = async (reportId: string) => {
     try {
       if (isLoading || !aggregatedData) {
         toast.error('Data is still loading. Please try again later.');
         return;
       }
-      
+
       toast.promise(
         reportingService.generateReport(reportId, aggregatedData),
         {
@@ -124,19 +132,19 @@ function ReportDefinitions({ aggregatedData, isLoading }: ReportingProps) {
       console.error('Error generating report:', error);
     }
   };
-  
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Report Templates</h3>
-        <ReportDefinitionDialog 
+        <ReportDefinitionDialog
           onSave={(report) => {
             addReportDefinition(report);
             toast.success('Report template created');
           }}
         />
       </div>
-      
+
       {reportDefinitions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
           <FileText className="h-10 w-10 text-muted-foreground mb-2" />
@@ -179,8 +187,8 @@ function ReportDefinitions({ aggregatedData, isLoading }: ReportingProps) {
               </CardContent>
               <CardFooter className="flex justify-between pt-2">
                 <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => handleGenerateReport(report.id)}
                     disabled={isLoading}
@@ -188,21 +196,21 @@ function ReportDefinitions({ aggregatedData, isLoading }: ReportingProps) {
                     <FileText className="h-4 w-4 mr-1" />
                     Generate
                   </Button>
-                  <ScheduleReportDialog 
+                  <ScheduleReportDialog
                     reportId={report.id}
                     reportName={report.name}
                   />
                 </div>
                 <div className="flex space-x-2">
-                  <ReportDefinitionDialog 
+                  <ReportDefinitionDialog
                     report={report}
                     onSave={(updates) => {
                       updateReportDefinition(report.id, updates);
                       toast.success('Report template updated');
                     }}
                   />
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-red-500"
                     onClick={() => {
@@ -224,17 +232,17 @@ function ReportDefinitions({ aggregatedData, isLoading }: ReportingProps) {
 
 function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
   const { scheduledReports, updateScheduledReport, removeScheduledReport } = useReportingStore();
-  
+
   const handleRunNow = async (reportId: string) => {
     try {
       if (isLoading || !aggregatedData) {
         toast.error('Data is still loading. Please try again later.');
         return;
       }
-      
+
       const report = scheduledReports.find((r) => r.id === reportId);
       if (!report) return;
-      
+
       toast.promise(
         reportingService.generateReport(report, aggregatedData),
         {
@@ -243,7 +251,7 @@ function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
           error: 'Failed to generate report'
         }
       );
-      
+
       // Update last run date
       updateScheduledReport(reportId, {
         lastRunDate: new Date().toISOString()
@@ -252,12 +260,12 @@ function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
       console.error('Error generating report:', error);
     }
   };
-  
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
-  
+
   const getFrequencyLabel = (frequency: ReportFrequency) => {
     switch (frequency) {
       case ReportFrequency.DAILY:
@@ -272,13 +280,13 @@ function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
         return frequency;
     }
   };
-  
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Scheduled Reports</h3>
       </div>
-      
+
       {scheduledReports.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
           <Calendar className="h-10 w-10 text-muted-foreground mb-2" />
@@ -307,13 +315,13 @@ function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
                     <span className="text-muted-foreground mr-1">Frequency:</span>
                     {getFrequencyLabel(report.frequency)}
                   </div>
-                  
+
                   <div className="flex items-center text-sm">
                     <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="text-muted-foreground mr-1">Next run:</span>
                     {formatDate(report.nextRunDate)}
                   </div>
-                  
+
                   {report.lastRunDate && (
                     <div className="flex items-center text-sm">
                       <Check className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -321,7 +329,7 @@ function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
                       {formatDate(report.lastRunDate)}
                     </div>
                   )}
-                  
+
                   {report.recipients.length > 0 && (
                     <div className="flex items-start text-sm">
                       <Mail className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
@@ -341,8 +349,8 @@ function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
               </CardContent>
               <CardFooter className="flex justify-between pt-2">
                 <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => handleRunNow(report.id)}
                     disabled={isLoading}
@@ -350,8 +358,8 @@ function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
                     <FileText className="h-4 w-4 mr-1" />
                     Run Now
                   </Button>
-                  <Button 
-                    variant={report.enabled ? 'outline' : 'default'} 
+                  <Button
+                    variant={report.enabled ? 'outline' : 'default'}
                     size="sm"
                     onClick={() => {
                       updateScheduledReport(report.id, { enabled: !report.enabled });
@@ -371,8 +379,8 @@ function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
                     )}
                   </Button>
                 </div>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-red-500"
                   onClick={() => {
@@ -393,18 +401,18 @@ function ScheduledReports({ aggregatedData, isLoading }: ReportingProps) {
 
 function GeneratedReports() {
   const { generatedReports, removeGeneratedReport, clearGeneratedReports } = useReportingStore();
-  
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
-  
+
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
-  
+
   const getFormatIcon = (format: ReportFormat) => {
     switch (format) {
       case ReportFormat.PDF:
@@ -419,14 +427,14 @@ function GeneratedReports() {
         return <FileText className="h-4 w-4" />;
     }
   };
-  
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Generated Reports</h3>
         {generatedReports.length > 0 && (
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => {
               clearGeneratedReports();
@@ -438,7 +446,7 @@ function GeneratedReports() {
           </Button>
         )}
       </div>
-      
+
       {generatedReports.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
           <FileText className="h-10 w-10 text-muted-foreground mb-2" />
@@ -466,16 +474,16 @@ function GeneratedReports() {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => reportingService.downloadReport(report.id)}
                   >
                     <Download className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-red-500"
                     onClick={() => {
@@ -507,18 +515,18 @@ function ReportDefinitionDialog({ report, onSave }: ReportDefinitionDialogProps)
   const [modules, setModules] = useState<string[]>(report?.modules || ['inventory', 'sales', 'finance']);
   const [metrics, setMetrics] = useState<string[]>(report?.metrics || []);
   const [format, setFormat] = useState<ReportFormat>(report?.format || ReportFormat.PDF);
-  
+
   const handleSave = () => {
     if (!name) {
       toast.error('Please enter a report name');
       return;
     }
-    
+
     if (modules.length === 0) {
       toast.error('Please select at least one module');
       return;
     }
-    
+
     onSave({
       name,
       description,
@@ -527,10 +535,10 @@ function ReportDefinitionDialog({ report, onSave }: ReportDefinitionDialogProps)
       filters: {},
       format
     });
-    
+
     setOpen(false);
   };
-  
+
   const moduleOptions = [
     { id: 'inventory', label: 'Inventory' },
     { id: 'sales', label: 'Sales' },
@@ -538,7 +546,7 @@ function ReportDefinitionDialog({ report, onSave }: ReportDefinitionDialogProps)
     { id: 'employees', label: 'Employees' },
     { id: 'projects', label: 'Projects' }
   ];
-  
+
   const metricOptions = [
     { id: 'totalItems', label: 'Total Items', module: 'inventory' },
     { id: 'totalValue', label: 'Total Value', module: 'inventory' },
@@ -554,12 +562,12 @@ function ReportDefinitionDialog({ report, onSave }: ReportDefinitionDialogProps)
     { id: 'totalProjects', label: 'Total Projects', module: 'projects' },
     { id: 'activeProjects', label: 'Active Projects', module: 'projects' }
   ];
-  
+
   // Filter metric options based on selected modules
   const filteredMetricOptions = metricOptions.filter(
     (metric) => modules.includes(metric.module)
   );
-  
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -722,13 +730,13 @@ function ScheduleReportDialog({ reportId, reportName }: ScheduleReportDialogProp
   const [open, setOpen] = useState(false);
   const [frequency, setFrequency] = useState<ReportFrequency>(ReportFrequency.WEEKLY);
   const [recipients, setRecipients] = useState<string>('');
-  
+
   const handleSchedule = () => {
     const recipientList = recipients
       .split(',')
       .map((email) => email.trim())
       .filter((email) => email);
-    
+
     try {
       reportingService.scheduleReport(reportId, frequency, recipientList);
       setOpen(false);
@@ -736,7 +744,7 @@ function ScheduleReportDialog({ reportId, reportName }: ScheduleReportDialogProp
       console.error('Error scheduling report:', error);
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>

@@ -1,0 +1,62 @@
+```
++----------------+                                                +----------------+
+|                |                                                |                |
+|     ADMIN      |                                                |     USER       |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | CREATE/EDIT USERS                                               | REGISTER/LOGIN
+        | ASSIGN PERMISSIONS                                              | UPDATE PROFILE
+        v                                                                 v
++----------------+                                                +----------------+
+|                |                                                |                |
+|    MANAGE      |                                                |     USER       |
+|     USERS      |                                                |  REGISTRATION  |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | STORE USER DATA                                                 | STORE USER DATA
+        v                                                                 v
++----------------+                                                +----------------+
+|                |                                                |                |
+|      USER      |<---------------------------------------------->|  AUTHENTICATION|
+|    DATABASE    |                                                |     SYSTEM     |
+|                |                                                |                |
++----------------+                                                +----------------+
+        ^                                                                 ^
+        |                                                                 |
+        |                                                                 |
++----------------+                                                +----------------+
+|                |                                                |                |
+|    EMPLOYEE    |                                                |    PERMISSION  |
+|   MANAGEMENT   |                                                |    MANAGEMENT  |
+|                |                                                |                |
++----------------+                                                +----------------+
+        |                                                                 |
+        | STORE EMPLOYEE DATA                                             | STORE PERMISSIONS
+        v                                                                 v
++----------------+                                                +----------------+
+|                |                                                |                |
+|    EMPLOYEE    |                                                |   PERMISSION   |
+|    DATABASE    |                                                |    DATABASE    |
+|                |                                                |                |
++----------------+                                                +----------------+
+        ^
+        |
+        |
++----------------+
+|                |
+|   ATTENDANCE   |
+|    TRACKING    |
+|                |
++----------------+
+        |
+        | STORE ATTENDANCE
+        v
++----------------+
+|                |
+|   ATTENDANCE   |
+|    DATABASE    |
+|                |
++----------------+
+```

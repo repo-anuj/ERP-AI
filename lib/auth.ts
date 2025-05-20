@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
+import type { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from './prisma'
 
@@ -48,7 +49,19 @@ export async function verifyAuth(tokenOrCookies: string | ReadonlyRequestCookies
             token = cookieToken;
         }
 
-        return await decrypt(token);
+        // Add a timeout to prevent hanging
+        const timeoutPromise = new Promise<null>((resolve) => {
+            setTimeout(() => {
+                console.warn('Token verification timed out');
+                resolve(null);
+            }, 2000); // 2 second timeout
+        });
+
+        // Race between decryption and timeout
+        return await Promise.race([
+            decrypt(token),
+            timeoutPromise
+        ]);
     } catch (error) {
         console.error('Failed to verify token:', error);
         return null;

@@ -5,12 +5,12 @@ import { createNotification } from '@/lib/notification-service';
 
 /**
  * Create a financial transaction from a sale
- * 
+ *
  * @param sale The sale object with customer and items
  * @returns The created transaction or null if failed
  */
 export async function createTransactionFromSale(
-  sale: Sale & { 
+  sale: Sale & {
     customer: { name: string },
     items: SaleItem[]
   }
@@ -77,15 +77,18 @@ export async function createTransactionFromSale(
 
     // Create a notification about the transaction
     await createNotification({
-      userId: sale.employeeId || '', // This should be improved to notify financial admin
       title: 'New Sales Transaction Created',
       message: `A transaction of ${sale.total} has been created from sale #${sale.invoiceNumber || 'N/A'}`,
-      type: 'transaction',
-      entityId: transaction.id,
-      entityType: 'transaction',
+      type: 'info',
+      category: 'finance',
+      recipientId: sale.employeeId || undefined,
+      recipientType: 'employee',
+      senderName: 'System',
+      relatedItemId: transaction.id,
+      relatedItemType: 'transaction',
       actionType: 'created',
-      actorName: 'System',
-      link: `/dashboard/finance/transactions?id=${transaction.id}`,
+      actionUrl: `/dashboard/finance/transactions?id=${transaction.id}`,
+      companyId: sale.companyId,
     });
 
     return transaction;
@@ -97,12 +100,12 @@ export async function createTransactionFromSale(
 
 /**
  * Update a financial transaction when a sale is updated
- * 
+ *
  * @param sale The updated sale object
  * @returns The updated transaction or null if failed
  */
 export async function updateTransactionFromSale(
-  sale: Sale & { 
+  sale: Sale & {
     customer: { name: string },
     items: SaleItem[]
   }
@@ -149,7 +152,7 @@ export async function updateTransactionFromSale(
 
 /**
  * Delete a financial transaction when a sale is deleted
- * 
+ *
  * @param saleId The ID of the deleted sale
  * @param companyId The company ID
  * @returns Success status

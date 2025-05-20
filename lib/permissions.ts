@@ -69,6 +69,9 @@ export const ROLE_PERMISSIONS = {
   ],
 
   hr: [
+    // Dashboard
+    PERMISSIONS.VIEW_DASHBOARD,
+
     // HR
     PERMISSIONS.VIEW_EMPLOYEES,
     PERMISSIONS.MANAGE_EMPLOYEES,
@@ -83,6 +86,9 @@ export const ROLE_PERMISSIONS = {
   ],
 
   sales: [
+    // Dashboard
+    PERMISSIONS.VIEW_DASHBOARD,
+
     // Sales
     PERMISSIONS.VIEW_SALES,
     PERMISSIONS.MANAGE_SALES,
@@ -96,6 +102,9 @@ export const ROLE_PERMISSIONS = {
   ],
 
   engineering: [
+    // Dashboard
+    PERMISSIONS.VIEW_DASHBOARD,
+
     // Projects
     PERMISSIONS.VIEW_PROJECTS,
     PERMISSIONS.COMPLETE_TASKS,
@@ -105,6 +114,9 @@ export const ROLE_PERMISSIONS = {
   ],
 
   finance: [
+    // Dashboard
+    PERMISSIONS.VIEW_DASHBOARD,
+
     // Finance
     PERMISSIONS.VIEW_FINANCE,
     PERMISSIONS.MANAGE_FINANCE,
@@ -114,8 +126,8 @@ export const ROLE_PERMISSIONS = {
     // Sales (view only)
     PERMISSIONS.VIEW_SALES,
 
-    // Inventory (view only)
-    PERMISSIONS.VIEW_INVENTORY,
+    // Analytics
+    PERMISSIONS.VIEW_ANALYTICS,
 
     // Settings (limited)
     PERMISSIONS.VIEW_SETTINGS,
@@ -151,26 +163,43 @@ export function getPermissionsForDepartment(department: string): string[] {
 }
 
 // Get combined permissions for role and department
-export function getCombinedPermissions(role: string, department: string): string[] {
-  const rolePermissions = getPermissionsForRole(role);
+export function getCombinedPermissions(role: string, department: string, isUser: boolean = false): string[] {
+  // If user (owner), they have unrestricted access to everything
+  if (isUser) {
+    return ROLE_PERMISSIONS.admin; // Give them all permissions
+  }
 
-  // If admin, just return all admin permissions
+  // If admin or manager, they can access everything regardless of department
   if (role === 'admin') {
-    return rolePermissions;
+    return ROLE_PERMISSIONS.admin;
   }
 
-  // If manager, combine manager permissions with department permissions
   if (role === 'manager') {
+    // Managers get all their role permissions plus their department permissions
+    const rolePermissions = getPermissionsForRole(role);
     const deptPermissions = getPermissionsForDepartment(department);
-    return [...new Set([...rolePermissions, ...deptPermissions])];
+
+    // Combine permissions without duplicates
+    const combinedPermissions = [...rolePermissions];
+    deptPermissions.forEach(permission => {
+      if (!combinedPermissions.includes(permission)) {
+        combinedPermissions.push(permission);
+      }
+    });
+
+    return combinedPermissions;
   }
 
-  // Otherwise, use department permissions
+  // For regular employees, use department-specific permissions
   return getPermissionsForDepartment(department);
 }
 
 // Check if a user has a specific permission
-export function hasPermission(userPermissions: string[], permission: string): boolean {
+export function hasPermission(userPermissions: string[], permission: string, isUser: boolean = false): boolean {
+  // If this is a regular user (not an employee), they have unrestricted access
+  if (isUser) return true;
+
+  // Otherwise, check if the user/employee has the specific permission
   return userPermissions.includes(permission);
 }
 
@@ -200,19 +229,30 @@ export const PERMISSION_ROUTES = {
 };
 
 // Get all accessible routes for a set of permissions
-export function getAccessibleRoutes(permissions: string[]): string[] {
-  const routes = new Set<string>();
-
-  // Always include dashboard
-  routes.add('/');
+export function getAccessibleRoutes(permissions: string[], role?: string): string[] {
+  const routes: string[] = [];
 
   // Add routes based on permissions
   permissions.forEach(permission => {
     const permissionRoutes = PERMISSION_ROUTES[permission as keyof typeof PERMISSION_ROUTES];
     if (permissionRoutes) {
-      permissionRoutes.forEach(route => routes.add(route));
+      permissionRoutes.forEach(route => {
+        if (!routes.includes(route)) {
+          routes.push(route);
+        }
+      });
     }
   });
 
-  return Array.from(routes);
+  // Make sure dashboard is included for roles that should have it
+  if (!routes.includes('/') && (role === 'admin' || role === 'manager' || permissions.includes(PERMISSIONS.VIEW_DASHBOARD))) {
+    routes.push('/');
+  }
+
+  // Always include settings
+  if (!routes.includes('/settings')) {
+    routes.push('/settings');
+  }
+
+  return routes;
 }

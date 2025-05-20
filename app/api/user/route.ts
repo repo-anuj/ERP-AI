@@ -4,6 +4,8 @@ import { verifyAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import * as z from "zod";
 
+export const runtime = 'nodejs';
+
 const updateUserSchema = z.object({
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
@@ -14,7 +16,7 @@ export async function GET() {
   try {
     console.log("User API route called");
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       console.log("No token found");
       return new NextResponse("Unauthorized", { status: 401 });
@@ -22,7 +24,7 @@ export async function GET() {
 
     console.log("Verifying token...");
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       console.log("Invalid token payload");
       return new NextResponse("Invalid token", { status: 401 });
@@ -57,13 +59,13 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse("Invalid token", { status: 401 });
     }
@@ -99,7 +101,7 @@ export async function PATCH(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return new NextResponse(JSON.stringify(error.errors), { status: 400 });
     }
-    
+
     console.error("[USER_PATCH]", error);
     return new NextResponse("Internal error", { status: 500 });
   }

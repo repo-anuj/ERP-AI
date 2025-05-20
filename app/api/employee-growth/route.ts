@@ -3,16 +3,18 @@ import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse('Invalid token', { status: 401 });
     }
@@ -34,7 +36,7 @@ export async function GET() {
 
     // Group employees by month and year of start date
     const employeesByMonth: Record<string, number> = {};
-    
+
     // Initialize with the last 12 months
     const today = new Date();
     for (let i = 0; i < 12; i++) {
@@ -48,7 +50,7 @@ export async function GET() {
     employees.forEach(employee => {
       const date = new Date(employee.startDate);
       const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
+
       if (employeesByMonth[monthYear] !== undefined) {
         employeesByMonth[monthYear]++;
       }

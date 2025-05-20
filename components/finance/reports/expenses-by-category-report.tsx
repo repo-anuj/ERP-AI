@@ -149,7 +149,7 @@ export function ExpensesByCategoryReport({ data }: ExpensesByCategoryReportProps
                 <XAxis type="number" tickFormatter={(value) => formatCurrency(value)} />
                 <YAxis type="category" dataKey="name" width={100} />
                 <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                <Bar dataKey="amount" nameKey="name">
+                <Bar dataKey="amount">
                   {barData.slice(0, 5).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -220,8 +220,8 @@ export function ExpensesByCategoryReport({ data }: ExpensesByCategoryReportProps
                       {category.icon ? (
                         <span className="text-lg">{category.icon}</span>
                       ) : (
-                        <div 
-                          className="w-3 h-3 rounded-full" 
+                        <div
+                          className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: category.color || COLORS[index % COLORS.length] }}
                         />
                       )}

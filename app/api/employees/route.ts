@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { z } from "zod";
 
+export const runtime = 'nodejs';
+
 const employeeSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
@@ -110,14 +112,23 @@ export async function GET() {
     });
 
     // Define the type for a project member inline for clarity
-    type ProjectMember = { employeeId: string; name: string; role?: string; department?: string; };
+    type ProjectMember = { employeeId: string; name: string; role: string | null; department: string | null; };
 
     // Create a map for quick lookup: employeeId -> projects
     const employeeProjectMap = new Map<string, { id: string; name: string }[]>();
     projects.forEach(project => {
-      // Ensure project.members exists before trying to iterate
-      if (project.members && Array.isArray(project.members)) {
-        project.members.forEach((member: ProjectMember) => {
+      // Process project manager
+      if (project.projectManager) {
+        const managerId = project.projectManager.employeeId;
+        if (!employeeProjectMap.has(managerId)) {
+          employeeProjectMap.set(managerId, []);
+        }
+        employeeProjectMap.get(managerId)?.push({ id: project.id, name: project.name });
+      }
+
+      // Process team members
+      if (project.teamMembers && Array.isArray(project.teamMembers)) {
+        project.teamMembers.forEach((member: ProjectMember) => {
           if (!employeeProjectMap.has(member.employeeId)) {
             employeeProjectMap.set(member.employeeId, []);
           }

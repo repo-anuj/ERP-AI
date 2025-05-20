@@ -13,7 +13,7 @@ import { EditMilestoneDialog } from '@/components/projects/edit-milestone-dialog
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,22 +23,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  CheckCircle2, 
-  Clock, 
-  Loader2, 
-  PlayCircle, 
-  PauseCircle, 
-  Plus, 
-  Trash2, 
-  Users, 
-  XCircle 
+import {
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  PlayCircle,
+  PauseCircle,
+  Plus,
+  Trash2,
+  Users,
+  XCircle
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Project, Task, Milestone } from '@/components/projects/columns';
+import { Project, Task as BaseTask, Milestone as BaseMilestone } from '@/components/projects/columns';
 import { formatCurrency, formatDate } from '@/lib/utils';
+
+// Extended Task type with projectId
+interface Task extends BaseTask {
+  projectId: string;
+}
+
+// Extended Milestone type with projectId
+interface Milestone extends BaseMilestone {
+  projectId: string;
+}
 
 export default function ProjectEditPage() {
   const params = useParams();
@@ -56,15 +66,15 @@ export default function ProjectEditPage() {
 
   const fetchProject = async () => {
     if (!params.id) return;
-    
+
     try {
       setIsLoading(true);
       const response = await fetch(`/api/projects?id=${params.id}`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch project');
       }
-      
+
       const data = await response.json();
       setProject(data);
     } catch (error) {
@@ -85,21 +95,21 @@ export default function ProjectEditPage() {
 
   const handleDeleteTask = async () => {
     if (!selectedTask) return;
-    
+
     try {
       const response = await fetch(`/api/projects/tasks?id=${selectedTask.id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete task');
       }
-      
+
       toast({
         title: 'Success',
         description: 'Task deleted successfully',
       });
-      
+
       // Refresh project data
       fetchProject();
     } catch (error) {
@@ -117,21 +127,21 @@ export default function ProjectEditPage() {
 
   const handleDeleteMilestone = async () => {
     if (!selectedMilestone) return;
-    
+
     try {
       const response = await fetch(`/api/projects/milestones?id=${selectedMilestone.id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete milestone');
       }
-      
+
       toast({
         title: 'Success',
         description: 'Milestone deleted successfully',
       });
-      
+
       // Refresh project data
       fetchProject();
     } catch (error) {
@@ -211,9 +221,9 @@ export default function ProjectEditPage() {
     return (
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="mr-2"
             onClick={() => router.push('/projects')}
           >
@@ -230,9 +240,9 @@ export default function ProjectEditPage() {
     return (
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="mr-2"
             onClick={() => router.push('/projects')}
           >
@@ -242,7 +252,7 @@ export default function ProjectEditPage() {
         </div>
         <div className="flex flex-col items-center justify-center h-96">
           <p className="text-muted-foreground">The requested project could not be found.</p>
-          <Button 
+          <Button
             onClick={() => router.push('/projects')}
             className="mt-4"
           >
@@ -257,9 +267,9 @@ export default function ProjectEditPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="mr-2"
             onClick={() => router.push('/projects')}
           >
@@ -271,8 +281,8 @@ export default function ProjectEditPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setIsEditProjectOpen(true)}
           >
             Edit Project
@@ -352,7 +362,7 @@ export default function ProjectEditPage() {
           <TabsTrigger value="milestones">Milestones ({project.milestones.length})</TabsTrigger>
           <TabsTrigger value="team">Team ({project.teamMembers.length + 1})</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="details" className="mt-4 space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
@@ -363,7 +373,7 @@ export default function ProjectEditPage() {
                 <p className="whitespace-pre-line">{project.description || 'No description available'}</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Notes</CardTitle>
@@ -373,7 +383,7 @@ export default function ProjectEditPage() {
               </CardContent>
             </Card>
           </div>
-          
+
           {project.client && (
             <Card>
               <CardHeader>
@@ -395,7 +405,7 @@ export default function ProjectEditPage() {
               </CardContent>
             </Card>
           )}
-          
+
           {project.tags.length > 0 && (
             <Card>
               <CardHeader>
@@ -411,7 +421,7 @@ export default function ProjectEditPage() {
             </Card>
           )}
         </TabsContent>
-        
+
         <TabsContent value="tasks" className="mt-4 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Project Tasks</h3>
@@ -420,12 +430,12 @@ export default function ProjectEditPage() {
               Add Task
             </Button>
           </div>
-          
+
           {project.tasks.length === 0 ? (
             <div className="text-center p-8 border rounded-md">
               <p className="text-muted-foreground">No tasks have been added to this project yet.</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setIsAddTaskOpen(true)}
                 className="mt-4"
               >
@@ -475,23 +485,25 @@ export default function ProjectEditPage() {
                       <span className="text-xs">{task.completionPercentage}%</span>
                     </div>
                     <div className="flex pt-2 justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         className="h-8 px-2"
                         onClick={() => {
-                          setSelectedTask(task);
+                          // Add projectId from the current project
+                          setSelectedTask({...task, projectId: project.id});
                           setIsDeleteTaskOpen(true);
                         }}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         className="h-8"
                         onClick={() => {
-                          setSelectedTask(task);
+                          // Add projectId from the current project
+                          setSelectedTask({...task, projectId: project.id});
                           setTimeout(() => document.getElementById('edit-task-dialog')?.click(), 0);
                         }}
                       >
@@ -504,7 +516,7 @@ export default function ProjectEditPage() {
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="milestones" className="mt-4 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Project Milestones</h3>
@@ -513,12 +525,12 @@ export default function ProjectEditPage() {
               Add Milestone
             </Button>
           </div>
-          
+
           {project.milestones.length === 0 ? (
             <div className="text-center p-8 border rounded-md">
               <p className="text-muted-foreground">No milestones have been added to this project yet.</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setIsAddMilestoneOpen(true)}
                 className="mt-4"
               >
@@ -563,23 +575,25 @@ export default function ProjectEditPage() {
                       </div>
                     )}
                     <div className="flex pt-2 justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         className="h-8 px-2"
                         onClick={() => {
-                          setSelectedMilestone(milestone);
+                          // Add projectId from the current project
+                          setSelectedMilestone({...milestone, projectId: project.id});
                           setIsDeleteMilestoneOpen(true);
                         }}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         className="h-8"
                         onClick={() => {
-                          setSelectedMilestone(milestone);
+                          // Add projectId from the current project
+                          setSelectedMilestone({...milestone, projectId: project.id});
                           setTimeout(() => document.getElementById('edit-milestone-dialog')?.click(), 0);
                         }}
                       >
@@ -592,7 +606,7 @@ export default function ProjectEditPage() {
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="team" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
@@ -613,7 +627,7 @@ export default function ProjectEditPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Team Members</CardTitle>
@@ -653,7 +667,7 @@ export default function ProjectEditPage() {
         onOpenChange={setIsEditProjectOpen}
         onProjectUpdated={fetchProject}
       />
-      
+
       {/* Add Task Dialog */}
       <AddTaskDialog
         projectId={project.id}
@@ -661,18 +675,17 @@ export default function ProjectEditPage() {
         onOpenChange={setIsAddTaskOpen}
         onTaskAdded={fetchProject}
       />
-      
+
       {/* Edit Task Dialog */}
       {selectedTask && (
         <EditTaskDialog
-          task={selectedTask}
+          task={selectedTask as any}
           open={!!selectedTask}
           onOpenChange={() => setSelectedTask(null)}
           onTaskUpdated={fetchProject}
-          id="edit-task-dialog"
         />
       )}
-      
+
       {/* Add Milestone Dialog */}
       <AddMilestoneDialog
         projectId={project.id}
@@ -680,18 +693,17 @@ export default function ProjectEditPage() {
         onOpenChange={setIsAddMilestoneOpen}
         onMilestoneAdded={fetchProject}
       />
-      
+
       {/* Edit Milestone Dialog */}
       {selectedMilestone && (
         <EditMilestoneDialog
-          milestone={selectedMilestone}
+          milestone={selectedMilestone as any}
           open={!!selectedMilestone}
           onOpenChange={() => setSelectedMilestone(null)}
           onMilestoneUpdated={fetchProject}
-          id="edit-milestone-dialog"
         />
       )}
-      
+
       {/* Delete Task Confirmation */}
       <AlertDialog open={isDeleteTaskOpen} onOpenChange={setIsDeleteTaskOpen}>
         <AlertDialogContent>
@@ -704,7 +716,7 @@ export default function ProjectEditPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteTask}
               className="bg-red-600 hover:bg-red-700"
             >
@@ -713,7 +725,7 @@ export default function ProjectEditPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       {/* Delete Milestone Confirmation */}
       <AlertDialog open={isDeleteMilestoneOpen} onOpenChange={setIsDeleteMilestoneOpen}>
         <AlertDialogContent>
@@ -726,7 +738,7 @@ export default function ProjectEditPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteMilestone}
               className="bg-red-600 hover:bg-red-700"
             >
@@ -737,4 +749,4 @@ export default function ProjectEditPage() {
       </AlertDialog>
     </div>
   );
-} 
+}

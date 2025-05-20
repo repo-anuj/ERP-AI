@@ -4,6 +4,8 @@ import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
+export const runtime = 'nodejs';
+
 const departmentSchema = z.object({
   name: z.string().min(2, "Department name is required"),
   description: z.string().optional(),
@@ -13,13 +15,13 @@ const departmentSchema = z.object({
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse('Invalid token', { status: 401 });
     }
@@ -42,7 +44,7 @@ export async function GET() {
     // Extract unique department names
     const departmentSet = new Set<string>();
     employees.forEach(emp => departmentSet.add(emp.department));
-    
+
     // Convert to array of department objects
     const departments = Array.from(departmentSet).map(name => ({
       name,
@@ -59,13 +61,13 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const token = cookies().get('token')?.value;
-    
+
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const payload = await verifyAuth(token);
-    
+
     if (!payload.email) {
       return new NextResponse('Invalid token', { status: 401 });
     }

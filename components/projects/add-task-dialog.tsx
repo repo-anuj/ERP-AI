@@ -58,11 +58,12 @@ type Task = {
 
 interface AddTaskDialogProps {
   projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onTaskAdded?: () => void;
 }
 
-export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
-  const [open, setOpen] = useState(false)
+export function AddTaskDialog({ projectId, open, onOpenChange, onTaskAdded }: AddTaskDialogProps) {
   const [loading, setLoading] = useState(false)
   const [employees, setEmployees] = useState<Employee[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
@@ -181,18 +182,18 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
       }
 
       const task = await response.json()
-      
+
       // Reset form and close dialog
-      setOpen(false)
+      onOpenChange(false)
       form.reset()
       setSelectedDependencies([])
-      
+
       toast({
         title: "Task Added",
         description: `${task.name} has been added successfully.`,
         variant: "default",
       })
-      
+
       // Notify parent component
       if (onTaskAdded) {
         onTaskAdded()
@@ -210,7 +211,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 gap-1">
           <PlusCircle className="h-3.5 w-3.5" />
@@ -239,7 +240,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="description"
@@ -253,7 +254,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -278,7 +279,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="priority"
@@ -303,7 +304,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="assigneeId"
@@ -328,7 +329,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -368,7 +369,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="dueDate"
@@ -408,7 +409,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                 )}
               />
             </div>
-            
+
             <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
@@ -417,18 +418,18 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                   <FormItem>
                     <FormLabel>Estimated Hours *</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        {...field} 
-                        onChange={e => field.onChange(parseInt(e.target.value))} 
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={e => field.onChange(parseInt(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="actualHours"
@@ -436,19 +437,19 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                   <FormItem>
                     <FormLabel>Actual Hours *</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        step="0.5" 
-                        {...field} 
-                        onChange={e => field.onChange(parseFloat(e.target.value))} 
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        {...field}
+                        onChange={e => field.onChange(parseFloat(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="completionPercentage"
@@ -456,12 +457,12 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                   <FormItem>
                     <FormLabel>Completion % *</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        max="100" 
-                        {...field} 
-                        onChange={e => field.onChange(parseInt(e.target.value))} 
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        {...field}
+                        onChange={e => field.onChange(parseInt(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -469,19 +470,19 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                 )}
               />
             </div>
-            
+
             {tasks.length > 0 && (
               <div className="space-y-2">
                 <FormLabel>Dependencies (Optional)</FormLabel>
                 <div className="border rounded-md p-4 max-h-[150px] overflow-y-auto">
                   {tasks.map((task) => (
                     <div key={task.id} className="flex items-center space-x-2 py-1">
-                      <Checkbox 
-                        id={`task-${task.id}`} 
+                      <Checkbox
+                        id={`task-${task.id}`}
                         checked={selectedDependencies.includes(task.id)}
                         onCheckedChange={() => toggleDependency(task.id)}
                       />
-                      <label 
+                      <label
                         htmlFor={`task-${task.id}`}
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
@@ -492,7 +493,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                 </div>
               </div>
             )}
-            
+
             <FormField
               control={form.control}
               name="notes"
@@ -506,7 +507,7 @@ export function AddTaskDialog({ projectId, onTaskAdded }: AddTaskDialogProps) {
                 </FormItem>
               )}
             />
-            
+
             <DialogFooter>
               <Button type="submit" disabled={loading}>
                 {loading ? "Adding..." : "Add Task"}
