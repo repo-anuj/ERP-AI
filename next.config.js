@@ -8,18 +8,10 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   swcMinify: true,
-
-  // Disable middleware to avoid the EvalError
-  skipMiddlewareUrlNormalize: true,
-  skipTrailingSlashRedirect: true,
-
-  // Experimental features
+  // Ensure prerender-manifest.js is generated
   experimental: {
+    // This is experimental but may help with the issue
     serverComponentsExternalPackages: ['@prisma/client'],
-    instrumentationHook: false, // Disable instrumentation hook
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
   },
 };
 
