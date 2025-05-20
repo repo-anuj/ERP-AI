@@ -28,14 +28,30 @@ const departmentHomePage: Record<DepartmentType, string> = {
 }
 
 export async function middleware(request: NextRequest) {
-    const token = request.cookies.get('token')?.value
-    const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
-    const isOnboardingPage = request.nextUrl.pathname === '/auth/onboarding'
-    const isEmployee = request.cookies.get('isEmployee')?.value === 'true'
+    try {
+        // Skip middleware for static assets and API routes to prevent header conflicts
+        const { pathname } = request.nextUrl;
+        if (
+            pathname.includes('/_next') ||
+            pathname.includes('/api/') ||
+            pathname.includes('/static/') ||
+            pathname.includes('/images/') ||
+            pathname.endsWith('.ico') ||
+            pathname.endsWith('.png') ||
+            pathname.endsWith('.jpg') ||
+            pathname.endsWith('.svg')
+        ) {
+            return NextResponse.next();
+        }
 
-    // Verify authentication
-    const verifiedToken = token && await verifyAuth(token).catch(() => null)
-    const isAuthenticated = !!verifiedToken
+        const token = request.cookies.get('token')?.value
+        const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
+        const isOnboardingPage = request.nextUrl.pathname === '/auth/onboarding'
+        const isEmployee = request.cookies.get('isEmployee')?.value === 'true'
+
+        // Verify authentication
+        const verifiedToken = token && await verifyAuth(token).catch(() => null)
+        const isAuthenticated = !!verifiedToken
 
     // Redirect to sign in if accessing protected routes while not authenticated
     if (!isAuthenticated && !isAuthPage) {
@@ -120,8 +136,13 @@ export async function middleware(request: NextRequest) {
     }
 
     return NextResponse.next()
+    } catch (error) {
+        console.error('Middleware error:', error);
+        // In case of error, just continue to the page without redirecting
+        return NextResponse.next();
+    }
 }
 
 export const config = {
-    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }

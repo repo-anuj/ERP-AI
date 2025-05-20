@@ -52,5 +52,73 @@ if (!fs.existsSync(prerenderManifestPath)) {
   fs.writeFileSync(prerenderManifestPath, emptyManifest);
 }
 
+// Create a fallback for the prerender-manifest.json if it doesn't exist
+const prerenderManifestJsonPath = path.join(nextDir, 'prerender-manifest.json');
+if (!fs.existsSync(prerenderManifestJsonPath)) {
+  console.log('Creating prerender-manifest.json...');
+  const emptyManifestJson = `{
+  "version": 4,
+  "routes": {},
+  "dynamicRoutes": {},
+  "preview": {
+    "previewModeId": "",
+    "previewModeSigningKey": "",
+    "previewModeEncryptionKey": ""
+  },
+  "notFoundRoutes": []
+}`;
+  fs.writeFileSync(prerenderManifestJsonPath, emptyManifestJson);
+}
+
+// Set up error handling for the process
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit the process, just log the error
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit the process, just log the error
+});
+
 // Start the Next.js server
-runCommand(`next start -p ${port}`);
+try {
+  console.log(`Starting Next.js server on port ${port}...`);
+  runCommand(`next start -p ${port}`);
+} catch (error) {
+  console.error('Failed to start Next.js server:', error);
+  console.log('Attempting to start with node directly...');
+
+  // Fallback to a simple HTTP server if Next.js fails to start
+  const http = require('http');
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>ERP-AI System</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+            .container { max-width: 600px; margin: 0 auto; }
+            .error { color: #e74c3c; }
+            .button { display: inline-block; background: #3498db; color: white; padding: 10px 20px;
+                     text-decoration: none; border-radius: 5px; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>ERP-AI System</h1>
+            <p>The application is currently experiencing technical difficulties.</p>
+            <p class="error">Our team has been notified and is working to resolve the issue.</p>
+            <a href="/" class="button">Refresh</a>
+          </div>
+        </body>
+      </html>
+    `);
+  });
+
+  server.listen(port, () => {
+    console.log(`Fallback server running on port ${port}`);
+  });
+}
