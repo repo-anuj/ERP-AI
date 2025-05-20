@@ -9,6 +9,7 @@ import { UserProvider } from '@/contexts/user-context';
 import { CompanyProvider } from '@/contexts/company-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { PermissionProvider } from '@/contexts/permission-context';
+import AuthCheck from './auth-check';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -35,15 +36,17 @@ export default function RootLayout({
             <UserProvider>
               <NotificationProvider>
                 <PermissionProvider>
-                  <div className="flex min-h-screen">
-                    <Sidebar />
-                    <div className="flex-1 flex flex-col md:ml-64">
-                      <Header />
-                      <main className="flex-1 overflow-y-auto bg-background">
-                        {children}
-                      </main>
+                  <AuthCheck>
+                    <div className="flex min-h-screen">
+                      <Sidebar />
+                      <div className="flex-1 flex flex-col md:ml-64">
+                        <Header />
+                        <main className="flex-1 overflow-y-auto bg-background">
+                          {children}
+                        </main>
+                      </div>
                     </div>
-                  </div>
+                  </AuthCheck>
                   <Toaster />
                 </PermissionProvider>
               </NotificationProvider>

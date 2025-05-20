@@ -12,6 +12,8 @@ services:
         value: "10000"
       - key: DATABASE_URL
         sync: false
+      - key: NEXT_DISABLE_MIDDLEWARE
+        value: "1"
     buildFilter:
       paths:
         - app/**
