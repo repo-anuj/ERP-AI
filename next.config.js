@@ -12,6 +12,15 @@ const nextConfig = {
   experimental: {
     // This is experimental but may help with the issue
     serverComponentsExternalPackages: ['@prisma/client'],
+    // Improve Edge Runtime compatibility
+    optimizePackageImports: ['jose'],
+    // Configure middleware to run in Node.js runtime instead of Edge
+    // This can help with compatibility issues
+    middleware: {
+      // Use the Node.js runtime for middleware
+      // This can help with jose library compatibility
+      runtime: "nodejs"
+    }
   },
 };
 

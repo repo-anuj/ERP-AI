@@ -49,19 +49,14 @@ export async function verifyAuth(tokenOrCookies: string | ReadonlyRequestCookies
             token = cookieToken;
         }
 
-        // Add a timeout to prevent hanging
-        const timeoutPromise = new Promise<null>((resolve) => {
-            setTimeout(() => {
-                console.warn('Token verification timed out');
-                resolve(null);
-            }, 2000); // 2 second timeout
-        });
-
-        // Race between decryption and timeout
-        return await Promise.race([
-            decrypt(token),
-            timeoutPromise
-        ]);
+        // Edge Runtime doesn't like Promise.race with setTimeout
+        // So we'll just directly decrypt the token with proper error handling
+        try {
+            return await decrypt(token);
+        } catch (decryptError) {
+            console.error('Token decryption failed:', decryptError);
+            return null;
+        }
     } catch (error) {
         console.error('Failed to verify token:', error);
         return null;
