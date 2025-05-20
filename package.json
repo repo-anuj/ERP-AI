@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "build:render": "node ./scripts/render-build.js",
-    "start": "next start",
+    "start": "node ./scripts/render-start.js",
+    "start:prod": "next start",
     "lint": "next lint"
   },
   "dependencies": {
