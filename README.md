@@ -2,7 +2,7 @@
 
 # 🚀 ERP-AI
 
-### Enterprise Resource Planning System with AI Integration
+### Enterprise Resource Planning System with AI Integration 
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-94.4%25-blue?style=for-the-badge&logo=typescript&logoColor=white&color=3178C6)](https://www.typescriptlang.org/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-5.5%25-yellow?style=for-the-badge&logo=javascript&logoColor=black&color=F7DF1E)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
