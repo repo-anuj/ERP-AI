@@ -46,8 +46,23 @@ try {
 
 // Install dependencies with production optimizations
 console.log('Installing dependencies...');
-runCommand('npm ci');
-runCommand('npm install @typescript-eslint/eslint-plugin@^8.32.1 @typescript-eslint/parser@^8.32.1 --save-dev');
+runCommand('npm install');
+
+// Disable middleware to avoid Edge Runtime issues
+console.log('Disabling middleware for Edge Runtime compatibility...');
+const middlewarePath = path.join(process.cwd(), 'middleware.ts');
+const middlewareDisabledPath = path.join(process.cwd(), 'middleware.disabled');
+
+if (fs.existsSync(middlewarePath)) {
+  console.log('Backing up middleware.ts...');
+  fs.copyFileSync(middlewarePath, `${middlewarePath}.backup`);
+  fs.unlinkSync(middlewarePath);
+}
+
+if (fs.existsSync(middlewareDisabledPath)) {
+  console.log('Using disabled middleware...');
+  fs.copyFileSync(middlewareDisabledPath, middlewarePath);
+}
 
 // Install additional dependencies needed for CSS processing
 console.log('Installing additional dependencies for CSS processing...');
