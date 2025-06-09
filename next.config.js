@@ -3,24 +3,79 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  images: { unoptimized: true },
+  typescript: {
+    ignoreBuildErrors: false, // Enable TypeScript checking in production
+  },
+  images: {
+    unoptimized: true,
+    domains: [], // Add your image domains here if needed
+    formats: ['image/webp', 'image/avif'],
+  },
   output: 'standalone',
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
-  // Ensure prerender-manifest.js is generated
+  compress: true,
+
+  // External packages for server components (Next.js 15+)
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
+
+  // Performance optimizations
   experimental: {
-    // This is experimental but may help with the issue
-    serverComponentsExternalPackages: ['@prisma/client'],
-    // Improve Edge Runtime compatibility
-    optimizePackageImports: ['jose'],
-    // Configure middleware to run in Node.js runtime instead of Edge
-    // This can help with compatibility issues
-    middleware: {
-      // Use the Node.js runtime for middleware
-      // This can help with jose library compatibility
-      runtime: "nodejs"
+    optimizePackageImports: ['jose', 'lucide-react', '@radix-ui/react-icons'],
+  },
+
+  // Webpack optimizations
+  webpack: (config, { isServer }) => {
+    // Optimize bundle size
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
     }
+
+    // Optimize Prisma for serverless
+    config.externals = [...(config.externals || []), '_http_common'];
+
+    return config;
+  },
+
+  // Headers for security and performance
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
+      },
+      {
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0',
+          },
+        ],
+      },
+    ];
   },
 };
 

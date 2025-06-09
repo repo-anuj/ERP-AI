@@ -7,8 +7,9 @@ export const runtime = 'nodejs';
 
 export async function GET() {
   try {
-    const token = cookies().get('token')?.value;
-    const isEmployee = cookies().get('isEmployee')?.value === 'true';
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

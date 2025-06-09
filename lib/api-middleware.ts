@@ -17,8 +17,9 @@ export function withPermission(
 ) {
   return async (req: NextRequest, context: any) => {
     try {
-      const token = cookies().get('token')?.value;
-      const isEmployee = cookies().get('isEmployee')?.value === 'true';
+      const cookieStore = await cookies();
+      const token = cookieStore.get('token')?.value;
+      const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 
       if (!token) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

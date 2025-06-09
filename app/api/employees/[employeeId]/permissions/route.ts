@@ -12,9 +12,9 @@ const permissionSchema = z.object({
 });
 
 // Get employee permissions
-async function getEmployeePermissions(req: NextRequest, { params }: { params: { employeeId: string } }) {
+async function getEmployeePermissions(req: NextRequest, { params }: { params: Promise<{ employeeId: string }> }) {
   try {
-    const { employeeId } = params;
+    const { employeeId } = await params;
 
     if (!employeeId) {
       return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
@@ -51,9 +51,9 @@ async function getEmployeePermissions(req: NextRequest, { params }: { params: { 
 }
 
 // Update employee permissions
-async function updateEmployeePermissions(req: NextRequest, { params }: { params: { employeeId: string } }) {
+async function updateEmployeePermissions(req: NextRequest, { params }: { params: Promise<{ employeeId: string }> }) {
   try {
-    const { employeeId } = params;
+    const { employeeId } = await params;
     const body = await req.json();
 
     if (!employeeId) {

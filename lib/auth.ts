@@ -5,7 +5,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from './prisma'
 
 // Use environment variable or fallback to a default (for development only)
-const secretKey = process.env.JWT_SECRET_KEY || 'your-secret-key-here'
+// In production, JWT_SECRET_KEY MUST be set as an environment variable
+const secretKey = process.env.JWT_SECRET_KEY || 'your-secret-key-here-development-only'
+
+if (process.env.NODE_ENV === 'production' && secretKey === 'your-secret-key-here-development-only') {
+    throw new Error('JWT_SECRET_KEY environment variable must be set in production')
+}
+
 const key = new TextEncoder().encode(secretKey)
 
 // Remove unused constant
@@ -63,8 +69,9 @@ export async function verifyAuth(tokenOrCookies: string | ReadonlyRequestCookies
     }
 }
 
-export function setAuthCookie(token: string) {
-    cookies().set('token', token, {
+export async function setAuthCookie(token: string) {
+    const cookieStore = await cookies()
+    cookieStore.set('token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -73,8 +80,9 @@ export function setAuthCookie(token: string) {
     })
 }
 
-export function removeAuthCookie() {
-    cookies().delete('token')
+export async function removeAuthCookie() {
+    const cookieStore = await cookies()
+    cookieStore.delete('token')
 }
 
 /**

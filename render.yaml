@@ -2,9 +2,12 @@ services:
   - type: web
     name: erp-ai
     env: node
-    plan: free
+    plan: starter
+    region: oregon
     buildCommand: npm run build:render
     startCommand: npm run start
+    healthCheckPath: /api/test-db
+
     envVars:
       - key: NODE_ENV
         value: production
@@ -12,6 +15,11 @@ services:
         value: "10000"
       - key: DATABASE_URL
         sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+
     buildFilter:
       paths:
         - app/**
@@ -21,10 +29,21 @@ services:
         - lib/**
         - prisma/**
         - public/**
-        - styles/**
+        - scripts/**
         - next.config.js
         - package.json
         - package-lock.json
         - tsconfig.json
         - tailwind.config.ts
         - postcss.config.js
+        - middleware.ts
+        - .env.example
+
+    # Auto-deploy settings
+    autoDeploy: true
+
+    # Resource limits
+    disk:
+      name: erp-ai-disk
+      mountPath: /opt/render/project/src
+      sizeGB: 1

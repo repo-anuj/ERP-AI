@@ -22,10 +22,11 @@ const employeeUpdateSchema = z.object({
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { employeeId: string } }
+  { params }: { params: Promise<{ employeeId: string }> }
 ) {
   try {
-    const token = cookies().get('token')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
 
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -47,7 +48,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { employeeId } = params;
+    const { employeeId } = await params;
 
     if (!employeeId) {
       return new NextResponse("Employee ID is required", { status: 400 });

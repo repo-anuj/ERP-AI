@@ -42,20 +42,11 @@ export default function InventoryPage() {
     try {
       const response = await fetch('/api/inventory');
       if (response.ok) {
-        const responseData = await response.json();
-        const formattedItems = responseData.items.map((item: any) => ({
-          ...item,
-          lastUpdated: new Date(item.updatedAt).toLocaleString(),
-        }));
-        setData(formattedItems);
+        const items = await response.json();
+        setData(items);
       }
     } catch (error) {
       console.error('Error fetching inventory:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch inventory items',
-        variant: 'destructive',
-      });
     } finally {
       setIsLoading(false);
     }

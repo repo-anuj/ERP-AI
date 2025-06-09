@@ -23,8 +23,9 @@ const taskApprovalResponseSchema = z.object({
 // Request task approval
 async function requestTaskApproval(req: Request) {
   try {
-    const token = cookies().get('token')?.value;
-    const isEmployee = cookies().get('isEmployee')?.value === 'true';
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 
     if (!token || !isEmployee) {
       return NextResponse.json({ error: "Unauthorized - Only employees can request task approval" }, { status: 401 });
@@ -104,8 +105,9 @@ async function requestTaskApproval(req: Request) {
 // Respond to task approval request
 async function respondToTaskApproval(req: Request) {
   try {
-    const token = cookies().get('token')?.value;
-    const isEmployee = cookies().get('isEmployee')?.value === 'true';
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -194,8 +196,9 @@ async function respondToTaskApproval(req: Request) {
 // Get tasks awaiting approval
 async function getTasksAwaitingApproval(_req: Request) {
   try {
-    const token = cookies().get('token')?.value;
-    const isEmployee = cookies().get('isEmployee')?.value === 'true';
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

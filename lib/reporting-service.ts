@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 // Import file-saver with type definitions
 import { saveAs } from 'file-saver';
 
@@ -429,47 +429,34 @@ class ReportingService {
   ): Promise<{ url: string; size: number }> {
     try {
       // Create a new workbook
-      const workbook = XLSX.utils.book_new();
+      const workbook = new ExcelJS.Workbook();
 
       // Add a worksheet for each module
       for (const module of definition.modules) {
         if (data[module]) {
-          // Create data for the worksheet
-          const wsData: any[] = [];
+          // Create worksheet
+          const worksheet = workbook.addWorksheet(module.charAt(0).toUpperCase() + module.slice(1));
 
           // Add header row
-          wsData.push(['Metric', 'Value']);
+          worksheet.addRow(['Metric', 'Value']);
 
           // Add metrics
           if (data[module].metrics) {
             for (const [key, value] of Object.entries(data[module].metrics)) {
               if (definition.metrics.includes(key) || definition.metrics.length === 0) {
-                wsData.push([
+                worksheet.addRow([
                   key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
                   value
                 ]);
               }
             }
           }
-
-          // Create the worksheet
-          const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-          // Add the worksheet to the workbook
-          XLSX.utils.book_append_sheet(workbook, ws, module.charAt(0).toUpperCase() + module.slice(1));
         }
       }
 
-      // Convert the workbook to a binary string
-      const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
-
-      // Convert binary string to Blob
-      const buf = new ArrayBuffer(wbout.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < wbout.length; i++) {
-        view[i] = wbout.charCodeAt(i) & 0xFF;
-      }
-      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      // Generate buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
       // Create a data URL
       const reader = new FileReader();
