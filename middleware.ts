@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { verifyAuth } from '@/lib/auth'
+import { verifyAuthEdge } from '@/lib/auth'
 
 // Define department types
 type DepartmentType = 'admin' | 'manager' | 'hr' | 'sales' | 'engineering' | 'finance' | 'employee';
@@ -27,6 +27,8 @@ const departmentHomePage: Record<DepartmentType, string> = {
   employee: '/settings'
 }
 
+
+
 export async function middleware(request: NextRequest) {
     try {
         // Skip middleware for static assets and API routes to prevent header conflicts
@@ -49,16 +51,10 @@ export async function middleware(request: NextRequest) {
         const isOnboardingPage = request.nextUrl.pathname === '/auth/onboarding'
         const isEmployee = request.cookies.get('isEmployee')?.value === 'true'
 
-        // Verify authentication - with a safer approach for Edge Runtime
+        // Verify authentication - Edge Runtime compatible
         let verifiedToken = null
         if (token) {
-            try {
-                // Use a try/catch specifically for the token verification
-                verifiedToken = await verifyAuth(token)
-            } catch (verifyError) {
-                console.error('Token verification error:', verifyError)
-                // Continue with null token
-            }
+            verifiedToken = await verifyAuthEdge(token)
         }
 
         const isAuthenticated = !!verifiedToken

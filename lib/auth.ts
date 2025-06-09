@@ -55,8 +55,7 @@ export async function verifyAuth(tokenOrCookies: string | ReadonlyRequestCookies
             token = cookieToken;
         }
 
-        // Edge Runtime doesn't like Promise.race with setTimeout
-        // So we'll just directly decrypt the token with proper error handling
+        // Edge Runtime compatible token verification
         try {
             return await decrypt(token);
         } catch (decryptError) {
@@ -66,6 +65,22 @@ export async function verifyAuth(tokenOrCookies: string | ReadonlyRequestCookies
     } catch (error) {
         console.error('Failed to verify token:', error);
         return null;
+    }
+}
+
+// Edge Runtime compatible version for middleware
+export async function verifyAuthEdge(token: string) {
+    try {
+        const secretKey = process.env.JWT_SECRET_KEY || 'your-secret-key-here-development-only'
+        const key = new TextEncoder().encode(secretKey)
+
+        const { payload } = await jwtVerify(token, key, {
+            algorithms: ['HS256'],
+        })
+        return payload
+    } catch (error) {
+        console.error('Edge token verification error:', error)
+        return null
     }
 }
 
