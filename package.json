@@ -10,6 +10,7 @@
     "start:prod": "next start",
     "lint": "next lint",
     "test:build": "node ./scripts/test-build.js",
+    "test:middleware": "node ./scripts/test-middleware.js",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
