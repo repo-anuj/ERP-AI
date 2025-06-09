@@ -8,7 +8,9 @@
     "build:render": "node ./scripts/render-build.js",
     "start": "node ./scripts/render-start.js",
     "start:prod": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:build": "node ./scripts/test-build.js",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -50,8 +52,8 @@
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
-    "eslint": "8.49.0",
-    "eslint-config-next": "^14.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.28",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "input-otp": "^1.2.4",
@@ -81,8 +83,10 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/file-saver": "^2.0.7",
-    "@types/node": "22.10.7",
-    "@types/react": "18.3.18",
-    "typescript": "5.7.3"
+    "@types/node": "^22.10.7",
+    "@types/react": "^18.3.18",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.32.1",
+    "typescript": "^5.7.3"
   }
 }

@@ -22,10 +22,19 @@ const nextConfig = {
   // Performance optimizations
   experimental: {
     optimizePackageImports: ['jose', 'lucide-react', '@radix-ui/react-icons'],
+    // Enable Edge Runtime for middleware
+    allowMiddlewareResponseBody: true,
   },
 
+  // Configure allowed origins for cross-origin requests
+  allowedDevOrigins: [
+    'erp-ai-3bfk.onrender.com',
+    'localhost:3000',
+    '127.0.0.1:3000',
+  ],
+
   // Webpack optimizations
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Optimize bundle size
     if (!isServer) {
       config.resolve.fallback = {
@@ -33,11 +42,31 @@ const nextConfig = {
         fs: false,
         net: false,
         tls: false,
+        crypto: false,
       };
     }
 
     // Optimize Prisma for serverless
     config.externals = [...(config.externals || []), '_http_common'];
+
+    // Edge Runtime optimizations
+    if (!dev) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks?.cacheGroups,
+            jose: {
+              name: 'jose',
+              chunks: 'all',
+              test: /[\\/]node_modules[\\/]jose[\\/]/,
+              priority: 30,
+            },
+          },
+        },
+      };
+    }
 
     return config;
   },

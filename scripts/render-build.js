@@ -46,8 +46,8 @@ try {
 
 // Install dependencies with production optimizations
 console.log('Installing dependencies...');
-runCommand('npm ci --only=production');
-runCommand('npm install --only=dev');
+runCommand('npm ci');
+runCommand('npm install @typescript-eslint/eslint-plugin@^8.32.1 @typescript-eslint/parser@^8.32.1 --save-dev');
 
 // Install additional dependencies needed for CSS processing
 console.log('Installing additional dependencies for CSS processing...');
