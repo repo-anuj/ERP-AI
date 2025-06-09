@@ -18,8 +18,9 @@ const updateCompanySchema = z.object({
 export async function GET() {
   try {
     console.log("Company API route called");
-    const token = cookies().get('token')?.value;
-    const isEmployee = cookies().get('isEmployee')?.value === 'true';
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 
     if (!token) {
       console.log("No token found");
@@ -88,8 +89,9 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const token = cookies().get('token')?.value;
-    const isEmployee = cookies().get('isEmployee')?.value === 'true';
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });

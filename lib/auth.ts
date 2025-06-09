@@ -69,8 +69,9 @@ export async function verifyAuth(tokenOrCookies: string | ReadonlyRequestCookies
     }
 }
 
-export function setAuthCookie(token: string) {
-    cookies().set('token', token, {
+export async function setAuthCookie(token: string) {
+    const cookieStore = await cookies()
+    cookieStore.set('token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -79,8 +80,9 @@ export function setAuthCookie(token: string) {
     })
 }
 
-export function removeAuthCookie() {
-    cookies().delete('token')
+export async function removeAuthCookie() {
+    const cookieStore = await cookies()
+    cookieStore.delete('token')
 }
 
 /**

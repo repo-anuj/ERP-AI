@@ -4,7 +4,8 @@ import { verifyAuth } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
-    const token = cookies().get('token')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
     
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });

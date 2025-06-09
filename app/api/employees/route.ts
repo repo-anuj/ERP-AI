@@ -22,7 +22,8 @@ const employeeSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const token = cookies().get('token')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
 
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -74,7 +75,8 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const token = cookies().get('token')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
 
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });

@@ -14,12 +14,13 @@ const nextConfig = {
   output: 'standalone',
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
   compress: true,
+
+  // External packages for server components (Next.js 15+)
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
 
   // Performance optimizations
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
     optimizePackageImports: ['jose', 'lucide-react', '@radix-ui/react-icons'],
   },
 
