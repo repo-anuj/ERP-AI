@@ -1,0 +1,11 @@
+// Middleware disabled to avoid Edge Runtime issues
+// Authentication is now handled at the page level
+
+export function middleware() {
+    // Middleware disabled
+    return;
+}
+
+export const config = {
+    matcher: [],
+}
