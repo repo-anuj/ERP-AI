@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { verifyAuthEdge } from '@/lib/auth'
+import { jwtVerify } from 'jose'
 
 // Define department types
 type DepartmentType = 'admin' | 'manager' | 'hr' | 'sales' | 'engineering' | 'finance' | 'employee';
@@ -27,34 +27,56 @@ const departmentHomePage: Record<DepartmentType, string> = {
   employee: '/settings'
 }
 
-
+// Completely isolated Edge Runtime token verification
+async function verifyJWTToken(token: string) {
+  try {
+    const secretKey = process.env.JWT_SECRET_KEY || 'your-secret-key-here-development-only'
+    const key = new TextEncoder().encode(secretKey)
+    
+    const { payload } = await jwtVerify(token, key, {
+      algorithms: ['HS256'],
+    })
+    
+    return payload
+  } catch {
+    return null
+  }
+}
 
 export async function middleware(request: NextRequest) {
     try {
-        // Skip middleware for static assets and API routes to prevent header conflicts
         const { pathname } = request.nextUrl;
+        
+        // Skip middleware for static assets and API routes
         if (
-            pathname.includes('/_next') ||
-            pathname.includes('/api/') ||
-            pathname.includes('/static/') ||
-            pathname.includes('/images/') ||
-            pathname.endsWith('.ico') ||
-            pathname.endsWith('.png') ||
-            pathname.endsWith('.jpg') ||
-            pathname.endsWith('.svg')
+            pathname.startsWith('/_next/') ||
+            pathname.startsWith('/api/') ||
+            pathname.startsWith('/static/') ||
+            pathname.startsWith('/images/') ||
+            pathname.includes('.') && (
+                pathname.endsWith('.ico') ||
+                pathname.endsWith('.png') ||
+                pathname.endsWith('.jpg') ||
+                pathname.endsWith('.jpeg') ||
+                pathname.endsWith('.gif') ||
+                pathname.endsWith('.svg') ||
+                pathname.endsWith('.webp') ||
+                pathname.endsWith('.css') ||
+                pathname.endsWith('.js')
+            )
         ) {
             return NextResponse.next();
         }
 
         const token = request.cookies.get('token')?.value
-        const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
-        const isOnboardingPage = request.nextUrl.pathname === '/auth/onboarding'
+        const isAuthPage = pathname.startsWith('/auth')
+        const isOnboardingPage = pathname === '/auth/onboarding'
         const isEmployee = request.cookies.get('isEmployee')?.value === 'true'
 
-        // Verify authentication - Edge Runtime compatible
+        // Verify authentication
         let verifiedToken = null
         if (token) {
-            verifiedToken = await verifyAuthEdge(token)
+            verifiedToken = await verifyJWTToken(token)
         }
 
         const isAuthenticated = !!verifiedToken
@@ -62,25 +84,22 @@ export async function middleware(request: NextRequest) {
         // Redirect to sign in if accessing protected routes while not authenticated
         if (!isAuthenticated && !isAuthPage) {
             const redirectUrl = new URL('/auth/signin', request.url)
-            redirectUrl.searchParams.set('from', request.nextUrl.pathname)
+            redirectUrl.searchParams.set('from', pathname)
             return NextResponse.redirect(redirectUrl)
         }
 
         // Redirect to appropriate home page if accessing auth pages while authenticated
         if (isAuthenticated && isAuthPage && !isOnboardingPage) {
             if (isEmployee && verifiedToken) {
-                // Get employee role and department
                 const role = verifiedToken.role || 'employee'
                 const department = (verifiedToken.department?.toLowerCase() || 'employee') as DepartmentType
 
-                // Determine home page based on role and department
                 const homePage = role === 'admin' || role === 'manager'
                     ? departmentHomePage.admin
                     : departmentHomePage[department] || '/'
 
                 return NextResponse.redirect(new URL(homePage, request.url))
             } else {
-                // Regular users go to dashboard
                 return NextResponse.redirect(new URL('/', request.url))
             }
         }
@@ -92,48 +111,33 @@ export async function middleware(request: NextRequest) {
 
         // Handle role-based access control for employees
         if (isAuthenticated && isEmployee && verifiedToken) {
-            // Get the first path segment (e.g., /hr/something -> hr)
-            const pathSegment = request.nextUrl.pathname.split('/')[1] || 'dashboard'
-
-            // Get employee role and department
+            const pathSegment = pathname.split('/')[1] || 'dashboard'
             const role = verifiedToken.role || 'employee'
             const department = (verifiedToken.department?.toLowerCase() || 'employee') as DepartmentType
 
-            // Determine allowed sections based on role and department
             let allowedSections: string[] = []
 
             if (role === 'admin') {
-                // Admin can access everything
                 allowedSections = departmentAccess.admin
             } else if (role === 'manager') {
-                // Managers get manager access plus their department access
-                // Create a new array to avoid mutation issues
                 allowedSections = [...departmentAccess.manager]
-
-                // Get department access safely
                 const deptAccess = departmentAccess[department] || []
-
-                // Add items from department access if they don't already exist
+                
                 for (const item of deptAccess) {
                     if (!allowedSections.includes(item)) {
                         allowedSections.push(item)
                     }
                 }
             } else {
-                // Regular employees get their department access
                 allowedSections = departmentAccess[department] || departmentAccess.employee
             }
 
-            // Check if the current path is allowed
             if (!allowedSections.includes(pathSegment) && pathSegment !== '') {
-                // Redirect to department home page if trying to access unauthorized section
                 const homePage = departmentHomePage[department] || '/settings'
                 return NextResponse.redirect(new URL(homePage, request.url))
             }
 
-            // If accessing root path, redirect to department home page
-            if (pathSegment === '' && request.nextUrl.pathname === '/') {
-                // Don't redirect admins and managers from dashboard
+            if (pathSegment === '' && pathname === '/') {
                 if (role !== 'admin' && role !== 'manager') {
                     const homePage = departmentHomePage[department] || '/settings'
                     return NextResponse.redirect(new URL(homePage, request.url))
@@ -143,12 +147,16 @@ export async function middleware(request: NextRequest) {
 
         return NextResponse.next()
     } catch (error) {
-        console.error('Middleware error:', error);
-        // In case of error, just continue to the page without redirecting
+        // Silent fail in production, log in development
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Middleware error:', error);
+        }
         return NextResponse.next();
     }
 }
 
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+    matcher: [
+        '/((?!api|_next/static|_next/image|_next/webpack-hmr|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js)$).*)',
+    ],
 }

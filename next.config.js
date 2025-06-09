@@ -24,6 +24,8 @@ const nextConfig = {
     optimizePackageImports: ['jose', 'lucide-react', '@radix-ui/react-icons'],
     // Enable Edge Runtime for middleware
     allowMiddlewareResponseBody: true,
+    // Optimize for serverless
+    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
   },
 
   // Configure allowed origins for cross-origin requests
