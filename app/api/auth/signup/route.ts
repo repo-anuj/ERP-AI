@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import * as z from "zod"
 import { hashPassword } from "@/lib/password"
-import { v4 as uuidv4 } from 'uuid'
 
 export const runtime = 'nodejs'
 
@@ -96,4 +95,4 @@ export async function OPTIONS(request: Request) {
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
     })
-}
+} 

@@ -14,14 +14,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { useUser } from "@/contexts/user-context"
 import { useToast } from "@/components/ui/use-toast"
 import { useCompany } from "@/contexts/company-context"
 import { useNotifications } from "@/contexts/notification-context"
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { toast } = useToast()
   const { user, loading: userLoading, updateUser } = useUser()
   const { company, loading: companyLoading, updateCompany } = useCompany()
@@ -371,5 +371,13 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto py-10"><div className="text-center">Loading...</div></div>}>
+      <SettingsContent />
+    </Suspense>
   )
 }

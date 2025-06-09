@@ -11,7 +11,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.7.4",
     "@hookform/resolvers": "^3.9.0",
     "@next/swc-wasm-nodejs": "^14.0.0",
     "@prisma/client": "^6.3.1",
@@ -61,7 +60,6 @@
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.446.0",
     "next": "^14.0.0",
-    "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.3.0",
     "postcss": "8.4.30",
     "prisma": "^6.3.1",

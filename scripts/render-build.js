@@ -21,17 +21,41 @@ function runCommand(command) {
 
 console.log('Starting Render build process...');
 
-// Install dependencies
+// Set environment variables
+process.env.NODE_ENV = 'production';
+process.env.NEXT_TELEMETRY_DISABLED = '1';
+
+// Validate environment before proceeding
+console.log('Validating environment configuration...');
+try {
+  // Basic environment checks
+  const requiredVars = ['DATABASE_URL'];
+  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+
+  if (missingVars.length > 0) {
+    console.error('❌ Missing required environment variables:', missingVars.join(', '));
+    console.error('Please set these variables in your Render dashboard');
+    process.exit(1);
+  }
+
+  console.log('✅ Environment validation passed');
+} catch (error) {
+  console.error('❌ Environment validation failed:', error);
+  process.exit(1);
+}
+
+// Install dependencies with production optimizations
 console.log('Installing dependencies...');
-runCommand('npm install');
+runCommand('npm ci --only=production');
+runCommand('npm install --only=dev');
 
 // Install additional dependencies needed for CSS processing
 console.log('Installing additional dependencies for CSS processing...');
 runCommand('npm install --no-save postcss-import tailwindcss-nesting');
 
-// Generate Prisma client
+// Generate Prisma client with optimizations
 console.log('Generating Prisma client...');
-runCommand('npx prisma generate');
+runCommand('npx prisma generate --no-engine');
 
 // Clean .next directory if it exists
 const nextDir = path.join(process.cwd(), '.next');
@@ -66,9 +90,13 @@ if (fs.existsSync(globalsCssPath)) {
   fs.copyFileSync(globalsCssPath, globalsCssBackupPath);
 }
 
-// Try to build the Next.js application
+// Try to build the Next.js application with optimizations
 console.log('Building Next.js application...');
 try {
+  // Set build optimizations
+  process.env.NEXT_TELEMETRY_DISABLED = '1';
+  process.env.NODE_OPTIONS = '--max-old-space-size=4096';
+
   runCommand('npm run build');
   console.log('Build completed successfully!');
 } catch (error) {
@@ -78,9 +106,10 @@ try {
     console.log('Using fallback CSS file...');
     fs.copyFileSync(globalsFallbackPath, globalsCssPath);
 
-    // Try building again
+    // Try building again with reduced memory usage
     console.log('Attempting build with fallback CSS...');
     try {
+      process.env.NODE_OPTIONS = '--max-old-space-size=2048';
       runCommand('npm run build');
       console.log('Build with fallback CSS completed successfully!');
     } catch (buildError) {

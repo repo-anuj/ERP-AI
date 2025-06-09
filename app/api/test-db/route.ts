@@ -1,31 +1,69 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { validateEnvironment, getEnvironmentInfo } from "@/lib/env-validation"
 
 export const runtime = 'nodejs'
 
 export async function GET() {
+    const startTime = Date.now()
+
     try {
+        // Environment validation
+        const envValidation = validateEnvironment()
+        if (!envValidation.isValid) {
+            return NextResponse.json({
+                status: "error",
+                message: "Environment validation failed",
+                errors: envValidation.errors,
+                warnings: envValidation.warnings
+            }, { status: 500 })
+        }
+
         // Test database connection
         await prisma.$connect()
         console.log("Database connection successful")
 
-        // Count users as a simple test
-        const userCount = await prisma.user.count()
-        console.log("Current user count:", userCount)
+        // Perform basic database operations
+        const [userCount, companyCount] = await Promise.all([
+            prisma.user.count(),
+            prisma.company.count()
+        ])
+
+        const responseTime = Date.now() - startTime
 
         return NextResponse.json({
             status: "success",
-            message: "Database connection successful",
-            userCount
+            message: "Health check passed",
+            timestamp: new Date().toISOString(),
+            responseTime: `${responseTime}ms`,
+            database: {
+                connected: true,
+                userCount,
+                companyCount
+            },
+            environment: getEnvironmentInfo(),
+            validation: {
+                errors: envValidation.errors,
+                warnings: envValidation.warnings
+            }
         })
     } catch (error) {
-        console.error("Database connection error:", error)
+        const responseTime = Date.now() - startTime
+        console.error("Health check failed:", error)
+
         return NextResponse.json({
             status: "error",
-            message: "Database connection failed",
-            error: error instanceof Error ? error.message : "Unknown error"
+            message: "Health check failed",
+            timestamp: new Date().toISOString(),
+            responseTime: `${responseTime}ms`,
+            error: error instanceof Error ? error.message : "Unknown error",
+            environment: getEnvironmentInfo()
         }, { status: 500 })
     } finally {
-        await prisma.$disconnect()
+        try {
+            await prisma.$disconnect()
+        } catch (disconnectError) {
+            console.error("Error disconnecting from database:", disconnectError)
+        }
     }
-} 
+}

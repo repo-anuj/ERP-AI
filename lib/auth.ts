@@ -5,7 +5,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from './prisma'
 
 // Use environment variable or fallback to a default (for development only)
-const secretKey = process.env.JWT_SECRET_KEY || 'your-secret-key-here'
+// In production, JWT_SECRET_KEY MUST be set as an environment variable
+const secretKey = process.env.JWT_SECRET_KEY || 'your-secret-key-here-development-only'
+
+if (process.env.NODE_ENV === 'production' && secretKey === 'your-secret-key-here-development-only') {
+    throw new Error('JWT_SECRET_KEY environment variable must be set in production')
+}
+
 const key = new TextEncoder().encode(secretKey)
 
 // Remove unused constant
