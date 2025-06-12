@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import {
   BarChart,
   Bar,
@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface CashFlowReportProps {
   data: {
@@ -44,7 +44,7 @@ export function CashFlowReport({ data }: CashFlowReportProps) {
 
   // Format the data for the chart
   const chartData = data.dailyCashFlow.map((day) => ({
-    date: format(parseISO(day.date), 'MMM dd'),
+    date: format(new Date(day.date), 'MMM dd'),
     Income: day.income,
     Expenses: -day.expenses, // Negative for better visualization
     'Net Cash Flow': day.netCashFlow,
@@ -65,7 +65,7 @@ export function CashFlowReport({ data }: CashFlowReportProps) {
                 </p>
               </div>
               <div className="p-2 bg-green-100 rounded-full">
-                <ArrowUpRight className="h-5 w-5 text-green-600" />
+                <ChevronUp className="h-5 w-5 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -82,7 +82,7 @@ export function CashFlowReport({ data }: CashFlowReportProps) {
                 </p>
               </div>
               <div className="p-2 bg-red-100 rounded-full">
-                <ArrowDownRight className="h-5 w-5 text-red-600" />
+                <ChevronDown className="h-5 w-5 text-red-600" />
               </div>
             </div>
           </CardContent>
@@ -102,11 +102,11 @@ export function CashFlowReport({ data }: CashFlowReportProps) {
               </div>
               <div className={`p-2 rounded-full ${data.netCashFlow >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
                 {data.netCashFlow > 0 ? (
-                  <ArrowUpRight className="h-5 w-5 text-green-600" />
+                  <ChevronUp className="h-5 w-5 text-green-600" />
                 ) : data.netCashFlow < 0 ? (
-                  <ArrowDownRight className="h-5 w-5 text-red-600" />
+                  <ChevronDown className="h-5 w-5 text-red-600" />
                 ) : (
-                  <ArrowRight className="h-5 w-5 text-gray-600" />
+                  <ChevronRight className="h-5 w-5 text-gray-600" />
                 )}
               </div>
             </div>
@@ -162,7 +162,7 @@ export function CashFlowReport({ data }: CashFlowReportProps) {
           <tbody>
             {data.dailyCashFlow.map((day, index) => (
               <tr key={index} className="border-b hover:bg-muted/50">
-                <td className="py-2 px-4">{format(parseISO(day.date), 'MMM dd, yyyy')}</td>
+                <td className="py-2 px-4">{format(new Date(day.date), 'MMM dd, yyyy')}</td>
                 <td className="text-right py-2 px-4 text-green-600">{formatCurrency(day.income)}</td>
                 <td className="text-right py-2 px-4 text-red-600">{formatCurrency(day.expenses)}</td>
                 <td className={`text-right py-2 px-4 ${day.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>

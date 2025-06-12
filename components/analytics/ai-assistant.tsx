@@ -7,20 +7,20 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  Brain,
+  MessageCircle,
   Send,
   RefreshCw,
   BarChart,
   PieChart,
-  LineChart,
+  Activity,
   Search,
   ChevronDown,
   ChevronUp,
   Save,
   Download,
-  History,
-  Sparkles,
-  Lightbulb,
+  Clock,
+  Star,
+  HelpCircle,
   Trash2
 } from 'lucide-react';
 import {
@@ -424,7 +424,7 @@ export function AIAssistant({ aggregatedData, isLoading = false }: AIAssistantPr
     },
     {
       text: "How does this ERP system work?",
-      icon: <Brain className="h-3 w-3 mr-2" />,
+      icon: <MessageCircle className="h-3 w-3 mr-2" />,
       isAnalysis: false
     },
     {
@@ -440,7 +440,7 @@ export function AIAssistant({ aggregatedData, isLoading = false }: AIAssistantPr
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Brain className="mr-2 h-5 w-5 text-primary" />
+              <MessageCircle className="mr-2 h-5 w-5 text-primary" />
               <CardTitle>AI Analytics Assistant</CardTitle>
             </div>
             <div className="flex space-x-2">
@@ -602,7 +602,7 @@ export function AIAssistant({ aggregatedData, isLoading = false }: AIAssistantPr
                   </span>
                 ) : (
                   <span className="flex items-center">
-                    <Brain className="h-3 w-3 mr-1" />
+                    <MessageCircle className="h-3 w-3 mr-1" />
                     Chat mode: Add analysis keywords for data insights
                   </span>
                 )}
@@ -707,7 +707,7 @@ export function AIAssistant({ aggregatedData, isLoading = false }: AIAssistantPr
 
               {queryHistory.length === 0 ? (
                 <div className="text-center py-8">
-                  <History className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <Clock className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground">No query history yet</p>
                   <p className="text-xs text-muted-foreground mt-1">Your recent queries will appear here</p>
                 </div>

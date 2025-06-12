@@ -4,18 +4,18 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { formatDate, formatCurrency } from "@/lib/utils"
-import { 
-  MoreHorizontal, 
-  ArrowUpDown, 
-  Eye, 
-  Edit, 
-  FileText, 
-  Trash2, 
-  Copy, 
+import {
+  MoreHorizontal,
+  Repeat,
+  Eye,
+  Edit,
+  FileText,
+  Trash2,
+  Copy,
   Download,
   ShoppingCart,
   User,
-  Receipt
+  FileText as Receipt
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -642,7 +642,7 @@ export const columns: ColumnDef<Sale>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       )
     },
@@ -676,7 +676,7 @@ export const columns: ColumnDef<Sale>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Total
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       )
     },

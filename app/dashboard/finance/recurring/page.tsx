@@ -23,10 +23,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { PlusIcon, MoreHorizontal, Edit, Trash, Play, Pause, RefreshCw, CalendarIcon } from 'lucide-react';
+import { PlusIcon, MoreHorizontal, Edit, Trash2, PlayCircle, PauseCircle, RefreshCw, Calendar } from 'lucide-react';
 import { RecurringTransactionDialog } from '@/components/finance/recurring-transaction-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
+
+// Custom relative time function
+const formatRelativeTime = (date: Date) => {
+  const now = new Date();
+  const targetDate = new Date(date);
+  const diffInMs = targetDate.getTime() - now.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInDays === 0) return 'today';
+  if (diffInDays === 1) return 'tomorrow';
+  if (diffInDays === -1) return 'yesterday';
+  if (diffInDays > 0) return `in ${diffInDays} day${diffInDays > 1 ? 's' : ''}`;
+  return `${Math.abs(diffInDays)} day${Math.abs(diffInDays) > 1 ? 's' : ''} ago`;
+};
 
 export default function RecurringTransactionsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -242,7 +256,7 @@ export default function RecurringTransactionsPage() {
                 </div>
               ) : filteredTransactions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <CalendarIcon className="h-10 w-10 text-muted-foreground mb-4" />
+                  <Calendar className="h-10 w-10 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium">No recurring transactions found</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     Create your first recurring transaction to automate your finances
@@ -293,7 +307,7 @@ export default function RecurringTransactionsPage() {
                         <TableCell>
                           {formatDate(transaction.nextDueDate)}
                           <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(transaction.nextDueDate), { addSuffix: true })}
+                            {formatRelativeTime(new Date(transaction.nextDueDate))}
                           </p>
                         </TableCell>
                         <TableCell>
@@ -319,12 +333,12 @@ export default function RecurringTransactionsPage() {
                               
                               {transaction.status === 'active' ? (
                                 <DropdownMenuItem onClick={() => handleChangeStatus(transaction.id, 'paused')}>
-                                  <Pause className="mr-2 h-4 w-4" />
+                                  <PauseCircle className="mr-2 h-4 w-4" />
                                   Pause
                                 </DropdownMenuItem>
                               ) : transaction.status === 'paused' ? (
                                 <DropdownMenuItem onClick={() => handleChangeStatus(transaction.id, 'active')}>
-                                  <Play className="mr-2 h-4 w-4" />
+                                  <PlayCircle className="mr-2 h-4 w-4" />
                                   Activate
                                 </DropdownMenuItem>
                               ) : null}
@@ -334,7 +348,7 @@ export default function RecurringTransactionsPage() {
                                 onClick={() => handleDeleteTransaction(transaction.id)}
                                 className="text-red-600"
                               >
-                                <Trash className="mr-2 h-4 w-4" />
+                                <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>

@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNotifications } from '@/contexts/notification-context';
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import { CheckCircle, RefreshCw, Eye } from 'lucide-react';
 
 export default function NotificationsPage() {
@@ -83,7 +83,18 @@ export default function NotificationsPage() {
   // Format the relative time
   const formatRelativeTime = (date: Date) => {
     try {
-      return formatDistanceToNow(new Date(date), { addSuffix: true });
+      const now = new Date();
+      const notificationDate = new Date(date);
+      const diffInMs = now.getTime() - notificationDate.getTime();
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+      const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+      if (diffInMinutes < 1) return 'just now';
+      if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+      if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+      if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+      return format(notificationDate, 'MMM d, yyyy');
     } catch (error) {
       return '';
     }

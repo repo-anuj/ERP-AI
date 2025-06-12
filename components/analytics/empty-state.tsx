@@ -2,14 +2,14 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  BarChart, 
-  PieChart, 
-  LineChart, 
-  RefreshCw, 
-  FileBarChart2,
-  DatabaseIcon,
-  ArrowRight
+import {
+  BarChart,
+  PieChart,
+  Activity,
+  RefreshCw,
+  FileText,
+  Archive,
+  ChevronRight
 } from 'lucide-react';
 
 interface EmptyAnalyticsProps {
@@ -22,7 +22,7 @@ export function EmptyAnalytics({ onRefresh }: EmptyAnalyticsProps) {
       <div className="flex items-center justify-center mb-8 relative">
         <BarChart className="h-16 w-16 text-muted-foreground absolute -left-8 -top-4 opacity-50" />
         <PieChart className="h-20 w-20 text-primary" />
-        <LineChart className="h-16 w-16 text-muted-foreground absolute -right-8 -top-4 opacity-50" />
+        <Activity className="h-16 w-16 text-muted-foreground absolute -right-8 -top-4 opacity-50" />
       </div>
       
       <h2 className="text-2xl font-bold text-center mb-4">No Analytics Data Available</h2>
@@ -35,7 +35,7 @@ export function EmptyAnalytics({ onRefresh }: EmptyAnalyticsProps) {
         <Card className="bg-background/50">
           <CardContent className="p-6">
             <div className="flex flex-col items-center text-center">
-              <DatabaseIcon className="h-10 w-10 text-primary mb-4" />
+              <Archive className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-lg font-medium mb-2">Add Data First</h3>
               <p className="text-sm text-muted-foreground">
                 Create transactions, add inventory items, and set up projects to start
@@ -48,7 +48,7 @@ export function EmptyAnalytics({ onRefresh }: EmptyAnalyticsProps) {
         <Card className="bg-background/50">
           <CardContent className="p-6">
             <div className="flex flex-col items-center text-center">
-              <FileBarChart2 className="h-10 w-10 text-primary mb-4" />
+              <FileText className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-lg font-medium mb-2">View Insights</h3>
               <p className="text-sm text-muted-foreground">
                 Analytics will automatically generate charts and insights based on your
@@ -83,7 +83,7 @@ export function EmptyAnalytics({ onRefresh }: EmptyAnalyticsProps) {
         <Button asChild>
           <a href="/dashboard">
             Go to Dashboard
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ChevronRight className="ml-2 h-4 w-4" />
           </a>
         </Button>
       </div>

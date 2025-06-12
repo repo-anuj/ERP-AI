@@ -15,7 +15,7 @@ import {
   YAxis,
   CartesianGrid,
 } from 'recharts';
-import { ArrowDownRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 interface ExpensesByCategoryReportProps {
   data: {
@@ -102,7 +102,7 @@ export function ExpensesByCategoryReport({ data }: ExpensesByCategoryReportProps
               </p>
             </div>
             <div className="p-2 bg-red-100 rounded-full">
-              <ArrowDownRight className="h-5 w-5 text-red-600" />
+              <ChevronDown className="h-5 w-5 text-red-600" />
             </div>
           </div>
         </CardContent>

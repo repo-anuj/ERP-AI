@@ -9,12 +9,11 @@ import {
   Plus,
   Clock,
   Mail,
-  FileSpreadsheet,
   Check,
   X
 } from 'lucide-react';
 // Use FileText as base for custom file type icons
-import { FileJson } from 'lucide-react';
+import { File } from 'lucide-react';
 
 // Custom icons for file types not available in lucide-react
 const FileCsv = (props: any) => (
@@ -175,11 +174,11 @@ function ReportDefinitions({ aggregatedData, isLoading }: ReportingProps) {
                     {report.format === ReportFormat.PDF ? (
                       <FilePdf className="h-4 w-4 mr-1 text-red-500" />
                     ) : report.format === ReportFormat.EXCEL ? (
-                      <FileSpreadsheet className="h-4 w-4 mr-1 text-green-500" />
+                      <FileText className="h-4 w-4 mr-1 text-green-500" />
                     ) : report.format === ReportFormat.CSV ? (
                       <FileCsv className="h-4 w-4 mr-1 text-blue-500" />
                     ) : (
-                      <FileJson className="h-4 w-4 mr-1 text-yellow-500" />
+                      <File className="h-4 w-4 mr-1 text-yellow-500" />
                     )}
                     {report.format.toUpperCase()}
                   </div>
@@ -418,11 +417,11 @@ function GeneratedReports() {
       case ReportFormat.PDF:
         return <FilePdf className="h-4 w-4 text-red-500" />;
       case ReportFormat.EXCEL:
-        return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
+        return <FileText className="h-4 w-4 text-green-500" />;
       case ReportFormat.CSV:
         return <FileCsv className="h-4 w-4 text-blue-500" />;
       case ReportFormat.JSON:
-        return <FileJson className="h-4 w-4 text-yellow-500" />;
+        return <File className="h-4 w-4 text-yellow-500" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -693,7 +692,7 @@ function ReportDefinitionDialog({ report, onSave }: ReportDefinitionDialogProps)
                 </SelectItem>
                 <SelectItem value={ReportFormat.EXCEL}>
                   <div className="flex items-center">
-                    <FileSpreadsheet className="h-4 w-4 mr-2 text-green-500" />
+                    <FileText className="h-4 w-4 mr-2 text-green-500" />
                     Excel
                   </div>
                 </SelectItem>
@@ -705,7 +704,7 @@ function ReportDefinitionDialog({ report, onSave }: ReportDefinitionDialogProps)
                 </SelectItem>
                 <SelectItem value={ReportFormat.JSON}>
                   <div className="flex items-center">
-                    <FileJson className="h-4 w-4 mr-2 text-yellow-500" />
+                    <File className="h-4 w-4 mr-2 text-yellow-500" />
                     JSON
                   </div>
                 </SelectItem>

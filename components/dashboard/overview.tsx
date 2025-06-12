@@ -3,7 +3,7 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LineChart, TrendingUp } from 'lucide-react';
+import { Activity, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
 
@@ -37,7 +37,7 @@ export function Overview({ data }: OverviewProps) {
           <CardTitle>Revenue Overview</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-10 space-y-4">
-          <LineChart className="h-16 w-16 text-muted-foreground" />
+          <Activity className="h-16 w-16 text-muted-foreground" />
           <div className="text-center space-y-2">
             <h3 className="font-medium">No revenue data available</h3>
             <p className="text-sm text-muted-foreground">

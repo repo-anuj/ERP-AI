@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 
 interface TaskRequestApprovalProps {
   taskId: string;
@@ -59,7 +59,7 @@ export function TaskRequestApproval({
         onClick={() => setIsOpen(true)}
         disabled={disabled}
       >
-        <CheckCircle2 className="h-4 w-4 mr-1" />
+        <CheckCircle className="h-4 w-4 mr-1" />
         Request Approval
       </Button>
       

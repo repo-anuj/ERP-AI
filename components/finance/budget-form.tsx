@@ -30,7 +30,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, Loader2, Plus, Trash } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCurrency } from '@/contexts/currency-context';
@@ -520,7 +520,7 @@ export function BudgetForm({ budget, onSuccess, onCancel }: BudgetFormProps) {
                   onClick={() => removeBudgetItem(index)}
                   disabled={form.watch('items').length <= 1}
                 >
-                  <Trash className="h-4 w-4 text-destructive" />
+                  <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
             </div>

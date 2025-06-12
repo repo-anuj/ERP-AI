@@ -1,11 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
-  ChevronsRight 
+import {
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { 
   Select, 
@@ -79,7 +77,7 @@ export function PaginationControls({
           disabled={!hasPrevPage || isLoading}
           className="h-8 w-8"
         >
-          <ChevronsLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" />
           <span className="sr-only">First page</span>
         </Button>
         
@@ -116,7 +114,7 @@ export function PaginationControls({
           disabled={!hasNextPage || isLoading}
           className="h-8 w-8"
         >
-          <ChevronsRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4" />
           <span className="sr-only">Last page</span>
         </Button>
       </div>

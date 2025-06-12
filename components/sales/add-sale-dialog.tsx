@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { format } from "date-fns"
-import { CalendarIcon, Plus, Trash, Package, AlertCircle } from "lucide-react"
+import { Calendar as CalendarIcon, Plus, Trash2, Package, AlertCircle } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
@@ -502,7 +502,7 @@ export function AddSaleDialog() {
                         onClick={() => removeItem(index)}
                         disabled={form.watch("items").length <= 1}
                       >
-                        <Trash className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="grid grid-cols-2 gap-4">

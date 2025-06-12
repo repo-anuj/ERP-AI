@@ -10,7 +10,7 @@ import {
   Legend,
   Tooltip,
 } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface BalanceSheetReportProps {
   data: {
@@ -78,7 +78,7 @@ export function BalanceSheetReport({ data }: BalanceSheetReportProps) {
                 <h3 className="text-2xl font-bold mt-1">{formatCurrency(data.totalAssets)}</h3>
               </div>
               <div className="p-2 bg-green-100 rounded-full">
-                <ArrowUpRight className="h-5 w-5 text-green-600" />
+                <ChevronUp className="h-5 w-5 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -92,7 +92,7 @@ export function BalanceSheetReport({ data }: BalanceSheetReportProps) {
                 <h3 className="text-2xl font-bold mt-1">{formatCurrency(data.totalLiabilities)}</h3>
               </div>
               <div className="p-2 bg-red-100 rounded-full">
-                <ArrowDownRight className="h-5 w-5 text-red-600" />
+                <ChevronDown className="h-5 w-5 text-red-600" />
               </div>
             </div>
           </CardContent>
@@ -109,11 +109,11 @@ export function BalanceSheetReport({ data }: BalanceSheetReportProps) {
               </div>
               <div className={`p-2 rounded-full ${data.netWorth >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
                 {data.netWorth > 0 ? (
-                  <ArrowUpRight className="h-5 w-5 text-green-600" />
+                  <ChevronUp className="h-5 w-5 text-green-600" />
                 ) : data.netWorth < 0 ? (
-                  <ArrowDownRight className="h-5 w-5 text-red-600" />
+                  <ChevronDown className="h-5 w-5 text-red-600" />
                 ) : (
-                  <ArrowRight className="h-5 w-5 text-gray-600" />
+                  <ChevronRight className="h-5 w-5 text-gray-600" />
                 )}
               </div>
             </div>

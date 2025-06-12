@@ -16,7 +16,7 @@ import {
   TrendingUp,
   DollarSign,
   CreditCard,
-  ArrowDownUp
+  Repeat
 } from 'lucide-react';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { CashFlowReport } from '@/components/finance/reports/cash-flow-report';
@@ -247,7 +247,7 @@ export default function ReportsPage() {
       <Tabs defaultValue="cash-flow" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
           <TabsTrigger value="cash-flow" className="flex items-center gap-2">
-            <ArrowDownUp className="h-4 w-4" />
+            <Repeat className="h-4 w-4" />
             <span>Cash Flow</span>
           </TabsTrigger>
           <TabsTrigger value="profit-loss" className="flex items-center gap-2">
@@ -268,7 +268,7 @@ export default function ReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ArrowDownUp className="h-5 w-5" />
+                <Repeat className="h-5 w-5" />
                 Cash Flow Report
               </CardTitle>
               <CardDescription>

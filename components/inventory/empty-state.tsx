@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BarChart3, Package, Plus, RefreshCcw, Truck } from 'lucide-react';
+import { ChevronRight, BarChart, Package, Plus, RefreshCw, ShoppingCart } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -43,7 +43,7 @@ export function EmptyState({ onAddClick }: { onAddClick: () => void }) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-medium flex items-center">
-              <RefreshCcw className="h-4 w-4 mr-2 text-primary" />
+              <RefreshCw className="h-4 w-4 mr-2 text-primary" />
               Automate Reordering
             </CardTitle>
           </CardHeader>
@@ -57,7 +57,7 @@ export function EmptyState({ onAddClick }: { onAddClick: () => void }) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-medium flex items-center">
-              <BarChart3 className="h-4 w-4 mr-2 text-primary" />
+              <BarChart className="h-4 w-4 mr-2 text-primary" />
               Analyze Performance
             </CardTitle>
           </CardHeader>
@@ -79,7 +79,7 @@ export function EmptyState({ onAddClick }: { onAddClick: () => void }) {
             <div>
               <Button variant="outline" className="gap-1">
                 Learn More
-                <ArrowRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -95,10 +95,10 @@ export function EmptyState({ onAddClick }: { onAddClick: () => void }) {
                   <Package className="h-6 w-6 text-primary/60" />
                 </div>
                 <div className="h-16 rounded-md bg-primary/10 flex items-center justify-center">
-                  <Truck className="h-6 w-6 text-primary/60" />
+                  <ShoppingCart className="h-6 w-6 text-primary/60" />
                 </div>
                 <div className="h-16 rounded-md bg-primary/10 flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-primary/60" />
+                  <BarChart className="h-6 w-6 text-primary/60" />
                 </div>
               </div>
             </div>

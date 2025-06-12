@@ -35,21 +35,23 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { 
-  ArrowDownUp, 
-  ChevronDown, 
-  Download, 
-  FileDown, 
-  Filter, 
-  RefreshCw, 
-  Search, 
-  ShoppingCart, 
-  SlidersHorizontal, 
-  TrendingUp, 
+import {
+  Repeat,
+  ChevronDown,
+  Download,
+  Download as FileDown,
+  Filter,
+  RefreshCw,
+  Search,
+  ShoppingCart,
+  Settings,
+  TrendingUp,
   X,
-  Receipt,
+  FileText,
   DollarSign,
-  Clock
+  Clock,
+  CheckCircle,
+  MoreHorizontal
 } from "lucide-react"
 import { 
   Select, 
@@ -269,7 +271,7 @@ export function DataTable<TData, TValue>({
               <p className="text-2xl font-bold">{completedSales}</p>
             </div>
             <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <Receipt className="h-5 w-5 text-green-600" />
+              <CheckCircle className="h-5 w-5 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -369,7 +371,7 @@ export function DataTable<TData, TValue>({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 gap-1">
-                  <SlidersHorizontal className="h-4 w-4" />
+                  <MoreHorizontal className="h-4 w-4" />
                   <span className="hidden sm:inline">Columns</span>
                 </Button>
               </DropdownMenuTrigger>

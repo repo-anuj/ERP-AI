@@ -6,9 +6,9 @@ import {
   TrendingUp,
   TrendingDown,
   AlertTriangle,
-  BarChart4,
+  BarChart,
   PieChart as PieChartIcon,
-  ArrowUpDown
+  Repeat
 } from 'lucide-react';
 import {
   Card,
@@ -117,7 +117,7 @@ export function InventoryAnalytics({
               title="Total Quantity"
               value={metrics.totalQuantity.toLocaleString()}
               description={`Across ${metrics.categories} categories`}
-              icon={<BarChart4 className="h-4 w-4 text-muted-foreground" />}
+              icon={<BarChart className="h-4 w-4 text-muted-foreground" />}
               isLoading={isLoading}
             />
 
@@ -147,7 +147,7 @@ export function InventoryAnalytics({
               title="Avg. Turnover Rate"
               value={avgTurnoverRate.toFixed(2)}
               description="Lower is better"
-              icon={<ArrowUpDown className="h-4 w-4 text-muted-foreground" />}
+              icon={<Repeat className="h-4 w-4 text-muted-foreground" />}
               isLoading={isLoading}
             />
           </div>

@@ -9,7 +9,7 @@ export const runtime = 'nodejs'; // Using nodejs runtime instead of edge for Pri
 export async function GET(req: Request) {
   try {
     // Use our custom auth method instead of next-auth
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
     const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 

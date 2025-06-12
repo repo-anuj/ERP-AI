@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, BarChartBig, Plus, TrendingUp } from 'lucide-react';
+import { DollarSign, BarChart, Plus, TrendingUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface EmptyStateProps {
@@ -32,7 +32,7 @@ export function EmptyState({ onAddTransaction }: EmptyStateProps) {
           </Card>
           
           <Card className="p-4 flex flex-col items-center text-center space-y-2 hover:bg-muted/50 transition-colors cursor-pointer">
-            <BarChartBig className="h-8 w-8 text-primary mb-2" />
+            <BarChart className="h-8 w-8 text-primary mb-2" />
             <h4 className="font-medium">Create Budget</h4>
             <p className="text-sm text-muted-foreground">Set budget categories and limits</p>
           </Card>

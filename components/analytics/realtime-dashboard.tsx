@@ -12,12 +12,12 @@ import {
   Package,
   ShoppingCart,
   Users,
-  ClipboardList,
+  Clipboard,
   AlertTriangle,
-  CheckCircle2,
+  CheckCircle,
   Clock,
   CreditCard,
-  BarChart4
+  BarChart as BarChartIcon
 } from 'lucide-react';
 import {
   BarChart,
@@ -212,7 +212,7 @@ export function RealtimeDashboard({ data, isLoading, onRefresh }: RealtimeDashbo
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center h-96">
-        <BarChart4 className="h-16 w-16 text-muted-foreground mb-4" />
+        <BarChartIcon className="h-16 w-16 text-muted-foreground mb-4" />
         <h2 className="text-2xl font-bold mb-2">No analytics data available</h2>
         <p className="text-muted-foreground mb-4">There is no data to display for the selected filters.</p>
         <Button onClick={handleRefresh} variant="outline">

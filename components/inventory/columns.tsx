@@ -11,16 +11,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  AlertCircle, 
-  ArrowUpDown, 
-  Copy, 
-  Edit, 
-  Eye, 
-  MoreHorizontal, 
-  Package, 
-  Trash2, 
-  TrendingUp 
+import {
+  AlertCircle,
+  Repeat,
+  Copy,
+  Edit,
+  Eye,
+  MoreHorizontal,
+  Package,
+  Trash2,
+  TrendingUp
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -385,7 +385,7 @@ export const columns: ColumnDef<InventoryItem>[] = [
           className="p-0 font-medium"
         >
           Product
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -401,7 +401,7 @@ export const columns: ColumnDef<InventoryItem>[] = [
           className="p-0 font-medium"
         >
           SKU
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -416,7 +416,7 @@ export const columns: ColumnDef<InventoryItem>[] = [
           className="p-0 font-medium"
         >
           Category
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -434,7 +434,7 @@ export const columns: ColumnDef<InventoryItem>[] = [
           className="p-0 font-medium"
         >
           Quantity
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -476,7 +476,7 @@ export const columns: ColumnDef<InventoryItem>[] = [
           className="p-0 font-medium"
         >
           Price
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -495,7 +495,7 @@ export const columns: ColumnDef<InventoryItem>[] = [
           className="p-0 font-medium"
         >
           Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -543,7 +543,7 @@ export const columns: ColumnDef<InventoryItem>[] = [
           className="p-0 font-medium"
         >
           Last Updated
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },

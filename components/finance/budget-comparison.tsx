@@ -31,7 +31,7 @@ import {
   AlertTriangle, 
   CheckCircle, 
   XCircle,
-  BarChart3
+  BarChart
 } from 'lucide-react';
 import {
   Select,
@@ -298,7 +298,7 @@ export function BudgetComparison({ budgetId }: BudgetComparisonProps) {
       </CardContent>
       <CardFooter className="border-t pt-4 text-sm text-muted-foreground">
         <div className="flex items-center">
-          <BarChart3 className="h-4 w-4 mr-2" />
+          <BarChart className="h-4 w-4 mr-2" />
           <span>
             Data for period: {formatDate(comparison.budget.startDate)} to {formatDate(comparison.budget.endDate)}
           </span>

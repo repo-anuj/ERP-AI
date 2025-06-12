@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Metadata } from 'next';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
-import { DollarSign, BarChart3, CreditCard, ReceiptText, PiggyBank } from 'lucide-react';
+import { DollarSign, BarChart, CreditCard, FileText, Calculator } from 'lucide-react';
 import { CurrencyProviderWrapper } from '@/components/finance/currency-provider-wrapper';
 
 export const metadata: Metadata = {
@@ -32,7 +32,7 @@ export default function FinanceLayout({ children }: FinanceLayoutProps) {
             >
               <Link href="/dashboard/finance">
                 <div className="flex items-center">
-                  <BarChart3 className="mr-2 h-4 w-4" />
+                  <BarChart className="mr-2 h-4 w-4" />
                   Overview
                 </div>
               </Link>
@@ -45,7 +45,7 @@ export default function FinanceLayout({ children }: FinanceLayoutProps) {
             >
               <Link href="/dashboard/finance/transactions">
                 <div className="flex items-center">
-                  <ReceiptText className="mr-2 h-4 w-4" />
+                  <FileText className="mr-2 h-4 w-4" />
                   Transactions
                 </div>
               </Link>
@@ -71,7 +71,7 @@ export default function FinanceLayout({ children }: FinanceLayoutProps) {
             >
               <Link href="/dashboard/finance/budgets">
                 <div className="flex items-center">
-                  <PiggyBank className="mr-2 h-4 w-4" />
+                  <Calculator className="mr-2 h-4 w-4" />
                   Budgets
                 </div>
               </Link>

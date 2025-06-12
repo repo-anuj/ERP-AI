@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Copy, Edit, MoreHorizontal, Trash, ShoppingCart, Receipt, Eye, FileText } from 'lucide-react';
+import { Copy, Edit, MoreHorizontal, Trash2, ShoppingCart, FileText, Eye, FileText as FileTextIcon } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -97,7 +97,7 @@ export function TransactionsTable({
               <TableCell className="font-medium">
                 <div className="flex items-center">
                   {transaction.sourceType === 'sales' && (
-                    <Receipt className="h-4 w-4 mr-2 text-blue-500" />
+                    <FileText className="h-4 w-4 mr-2 text-blue-500" />
                   )}
                   {transaction.sourceType === 'inventory' && (
                     <ShoppingCart className="h-4 w-4 mr-2 text-amber-500" />
@@ -159,7 +159,7 @@ export function TransactionsTable({
                           onClick={() => onDelete(transaction.id)}
                           className="text-red-600"
                         >
-                          <Trash className="mr-2 h-4 w-4" />
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
                       </>

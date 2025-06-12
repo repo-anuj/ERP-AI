@@ -24,9 +24,9 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import {
-  ArrowLeft,
+  ChevronLeft,
   Calendar,
-  CheckCircle2,
+  CheckCircle,
   Clock,
   Loader2,
   PlayCircle,
@@ -183,7 +183,7 @@ export default function ProjectEditPage() {
       case 'on_hold':
         return <PauseCircle className="h-3 w-3 mr-1" />;
       case 'completed':
-        return <CheckCircle2 className="h-3 w-3 mr-1" />;
+        return <CheckCircle className="h-3 w-3 mr-1" />;
       case 'cancelled':
         return <XCircle className="h-3 w-3 mr-1" />;
       default:
@@ -227,7 +227,7 @@ export default function ProjectEditPage() {
             className="mr-2"
             onClick={() => router.push('/projects')}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="w-48 h-6 bg-muted rounded animate-pulse"></div>
         </div>
@@ -246,7 +246,7 @@ export default function ProjectEditPage() {
             className="mr-2"
             onClick={() => router.push('/projects')}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
           <h2 className="text-3xl font-bold tracking-tight">Project Not Found</h2>
         </div>
@@ -273,7 +273,7 @@ export default function ProjectEditPage() {
             className="mr-2"
             onClick={() => router.push('/projects')}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
           <div>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{project.name}</h2>

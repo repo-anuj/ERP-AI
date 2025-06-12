@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FolderGit2, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Folder, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { DataTable } from '@/components/projects/data-table';
 import { columns, Project } from '@/components/projects/columns';
 import { EmptyState } from '@/components/projects/empty-state';
@@ -106,7 +106,7 @@ export default function ProjectsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
-            <FolderGit2 className="h-4 w-4 text-muted-foreground" />
+            <Folder className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {isLoading ? (

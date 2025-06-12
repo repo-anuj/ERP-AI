@@ -6,8 +6,8 @@ import {
   TrendingUp,
   TrendingDown,
   PieChart as PieChartIcon,
-  BarChart4,
-  ArrowUpDown,
+  BarChart,
+  Repeat,
   CreditCard
 } from 'lucide-react';
 import {
@@ -137,7 +137,7 @@ export function FinanceAnalytics({
               title="Profit Margin"
               value={`${profitMargin.toFixed(1)}%`}
               description="Net income / Total revenue"
-              icon={<ArrowUpDown className="h-4 w-4 text-muted-foreground" />}
+              icon={<Repeat className="h-4 w-4 text-muted-foreground" />}
               trend={profitMargin > 20 ? 'up' : profitMargin > 0 ? 'neutral' : 'down'}
               trendValue={profitMargin > 20 ? 'Healthy' : profitMargin > 0 ? 'Moderate' : 'Negative'}
               isLoading={isLoading}

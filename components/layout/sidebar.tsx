@@ -2,18 +2,18 @@
 
 import { cn } from '@/lib/utils';
 import {
-  BarChart3,
-  Box,
+  BarChart,
+  Archive,
   ChevronDown,
   ChevronRight,
-  CircleDollarSign,
-  ClipboardList,
-  LayoutDashboard,
+  DollarSign,
+  Clipboard,
+  Grid,
   Menu,
   Settings,
   Users,
   X,
-  DollarSign,
+  DollarSign as DollarSignIcon,
   AlertTriangle,
 } from 'lucide-react';
 import { RestrictedLink } from './restricted-link';
@@ -34,19 +34,19 @@ interface RouteItem {
 const routes: RouteItem[] = [
   {
     label: 'Dashboard',
-    icon: LayoutDashboard,
+    icon: Grid,
     href: '/',
     permission: PERMISSIONS.VIEW_DASHBOARD,
   },
   {
     label: 'Inventory',
-    icon: Box,
+    icon: Archive,
     href: '/inventory',
     permission: PERMISSIONS.VIEW_INVENTORY,
   },
   {
     label: 'Sales',
-    icon: CircleDollarSign,
+    icon: DollarSign,
     href: '/sales',
     permission: PERMISSIONS.VIEW_SALES,
   },
@@ -58,7 +58,7 @@ const routes: RouteItem[] = [
   },
   {
     label: 'Projects',
-    icon: ClipboardList,
+    icon: Clipboard,
     href: '/projects',
     permission: PERMISSIONS.VIEW_PROJECTS,
     submenu: [
@@ -76,7 +76,7 @@ const routes: RouteItem[] = [
   },
   {
     label: 'Finance',
-    icon: DollarSign,
+    icon: DollarSignIcon,
     href: '/dashboard/finance',
     permission: PERMISSIONS.VIEW_FINANCE,
     submenu: [
@@ -119,7 +119,7 @@ const routes: RouteItem[] = [
   },
   {
     label: 'Analytics',
-    icon: BarChart3,
+    icon: BarChart,
     href: '/analytics',
     permission: PERMISSIONS.VIEW_ANALYTICS,
   },

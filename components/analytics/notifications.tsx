@@ -8,7 +8,7 @@ import {
   Info, 
   AlertTriangle, 
   AlertCircle, 
-  CheckCircle2,
+  CheckCircle,
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -90,7 +90,7 @@ export function NotificationsPopover() {
       case 'error':
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       case 'success':
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       default:
         return <Info className="h-4 w-4 text-blue-500" />;
     }

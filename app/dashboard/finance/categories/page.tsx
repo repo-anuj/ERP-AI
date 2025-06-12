@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { PlusIcon, MoreHorizontal, Edit, Trash, Tag, RefreshCw } from 'lucide-react';
+import { Plus, MoreHorizontal, Edit, Trash2, Tag, RefreshCw } from 'lucide-react';
 import { CategoryDialog } from '@/components/finance/category-dialog';
 import { Input } from '@/components/ui/input';
 
@@ -151,7 +151,7 @@ export default function CategoriesPage() {
             Refresh
           </Button>
           <Button size="sm" onClick={handleAddCategory}>
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" />
             Add Category
           </Button>
         </div>
@@ -204,7 +204,7 @@ export default function CategoriesPage() {
                     className="mt-4"
                     onClick={handleAddCategory}
                   >
-                    <PlusIcon className="mr-2 h-4 w-4" />
+                    <Plus className="mr-2 h-4 w-4" />
                     Add Category
                   </Button>
                 </div>
@@ -287,7 +287,7 @@ export default function CategoriesPage() {
                                 className="text-red-600"
                                 disabled={(category.transactionCount !== undefined && category.transactionCount > 0)}
                               >
-                                <Trash className="mr-2 h-4 w-4" />
+                                <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>

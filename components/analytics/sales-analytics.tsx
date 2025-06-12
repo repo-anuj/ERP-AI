@@ -7,7 +7,7 @@ import {
   ShoppingCart,
   TrendingUp,
   Calendar,
-  BarChart4
+  BarChart
 } from 'lucide-react';
 import {
   Card,

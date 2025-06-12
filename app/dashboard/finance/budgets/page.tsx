@@ -28,7 +28,7 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  BarChart2,
+  BarChart,
 } from 'lucide-react';
 import {
   Table,
@@ -505,7 +505,7 @@ export default function BudgetsPage() {
                 <Tabs defaultValue="comparison" className="w-full">
                   <TabsList className="mb-4">
                     <TabsTrigger value="comparison">
-                      <BarChart2 className="h-4 w-4 mr-2" />
+                      <BarChart className="h-4 w-4 mr-2" />
                       Budget vs. Actual
                     </TabsTrigger>
                     <TabsTrigger value="alerts">
@@ -520,7 +520,7 @@ export default function BudgetsPage() {
                       <Card>
                         <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
                           <div className="rounded-full bg-primary/10 p-6">
-                            <BarChart2 className="h-10 w-10 text-primary" />
+                            <BarChart className="h-10 w-10 text-primary" />
                           </div>
                           <h3 className="text-xl font-semibold text-center">No Budget Data Available</h3>
                           <p className="text-center text-muted-foreground max-w-md">

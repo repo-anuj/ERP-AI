@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Award, TrendingUp } from 'lucide-react';
+import { Star, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,7 @@ export function TopPerformers({ data }: TopPerformersProps) {
           <CardTitle>Top Performers</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-10 space-y-4">
-          <Award className="h-16 w-16 text-muted-foreground" />
+          <Star className="h-16 w-16 text-muted-foreground" />
           <div className="text-center space-y-2">
             <h3 className="font-medium">No sales data yet</h3>
             <p className="text-sm text-muted-foreground">

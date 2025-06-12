@@ -29,7 +29,7 @@ import {
   TabsTrigger 
 } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { BarChart2, LineChart as LineChartIcon, TrendingUp, RefreshCw } from 'lucide-react';
+import { BarChart as BarChartIcon, PieChart as PieChartIcon, TrendingUp, RefreshCw, Activity } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 interface OverviewProps {
@@ -152,7 +152,7 @@ export function Overview({ data }: OverviewProps) {
           <CardTitle>Sales Overview</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-10 space-y-4">
-          <LineChartIcon className="h-16 w-16 text-muted-foreground" />
+          <Activity className="h-16 w-16 text-muted-foreground" />
           <div className="text-center space-y-2">
             <h3 className="font-medium">No sales data available</h3>
             <p className="text-sm text-muted-foreground">
@@ -287,7 +287,7 @@ export function Overview({ data }: OverviewProps) {
             variant={chartType === 'bar' ? 'default' : 'outline'} 
             onClick={() => setChartType('bar')}
           >
-            <BarChart2 className="h-4 w-4 mr-1" />
+            <BarChartIcon className="h-4 w-4 mr-1" />
             Bar
           </Button>
           <Button 
@@ -295,7 +295,7 @@ export function Overview({ data }: OverviewProps) {
             variant={chartType === 'line' ? 'default' : 'outline'} 
             onClick={() => setChartType('line')}
           >
-            <LineChartIcon className="h-4 w-4 mr-1" />
+            <Activity className="h-4 w-4 mr-1" />
             Line
           </Button>
           <Button 

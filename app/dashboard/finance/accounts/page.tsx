@@ -22,7 +22,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
-import { PlusIcon, Building2Icon, MoreHorizontal, Edit, Trash, RefreshCw } from 'lucide-react';
+import { Plus, Building2, MoreHorizontal, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { AccountDialog } from '@/components/finance/account-dialog';
 import { RecalculateBalanceButton } from '@/components/finance/recalculate-balance-button';
 import { Badge } from '@/components/ui/badge';
@@ -322,7 +322,7 @@ export default function AccountsPage() {
   const getAccountTypeIcon = (type: string) => {
     switch (type) {
       case 'bank':
-        return <Building2Icon className="h-4 w-4 text-blue-500" />;
+        return <Building2 className="h-4 w-4 text-blue-500" />;
       case 'cash':
         return <span className="text-green-500">💵</span>;
       case 'credit':
@@ -367,20 +367,20 @@ export default function AccountsPage() {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Financial Accounts</h1>
           <Button onClick={handleAddAccount}>
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" />
             Add Account
           </Button>
         </div>
 
         <Card className="p-12">
           <div className="flex flex-col items-center justify-center text-center space-y-4">
-            <Building2Icon className="h-16 w-16 text-muted-foreground" />
+            <Building2 className="h-16 w-16 text-muted-foreground" />
             <h2 className="text-2xl font-bold">No Accounts Found</h2>
             <p className="text-muted-foreground max-w-md">
               You haven't created any financial accounts yet. Create your first account to track your income and expenses.
             </p>
             <Button size="lg" onClick={handleAddAccount}>
-              <PlusIcon className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-4 w-4" />
               Create Your First Account
             </Button>
           </div>
@@ -420,7 +420,7 @@ export default function AccountsPage() {
             }}
           />
           <Button size="sm" onClick={handleAddAccount}>
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" />
             Add Account
           </Button>
         </div>
@@ -570,7 +570,7 @@ export default function AccountsPage() {
                             onClick={() => handleDeleteAccount(account.id)}
                             className="text-red-600"
                           >
-                            <Trash className="mr-2 h-4 w-4" />
+                            <Trash2 className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>

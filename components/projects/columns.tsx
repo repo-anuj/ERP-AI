@@ -13,9 +13,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   AlertCircle,
-  ArrowUpDown,
+  Repeat,
   Calendar,
-  CheckCircle2,
+  CheckCircle,
   Clock,
   Copy,
   Edit,
@@ -523,7 +523,7 @@ const StatusCell = ({ row }: { row: any }) => {
       variant = 'outline';
       break;
     case 'completed':
-      icon = <CheckCircle2 className="h-3 w-3 mr-1" />;
+      icon = <CheckCircle className="h-3 w-3 mr-1" />;
       variant = 'default';
       break;
     case 'cancelled':
@@ -592,7 +592,7 @@ export const columns: ColumnDef<Project>[] = [
           className="p-0 font-medium"
         >
           Project
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -608,7 +608,7 @@ export const columns: ColumnDef<Project>[] = [
           className="p-0 font-medium"
         >
           Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -627,7 +627,7 @@ export const columns: ColumnDef<Project>[] = [
           className="p-0 font-medium"
         >
           Type
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -651,7 +651,7 @@ export const columns: ColumnDef<Project>[] = [
           className="p-0 font-medium"
         >
           Priority
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -670,7 +670,7 @@ export const columns: ColumnDef<Project>[] = [
           className="p-0 font-medium"
         >
           Progress
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -686,7 +686,7 @@ export const columns: ColumnDef<Project>[] = [
           className="p-0 font-medium hidden md:flex"
         >
           Manager
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },
@@ -712,7 +712,7 @@ export const columns: ColumnDef<Project>[] = [
           className="p-0 font-medium hidden md:flex"
         >
           Due Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Repeat className="ml-2 h-4 w-4" />
         </Button>
       );
     },

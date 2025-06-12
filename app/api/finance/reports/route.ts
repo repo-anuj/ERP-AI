@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
-import { addDays, format, parseISO, startOfDay, endOfDay, isSameDay } from 'date-fns';
+import { addDays, format, startOfDay, endOfDay } from 'date-fns';
 
 /**
  * POST: Generate financial reports

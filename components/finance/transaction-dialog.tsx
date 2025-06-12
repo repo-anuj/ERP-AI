@@ -38,7 +38,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
-import { CalendarIcon, Check, Loader2, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, Loader2, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 

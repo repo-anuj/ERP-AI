@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowDownIcon, ArrowUpIcon, DollarSign, Users, Package, ShoppingCart, PlusCircle } from 'lucide-react';
+import { TrendingDown, TrendingUp, DollarSign, Users, Package, ShoppingCart, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
@@ -110,7 +110,7 @@ export function DashboardCards({ data }: DashboardCardProps) {
             <p className="text-xs text-muted-foreground">
               {(data?.revenue ?? 0) > 0 ? (
                 <span className="text-emerald-500 flex items-center">
-                  <ArrowUpIcon className="h-4 w-4 mr-1" />
+                  <TrendingUp className="h-4 w-4 mr-1" />
                   View financial details
                 </span>
               ) : (
@@ -132,7 +132,7 @@ export function DashboardCards({ data }: DashboardCardProps) {
             <p className="text-xs text-muted-foreground">
               {(data?.users ?? 0) > 0 ? (
                 <span className="text-emerald-500 flex items-center">
-                  <ArrowUpIcon className="h-4 w-4 mr-1" />
+                  <TrendingUp className="h-4 w-4 mr-1" />
                   View HR dashboard
                 </span>
               ) : (
@@ -154,7 +154,7 @@ export function DashboardCards({ data }: DashboardCardProps) {
             <p className="text-xs text-muted-foreground">
               {(data?.inventory ?? 0) > 0 ? (
                 <span className="text-emerald-500 flex items-center">
-                  <ArrowUpIcon className="h-4 w-4 mr-1" />
+                  <TrendingUp className="h-4 w-4 mr-1" />
                   View inventory
                 </span>
               ) : (
@@ -176,7 +176,7 @@ export function DashboardCards({ data }: DashboardCardProps) {
             <p className="text-xs text-muted-foreground">
               {(data?.projects ?? 0) > 0 ? (
                 <span className="text-emerald-500 flex items-center">
-                  <ArrowUpIcon className="h-4 w-4 mr-1" />
+                  <TrendingUp className="h-4 w-4 mr-1" />
                   View sales dashboard
                 </span>
               ) : (

@@ -26,7 +26,7 @@ import { CurrencyDisplay } from './currency-display';
 import { BudgetComparison } from './budget-comparison';
 import { BudgetAlerts } from './budget-alerts';
 import { toast } from 'sonner';
-import { Edit, RefreshCw, AlertTriangle, CheckCircle, XCircle, BarChart2 } from 'lucide-react';
+import { Edit, RefreshCw, AlertTriangle, CheckCircle, XCircle, BarChart } from 'lucide-react';
 import { useCurrency } from '@/contexts/currency-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -295,7 +295,7 @@ export function BudgetDetails({ budgetId, onEdit }: BudgetDetailsProps) {
       <Tabs defaultValue="comparison" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="comparison">
-            <BarChart2 className="h-4 w-4 mr-2" />
+            <BarChart className="h-4 w-4 mr-2" />
             Budget vs. Actual
           </TabsTrigger>
           <TabsTrigger value="alerts">

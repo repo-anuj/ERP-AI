@@ -17,7 +17,8 @@ const attendanceSchema = z.object({
 
 export async function GET() {
   try {
-    const token = cookies().get('token')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
 
     if (!token) {
       return new NextResponse('Unauthorized', { status: 401 });

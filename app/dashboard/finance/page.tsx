@@ -8,7 +8,7 @@ import { TransactionDialog } from '@/components/finance/transaction-dialog';
 import { TransactionsTable } from '@/components/finance/transactions-table';
 import { EmptyState } from '@/components/finance/empty-state';
 import { Button } from '@/components/ui/button';
-import { PlusIcon, ArrowDownIcon, ArrowUpIcon, RefreshCw, Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { PlusIcon, TrendingDown, TrendingUp, RefreshCw, Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { AccountDialog } from '@/components/finance/account-dialog';
@@ -750,7 +750,7 @@ export default function FinancePage() {
             <CardTitle className="text-sm font-medium">
               Total Income
             </CardTitle>
-            <ArrowUpIcon className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -777,7 +777,7 @@ export default function FinancePage() {
             <CardTitle className="text-sm font-medium">
               Total Expenses
             </CardTitle>
-            <ArrowDownIcon className="h-4 w-4 text-red-600" />
+            <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">

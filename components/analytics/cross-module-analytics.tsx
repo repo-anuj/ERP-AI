@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import {
   TrendingUp,
-  BarChart4,
-  ArrowUpDown,
+  BarChart,
+  Repeat,
   Link,
   Layers,
   Activity
@@ -203,7 +203,7 @@ export function CrossModuleAnalytics({
               title="Net Profit"
               value={formatCurrency(finance.metrics?.netCashflow || 0)}
               description="Income minus expenses"
-              icon={<BarChart4 className="h-4 w-4 text-muted-foreground" />}
+              icon={<BarChart className="h-4 w-4 text-muted-foreground" />}
               trend={finance.metrics?.netCashflow > 0 ? 'up' : 'down'}
               trendValue={`${Math.abs(((finance.metrics?.netCashflow || 0) / (finance.metrics?.income || 1)) * 100).toFixed(1)}%`}
               isLoading={isLoading}

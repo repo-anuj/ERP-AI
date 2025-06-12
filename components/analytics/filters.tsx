@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Download, Filter, ArrowDownToLine, FileJson, FileText } from 'lucide-react';
+import { Calendar as CalendarIcon, Download, Filter, ChevronDown, File, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -309,11 +309,11 @@ export function AnalyticsFilters({
             <span>Export as CSV</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onExport('json')}>
-            <FileJson className="mr-2 h-4 w-4" />
+            <File className="mr-2 h-4 w-4" />
             <span>Export as JSON</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onExport('pdf')}>
-            <ArrowDownToLine className="mr-2 h-4 w-4" />
+            <ChevronDown className="mr-2 h-4 w-4" />
             <span>Export as PDF</span>
           </DropdownMenuItem>
         </DropdownMenuContent>

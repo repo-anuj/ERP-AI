@@ -11,14 +11,12 @@ const nextConfig = {
     domains: [], // Add your image domains here if needed
     formats: ['image/webp', 'image/avif'],
   },
-  output: 'standalone',
+  output: 'standalone', // Use standalone for Netlify with API routes
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
   compress: true,
 
   // Performance optimizations
-  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   experimental: {
     optimizePackageImports: ['jose', 'lucide-react', '@radix-ui/react-icons'],
   },

@@ -35,18 +35,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  AlertCircle, 
-  ArrowDownUp, 
-  ChevronDown, 
-  Download, 
-  FileDown, 
-  Filter, 
-  Package, 
-  RefreshCw, 
-  Search, 
-  SlidersHorizontal, 
-  X 
+import {
+  AlertCircle,
+  Repeat,
+  ChevronDown,
+  Download,
+  Download as FileDown,
+  Filter,
+  Package,
+  RefreshCw,
+  Search,
+  Settings,
+  X
 } from 'lucide-react';
 import { 
   Select, 
@@ -236,7 +236,7 @@ export function DataTable<TData, TValue>({
               <p className="text-2xl font-bold">{formatCurrency(totalValue)}</p>
             </div>
             <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <ArrowDownUp className="h-5 w-5 text-green-600" />
+              <Repeat className="h-5 w-5 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -324,7 +324,7 @@ export function DataTable<TData, TValue>({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 gap-1">
-                  <SlidersHorizontal className="h-4 w-4" />
+                  <Settings className="h-4 w-4" />
                   <span className="hidden sm:inline">Columns</span>
                 </Button>
               </DropdownMenuTrigger>
