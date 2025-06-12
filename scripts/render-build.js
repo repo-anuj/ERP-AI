@@ -46,12 +46,9 @@ try {
 
 // Install dependencies with production optimizations
 console.log('Installing dependencies...');
-runCommand('npm ci --only=production');
-runCommand('npm install --only=dev');
+runCommand('npm ci');
 
-// Install additional dependencies needed for CSS processing
-console.log('Installing additional dependencies for CSS processing...');
-runCommand('npm install --no-save postcss-import tailwindcss-nesting');
+// Additional dependencies should already be installed with npm ci
 
 // Generate Prisma client with optimizations
 console.log('Generating Prisma client...');
@@ -80,50 +77,23 @@ if (fs.existsSync(postcssRenderConfigPath)) {
   console.log('Using Render-specific PostCSS configuration');
 }
 
-// Create a backup of the original globals.css
+// Backup globals.css if it exists
 const globalsCssPath = path.join(process.cwd(), 'app', 'globals.css');
 const globalsCssBackupPath = path.join(process.cwd(), 'app', 'globals.css.original');
-const globalsFallbackPath = path.join(process.cwd(), 'app', 'globals.fallback.css');
 
 if (fs.existsSync(globalsCssPath)) {
   console.log('Backing up original globals.css...');
   fs.copyFileSync(globalsCssPath, globalsCssBackupPath);
 }
 
-// Try to build the Next.js application with optimizations
+// Build the Next.js application
 console.log('Building Next.js application...');
-try {
-  // Set build optimizations
-  process.env.NEXT_TELEMETRY_DISABLED = '1';
-  process.env.NODE_OPTIONS = '--max-old-space-size=4096';
+// Set build optimizations
+process.env.NEXT_TELEMETRY_DISABLED = '1';
+process.env.NODE_OPTIONS = '--max-old-space-size=4096';
 
-  runCommand('npm run build');
-  console.log('Build completed successfully!');
-} catch (error) {
-  console.error('Build failed, attempting fallback approach...');
-
-  if (fs.existsSync(globalsFallbackPath)) {
-    console.log('Using fallback CSS file...');
-    fs.copyFileSync(globalsFallbackPath, globalsCssPath);
-
-    // Try building again with reduced memory usage
-    console.log('Attempting build with fallback CSS...');
-    try {
-      process.env.NODE_OPTIONS = '--max-old-space-size=2048';
-      runCommand('npm run build');
-      console.log('Build with fallback CSS completed successfully!');
-    } catch (buildError) {
-      console.error('Build still failing, restoring original CSS...');
-      if (fs.existsSync(globalsCssBackupPath)) {
-        fs.copyFileSync(globalsCssBackupPath, globalsCssPath);
-      }
-      throw buildError;
-    }
-  } else {
-    console.error('Fallback CSS file not found, cannot proceed.');
-    throw error;
-  }
-}
+runCommand('npm run build');
+console.log('Build completed successfully!');
 
 // Verify that prerender-manifest.js exists
 const prerenderManifestPath = path.join(process.cwd(), '.next', 'prerender-manifest.js');
