@@ -3,21 +3,9 @@
  * This script ensures the application starts in production mode
  */
 
-const { execSync } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-
-// Function to execute shell commands and log output
-function runCommand(command) {
-  console.log(`Running: ${command}`);
-  try {
-    execSync(command, { stdio: 'inherit' });
-  } catch (error) {
-    console.error(`Error executing command: ${command}`);
-    console.error(error);
-    process.exit(1);
-  }
-}
 
 // Ensure we're in production mode
 process.env.NODE_ENV = 'production';
@@ -93,11 +81,48 @@ process.on('unhandledRejection', (reason, promise) => {
 // Start the Next.js server
 try {
   console.log(`Starting Next.js server on port ${port}...`);
-  // Bind to all interfaces for Render
-  runCommand(`next start -p ${port} -H 0.0.0.0`);
+  // Use spawn instead of execSync to keep the process running
+  const { spawn } = require('child_process');
+
+  const nextProcess = spawn('next', ['start', '-p', port, '-H', '0.0.0.0'], {
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'production' }
+  });
+
+  nextProcess.on('error', (error) => {
+    console.error('Failed to start Next.js server:', error);
+    console.log('Attempting to start with fallback server...');
+    startFallbackServer();
+  });
+
+  nextProcess.on('exit', (code) => {
+    console.log(`Next.js process exited with code ${code}`);
+    if (code !== 0) {
+      console.log('Starting fallback server...');
+      startFallbackServer();
+    }
+  });
+
+  // Keep the process alive
+  process.on('SIGTERM', () => {
+    console.log('Received SIGTERM, shutting down gracefully...');
+    nextProcess.kill('SIGTERM');
+    process.exit(0);
+  });
+
+  process.on('SIGINT', () => {
+    console.log('Received SIGINT, shutting down gracefully...');
+    nextProcess.kill('SIGINT');
+    process.exit(0);
+  });
+
 } catch (error) {
   console.error('Failed to start Next.js server:', error);
-  console.log('Attempting to start with node directly...');
+  console.log('Attempting to start with fallback server...');
+  startFallbackServer();
+}
+
+function startFallbackServer() {
 
   // Fallback to a simple HTTP server if Next.js fails to start
   const http = require('http');
