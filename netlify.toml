@@ -1,0 +1,38 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--production=false"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[dev]
+  command = "npm run dev"
+  port = 3000
+
+# Redirect rules for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
+
+# API routes
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Handle Next.js routing
+[[redirects]]
+  from = "/_next/static/*"
+  to = "/_next/static/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404

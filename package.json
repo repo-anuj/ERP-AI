@@ -14,6 +14,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@next/swc-wasm-nodejs": "^14.0.0",
     "@prisma/client": "^6.3.1",
+    "@types/node": "^22.10.7",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -73,6 +74,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss": "3.3.3",
     "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.7.3",
     "uuid": "^11.1.0",
     "vaul": "^0.9.9",
     "xlsx": "^0.18.5",
@@ -83,8 +85,6 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/date-fns": "^2.5.3",
     "@types/file-saver": "^2.0.7",
-    "@types/node": "^22.10.7",
-    "@types/react": "^18.3.18",
-    "typescript": "^5.7.3"
+    "@types/react": "^18.3.18"
   }
 }

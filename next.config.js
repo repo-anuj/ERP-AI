@@ -11,7 +11,7 @@ const nextConfig = {
     domains: [], // Add your image domains here if needed
     formats: ['image/webp', 'image/avif'],
   },
-  output: 'standalone', // Use standalone for Netlify with API routes
+  // output: 'standalone', // Commented out for Netlify compatibility
   poweredByHeader: false,
   reactStrictMode: true,
   compress: true,
