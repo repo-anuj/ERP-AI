@@ -18,8 +18,8 @@ const nextConfig = {
   compress: true,
 
   // Performance optimizations
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
     optimizePackageImports: ['jose', 'lucide-react', '@radix-ui/react-icons'],
   },
 

@@ -26,6 +26,15 @@ process.env.NODE_ENV = 'production';
 const port = process.env.PORT || 3000;
 
 console.log(`Starting Next.js in production mode on port ${port}...`);
+console.log('Current working directory:', process.cwd());
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('Available scripts in package.json:');
+try {
+  const packageJson = require('../package.json');
+  console.log(JSON.stringify(packageJson.scripts, null, 2));
+} catch (e) {
+  console.log('Could not read package.json scripts');
+}
 
 // Check if .next directory exists
 const nextDir = path.join(process.cwd(), '.next');
@@ -84,7 +93,8 @@ process.on('unhandledRejection', (reason, promise) => {
 // Start the Next.js server
 try {
   console.log(`Starting Next.js server on port ${port}...`);
-  runCommand(`next start -p ${port}`);
+  // Bind to all interfaces for Render
+  runCommand(`next start -p ${port} -H 0.0.0.0`);
 } catch (error) {
   console.error('Failed to start Next.js server:', error);
   console.log('Attempting to start with node directly...');
@@ -118,7 +128,7 @@ try {
     `);
   });
 
-  server.listen(port, () => {
+  server.listen(port, '0.0.0.0', () => {
     console.log(`Fallback server running on port ${port}`);
   });
 }
