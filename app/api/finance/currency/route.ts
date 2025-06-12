@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
-import { 
-export const dynamic = 'force-dynamic';
-  getCompanyDefaultCurrency, 
-  updateCompanyDefaultCurrency, 
+import {
+  getCompanyDefaultCurrency,
+  updateCompanyDefaultCurrency,
   getSupportedCurrencies,
   convertCurrency
 } from '@/lib/currency-utils';
+
+export const dynamic = 'force-dynamic';
 
 // Validation schema for updating currency
 const currencyUpdateSchema = z.object({
