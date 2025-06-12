@@ -14,11 +14,17 @@ try {
   });
   console.log('✅ Prisma client generated successfully');
 
-  // Step 2: Build Next.js application
+  // Step 2: Build Next.js application with timeout handling
   console.log('🏗️ Building Next.js application...');
-  execSync('npx next build', { 
+  execSync('npx next build', {
     stdio: 'inherit',
-    cwd: process.cwd()
+    cwd: process.cwd(),
+    timeout: 600000, // 10 minutes timeout
+    env: {
+      ...process.env,
+      NODE_OPTIONS: '--max-old-space-size=4096',
+      NEXT_TELEMETRY_DISABLED: '1'
+    }
   });
   console.log('✅ Next.js build completed successfully');
 

@@ -3,11 +3,12 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
 import { getProjectFinancialSummary } from '@/lib/project-finance-integration';
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
     // Get the token from cookies
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {

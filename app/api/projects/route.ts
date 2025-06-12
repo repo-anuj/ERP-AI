@@ -4,6 +4,7 @@ import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { createProjectBudget, updateProjectBudget, getProjectFinancialSummary } from '@/lib/project-finance-integration';
+export const dynamic = 'force-dynamic';
 
 // Schema for project validation
 const projectSchema = z.object({
@@ -43,7 +44,7 @@ const projectSchema = z.object({
 
 // Helper function to check user authorization and get company ID
 async function getUserCompanyId() {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const token = cookieStore.get('token')?.value;
   const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 

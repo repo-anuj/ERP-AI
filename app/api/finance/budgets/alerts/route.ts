@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
 import { createNotification } from '@/lib/notification-service';
+export const dynamic = 'force-dynamic';
 
 /**
  * GET: Get budget alerts for the current user's company

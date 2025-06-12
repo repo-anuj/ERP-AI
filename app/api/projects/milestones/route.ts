@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+export const dynamic = 'force-dynamic';
 
 // Schema for milestone validation
 const milestoneSchema = z.object({

@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { analyticsCache } from '@/lib/analytics-cache';
+export const dynamic = 'force-dynamic';
 
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {
     // Verify authentication
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     // Verify authentication
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {

@@ -3,11 +3,12 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
 import { createTransactionFromSale, updateTransactionFromSale, deleteTransactionFromSale } from '@/lib/sales-finance-integration';
+export const dynamic = 'force-dynamic';
 
 // GET: Fetch all sales for the company with filtering and search
 export async function GET(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
@@ -118,7 +119,7 @@ export async function GET(req: NextRequest) {
 // POST: Create a new sale
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
@@ -300,7 +301,7 @@ export async function POST(req: NextRequest) {
 // PUT: Update a sale
 export async function PUT(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
@@ -387,7 +388,7 @@ export async function PUT(req: NextRequest) {
 // DELETE: Remove a sale
 export async function DELETE(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
@@ -493,7 +494,7 @@ export async function DELETE(req: NextRequest) {
 // PATCH: Process returns and get metrics
 export async function PATCH(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { withPermission } from "@/lib/api-middleware";
 import { PERMISSIONS, getCombinedPermissions } from "@/lib/permissions";
+export const dynamic = 'force-dynamic';
 
 // Schema for permission update
 const permissionSchema = z.object({

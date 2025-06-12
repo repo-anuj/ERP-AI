@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
 import { addDays, addMonths, addWeeks, addYears, setDate } from 'date-fns';
+export const dynamic = 'force-dynamic';
 
 // Validation schema for recurring transaction data
 const recurringTransactionSchema = z.object({

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+export const dynamic = 'force-dynamic';
 
 export const runtime = 'nodejs';
 
@@ -17,7 +18,7 @@ const attendanceSchema = z.object({
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {

@@ -10,6 +10,10 @@ import { CompanyProvider } from '@/contexts/company-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { PermissionProvider } from '@/contexts/permission-context';
 
+// Force dynamic rendering for all pages
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {

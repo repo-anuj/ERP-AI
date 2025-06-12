@@ -22,6 +22,10 @@ const nextConfig = {
     serverComponentsExternalPackages: ['@prisma/client'],
   },
 
+  // Disable static optimization to prevent build-time errors
+  staticPageGenerationTimeout: 1000,
+  generateEtags: false,
+
   // Webpack optimizations
   webpack: (config, { isServer }) => {
     // Optimize bundle size

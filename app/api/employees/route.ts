@@ -4,6 +4,7 @@ import { verifyAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { z } from "zod";
+export const dynamic = 'force-dynamic';
 
 export const runtime = 'nodejs';
 

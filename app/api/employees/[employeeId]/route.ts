@@ -4,6 +4,7 @@ import { verifyAuth } from "@/lib/auth";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
+export const dynamic = 'force-dynamic';
 
 // Define Zod schema for validation (adjust fields as needed)
 const employeeUpdateSchema = z.object({

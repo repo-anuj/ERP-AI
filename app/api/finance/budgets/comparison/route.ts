@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 /**
  * GET: Get budget vs actual comparison data

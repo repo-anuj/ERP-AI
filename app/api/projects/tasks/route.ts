@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+export const dynamic = 'force-dynamic';
 
 // Schema for task validation
 const taskSchema = z.object({
@@ -24,7 +25,7 @@ const taskSchema = z.object({
 
 // Helper function to check user authorization and get company ID
 async function getUserCompanyId() {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const token = cookieStore.get('token')?.value;
   
   if (!token) {

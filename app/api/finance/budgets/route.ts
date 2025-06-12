@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
 import { createBudgetNotification } from '@/lib/notification-service';
+export const dynamic = 'force-dynamic';
 
 // Validation schema for budget data
 const budgetSchema = z.object({

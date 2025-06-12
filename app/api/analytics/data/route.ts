@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { withRetry } from '@/lib/db-utils';
 import { Sale, SaleItem, Employee, InventoryItem } from '@prisma/client';
 import { analyticsCache } from '@/lib/analytics-cache';
+export const dynamic = 'force-dynamic';
 
 export const runtime = 'nodejs';
 
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
     }
 
     console.log('Fetching fresh analytics data');
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
 import { 
+export const dynamic = 'force-dynamic';
   getCompanyDefaultCurrency, 
   updateCompanyDefaultCurrency, 
   getSupportedCurrencies,

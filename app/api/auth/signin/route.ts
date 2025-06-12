@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import * as z from "zod"
 import { generateToken, setAuthCookie } from "@/lib/auth"
 import { verifyPassword } from "@/lib/password"
+export const dynamic = 'force-dynamic';
 
 // Configure route segment config
 export const runtime = 'nodejs' // Changed from edge to nodejs for Prisma compatibility

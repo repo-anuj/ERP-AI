@@ -4,6 +4,10 @@ import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Schema for budget category validation
 const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),

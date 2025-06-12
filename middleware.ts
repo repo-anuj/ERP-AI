@@ -67,7 +67,9 @@ export async function middleware(request: NextRequest) {
         if (!isAuthenticated && !isAuthPage) {
             const redirectUrl = new URL('/auth/signin', request.url)
             redirectUrl.searchParams.set('from', request.nextUrl.pathname)
-            return NextResponse.redirect(redirectUrl)
+            const response = NextResponse.redirect(redirectUrl);
+            response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+            return response;
         }
 
         // Redirect to appropriate home page if accessing auth pages while authenticated
@@ -145,11 +147,19 @@ export async function middleware(request: NextRequest) {
             }
         }
 
-        return NextResponse.next()
+        // Add headers to prevent static generation issues
+        const response = NextResponse.next();
+        response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        response.headers.set('Pragma', 'no-cache');
+        response.headers.set('Expires', '0');
+
+        return response;
     } catch (error) {
         console.error('Middleware error:', error);
         // In case of error, just continue to the page without redirecting
-        return NextResponse.next();
+        const response = NextResponse.next();
+        response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return response;
     }
 }
 

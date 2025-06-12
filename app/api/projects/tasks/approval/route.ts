@@ -6,6 +6,7 @@ import { withPermission } from "@/lib/api-middleware";
 import { PERMISSIONS } from "@/lib/permissions";
 import { createTaskApprovalRequest, createTaskApprovalResponse } from "@/lib/notification-service";
 import { z } from "zod";
+export const dynamic = 'force-dynamic';
 
 // Schema for task approval request
 const taskApprovalRequestSchema = z.object({
@@ -194,7 +195,7 @@ async function respondToTaskApproval(req: Request) {
 // Get tasks awaiting approval
 async function getTasksAwaitingApproval(_req: Request) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
     const isEmployee = cookieStore.get('isEmployee')?.value === 'true';
 

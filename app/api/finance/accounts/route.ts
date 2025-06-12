@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // Validation schema for account data
 const accountSchema = z.object({

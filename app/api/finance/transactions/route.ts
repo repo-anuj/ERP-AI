@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
 import { applyTransactionToBalance, reverseTransactionFromBalance } from '@/lib/finance-utils';
+export const dynamic = 'force-dynamic';
 
 // Validation schema for transaction data
 const transactionSchema = z.object({

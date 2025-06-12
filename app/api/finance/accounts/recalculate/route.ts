@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
 import { recalculateAccountBalance } from '@/lib/finance-utils';
+export const dynamic = 'force-dynamic';
 
 /**
  * POST: Recalculate the balance of a specific account or all accounts

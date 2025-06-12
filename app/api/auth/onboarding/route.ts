@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { onboardingSchema } from "@/lib/validations/onboarding"
+export const dynamic = 'force-dynamic';
 
 export const runtime = 'nodejs'
 

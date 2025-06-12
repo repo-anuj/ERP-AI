@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
 import { linkTransactionToProject } from '@/lib/project-finance-integration';
+export const dynamic = 'force-dynamic';
 
 // Validation schema for linking a transaction to a project
 const linkTransactionSchema = z.object({
@@ -14,7 +15,7 @@ const linkTransactionSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     // Get the token from cookies
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getUserCompanyId } from '@/lib/auth';
 import { addDays, addMonths, addWeeks, addYears, setDate } from 'date-fns';
 import { applyTransactionToBalance } from '@/lib/finance-utils';
+export const dynamic = 'force-dynamic';
 
 /**
  * Calculate the next due date based on frequency and interval
