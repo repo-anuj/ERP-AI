@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:render": "node ./scripts/render-build.js",
+    "build:render": "node ./scripts/simple-build.js",
     "start": "next start -H 0.0.0.0",
     "start:prod": "next start",
     "lint": "next lint"
