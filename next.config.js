@@ -20,6 +20,7 @@ const nextConfig = {
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
 
   // Performance optimizations
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   experimental: {
     optimizePackageImports: ['jose', 'lucide-react', '@radix-ui/react-icons'],
     // Enable Edge Runtime for middleware

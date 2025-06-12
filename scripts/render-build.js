@@ -70,7 +70,7 @@ runCommand('npm install --no-save postcss-import tailwindcss-nesting');
 
 // Generate Prisma client with optimizations
 console.log('Generating Prisma client...');
-runCommand('npx prisma generate --no-engine');
+runCommand('npx prisma generate');
 
 // Clean .next directory if it exists
 const nextDir = path.join(process.cwd(), '.next');
