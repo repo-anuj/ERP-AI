@@ -11,7 +11,7 @@ const nextConfig = {
     domains: [], // Add your image domains here if needed
     formats: ['image/webp', 'image/avif'],
   },
-  // output: 'standalone', // Commented out for Netlify compatibility
+  // Netlify handles this automatically with the Next.js plugin
   poweredByHeader: false,
   reactStrictMode: true,
   compress: true,
@@ -22,9 +22,14 @@ const nextConfig = {
     serverComponentsExternalPackages: ['@prisma/client'],
   },
 
-  // Disable static optimization to prevent build-time errors
-  staticPageGenerationTimeout: 1000,
-  generateEtags: false,
+  // Ensure API routes are handled properly
+  async rewrites() {
+    return {
+      beforeFiles: [],
+      afterFiles: [],
+      fallback: []
+    };
+  },
 
   // Webpack optimizations
   webpack: (config, { isServer }) => {

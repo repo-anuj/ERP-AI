@@ -84,6 +84,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.11.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/date-fns": "^2.5.3",
     "@types/file-saver": "^2.0.7",
