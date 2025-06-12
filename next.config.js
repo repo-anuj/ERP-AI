@@ -19,6 +19,7 @@ const nextConfig = {
   // Performance optimizations
   experimental: {
     optimizePackageImports: ['jose', 'lucide-react', '@radix-ui/react-icons'],
+    serverComponentsExternalPackages: ['@prisma/client'],
   },
 
   // Webpack optimizations
