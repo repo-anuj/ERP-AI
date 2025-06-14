@@ -1,0 +1,2 @@
+1. add employe is not adding data directly to the database
+2. id proff form employe view is not adding data to the database

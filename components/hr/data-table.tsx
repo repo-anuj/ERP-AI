@@ -29,25 +29,20 @@ import { useState, useMemo } from 'react';
 import { Employee } from './columns';
 
 interface DataTableProps<TData extends Employee, TValue> {
-  columns: (onEdit: (employee: Employee) => void) => ColumnDef<TData, TValue>[]; // Update columns prop to receive onEdit handler
+  columns: ColumnDef<TData, TValue>[]; // Accept pre-generated columns
   data: TData[];
-  onEdit: (employee: Employee) => void; // Add the onEdit callback prop
 }
 
 export function DataTable<TData extends Employee, TValue>({
   columns,
   data,
-  onEdit,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  // Generate columns by passing the onEdit handler
-  const generatedColumns = useMemo(() => columns(onEdit), [onEdit]);
-
   const table = useReactTable({
     data,
-    columns: generatedColumns, // Use the generated columns
+    columns, // Use the passed columns directly
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -112,7 +107,7 @@ export function DataTable<TData extends Employee, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={generatedColumns.length}
+                  colSpan={columns.length}
                   className="h-24 text-center"
                 >
                   No results.

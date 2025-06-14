@@ -1,121 +1,15 @@
- Netlify Build                                                 
-5:46:23 PM: ────────────────────────────────────────────────────────────────
-5:46:23 PM: ​
-5:46:23 PM: ❯ Version
-5:46:23 PM:   @netlify/build 33.4.5
-5:46:23 PM: ​
-5:46:23 PM: ❯ Flags
-5:46:23 PM:   accountId: 648933bc3c3a3f535e6405c4
-5:46:23 PM:   baseRelDir: true
-5:46:23 PM:   buildId: 684ac4f5e7cf180008eb5549
-5:46:23 PM:   deployId: 684ac4f5e7cf180008eb554b
-5:46:23 PM: ​
-5:46:23 PM: ❯ Current directory
-5:46:23 PM:   /opt/build/repo
-5:46:23 PM: ​
-5:46:23 PM: ❯ Config file
-5:46:23 PM:   /opt/build/repo/netlify.toml
-5:46:23 PM: ​
-5:46:23 PM: ❯ Context
-5:46:23 PM:   production
-5:46:26 PM: ​
-5:46:26 PM: ❯ Using Next.js Runtime - v5.11.2
-5:46:27 PM: No Next.js cache to restore
-5:46:27 PM: ​
-5:46:27 PM: build.command from netlify.toml                               
-5:46:27 PM: ────────────────────────────────────────────────────────────────
-5:46:27 PM: ​
-5:46:27 PM: $ npm run build:netlify
-5:46:27 PM: > nextjs@0.1.0 build:netlify
-5:46:27 PM: > node scripts/netlify-build.js
-5:46:27 PM: 🚀 Starting Netlify build process...
-5:46:27 PM: 📦 Generating Prisma client...
-5:46:28 PM: Prisma schema loaded from prisma/schema.prisma
-5:46:29 PM: ✔ Generated Prisma Client (v6.3.1) to ./node_modules/@prisma/client in 266ms
-5:46:29 PM: Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-5:46:29 PM: Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-5:46:29 PM: ┌─────────────────────────────────────────────────────────┐
-5:46:29 PM: │  Update available 6.3.1 -> 6.9.0                        │
-5:46:29 PM: │  Run the following to update                            │
-5:46:29 PM: │    npm i --save-dev prisma@latest                       │
-5:46:29 PM: │    npm i @prisma/client@latest                          │
-5:46:29 PM: └─────────────────────────────────────────────────────────┘
-5:46:29 PM: ✅ Prisma client generated successfully
-5:46:29 PM: 🏗️ Building Next.js application...
-5:46:30 PM: ⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
-5:46:30 PM:   ▲ Next.js 14.2.28
-5:46:30 PM:    Creating an optimized production build ...
-5:46:47 PM: Failed during stage 'building site': Build script returned non-zero exit code: 2
-5:46:47 PM: Failed to compile.
-5:46:47 PM: 
-5:46:47 PM: ./app/api/finance/currency/route.ts
-5:46:47 PM: Error:
-5:46:47 PM:   x cannot import as reserved word
-5:46:47 PM:    ,-[/opt/build/repo/app/api/finance/currency/route.ts:3:1]
-5:46:47 PM:  3 | import { prisma } from '@/lib/prisma';
-5:46:47 PM:  4 | import { getUserCompanyId } from '@/lib/auth';
-5:46:47 PM:  5 | import {
-5:46:47 PM:  6 | export const dynamic = 'force-dynamic';
-5:46:47 PM:    : ^^^^^^
-5:46:47 PM:  7 |   getCompanyDefaultCurrency,
-5:46:47 PM:  8 |   updateCompanyDefaultCurrency,
-5:46:47 PM:  9 |   getSupportedCurrencies,
-5:46:47 PM:    `----
+Unhandled Runtime Error
+TypeError: Cannot read properties of undefined (reading 'original')
 
-Caused by:
-    Syntax Error
+Source
+components\sales\data-table.tsx (140:40) @ original
 
-Import trace for requested module:
-./app/api/finance/currency/route.ts
-5:46:47 PM: > Build failed because of webpack errors
-5:46:47 PM: ❌ Build process failed: Command failed: npx next build
-5:46:47 PM: ​
-5:46:47 PM: "build.command" failed                                        
-5:46:47 PM: ────────────────────────────────────────────────────────────────
-5:46:47 PM: ​
-5:46:47 PM:   Error message
-5:46:47 PM:   Command failed with exit code 1: npm run build:netlify
-5:46:47 PM: ​
-5:46:47 PM:   Error location
-5:46:47 PM:   In build.command from netlify.toml:
-5:46:47 PM:   npm run build:netlify
-5:46:47 PM: ​
-5:46:47 PM:   Resolved config
-5:46:47 PM:   build:
-5:46:47 PM:     command: npm run build:netlify
-5:46:47 PM:     commandOrigin: config
-5:46:47 PM:     environment:
-5:46:47 PM:       - DATABASE_URL
-5:46:47 PM:       - JWT_SECRET_KEY
-5:46:47 PM:       - NEXTAUTH_SECRET
-5:46:47 PM:       - NEXTAUTH_URL
-5:46:47 PM:       - NODE_ENV
-5:46:47 PM:       - OPENROUTER_API_KEY
-5:46:47 PM:       - NODE_VERSION
-5:46:47 PM:       - NPM_FLAGS
-5:46:47 PM:     publish: /opt/build/repo/.next
-5:46:47 PM:     publishOrigin: config
-5:46:47 PM:   plugins:
-5:46:47 PM:     - inputs: {}
-5:46:47 PM:       origin: config
-5:46:47 PM:       package: '@netlify/plugin-nextjs'
-5:46:47 PM:   redirects:
-5:46:47 PM:     - conditions:
-5:46:47 PM:         Role:
-5:46:47 PM:           - admin
-5:46:47 PM:       from: /*
-      status: 200
-      to: /index.html
-    - from: /api/*
-      status: 200
-      to: /.netlify/functions/:splat
-    - from: /_next/static/*
-      status: 200
-      to: /_next/static/:splat
-    - from: /*
-      status: 404
-      to: /404.html
-  redirectsOrigin: config
-5:46:47 PM: Build failed due to a user error: Build script returned non-zero exit code: 2
-5:46:47 PM: Failing build: Failed to build site
-5:46:47 PM: Finished processing build request in 57.198s
+  138 |       if (startDate) {
+  139 |         const filterFn = (row: any) => {
+> 140 |           const rowDate = new Date(row.original.date)
+      |                                        ^
+  141 |           return rowDate >= startDate!
+  142 |         }
+  143 |         
+
+  

@@ -6,9 +6,11 @@ import { Plus, Users, Briefcase, Clock, TrendingUp } from 'lucide-react';
 import { AddEmployeeDialog } from '@/components/hr/add-employee-dialog';
 import { DataTable } from '@/components/hr/data-table';
 import { columns, Employee } from '@/components/hr/columns';
-import { EditEmployeeModal } from '@/components/hr/edit-employee-modal';
+import { EnhancedEditEmployeeModal } from '@/components/hr/enhanced-edit-employee-modal';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
+import { Settings } from 'lucide-react';
 
 export default function HRPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -17,6 +19,7 @@ export default function HRPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +64,10 @@ export default function HRPage() {
   const handleOpenEditModal = (employee: Employee) => {
     setEditingEmployee(employee);
     setIsEditModalOpen(true);
+  };
+
+  const handleViewEmployee = (employee: Employee) => {
+    router.push(`/hr/employees/${employee.id}`);
   };
 
   const handleCloseEditModal = () => {
@@ -112,7 +119,16 @@ export default function HRPage() {
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Human Resources</h2>
-        <AddEmployeeDialog />
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/hr/settings')}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+          <AddEmployeeDialog />
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -238,10 +254,9 @@ export default function HRPage() {
               <p>Loading employee data...</p>
             </div>
           ) : employees.length > 0 ? (
-            <DataTable 
-              columns={columns} 
-              data={employees} 
-              onEdit={handleOpenEditModal} 
+            <DataTable
+              columns={columns(handleOpenEditModal, handleViewEmployee)}
+              data={employees}
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-6">
@@ -261,7 +276,7 @@ export default function HRPage() {
         </CardContent>
       </Card>
 
-      <EditEmployeeModal
+      <EnhancedEditEmployeeModal
         employee={editingEmployee}
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}

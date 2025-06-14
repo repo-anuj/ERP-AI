@@ -10,7 +10,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export type Employee = {
   id: string;
@@ -30,13 +31,43 @@ export type Employee = {
   createdAt: string;
   updatedAt: string;
   // Add the assignments field based on the API response
-  assignments?: { project: { id: string; name: string } }[];
+  assignments?: { id: string; name: string }[];
+
+  // Extended fields
+  employeeId?: string;
+  avatar?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  maritalStatus?: string;
+  nationality?: string;
+  personalEmail?: string;
+  alternatePhone?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  jobTitle?: string;
+  workLocation?: string;
+  manager?: string;
+  hireDate?: string;
+  probationEndDate?: string;
+  contractType?: string;
+  workType?: string;
+  skills?: string[];
+  bio?: string;
+  notes?: string;
 };
 
 // Make columns a function that accepts callbacks
 export const columns = (
-  onEdit: (employee: Employee) => void
-  // Add onView, onManageLeave later
+  onEdit: (employee: Employee) => void,
+  onView?: (employee: Employee) => void
 ): ColumnDef<Employee>[] => [
   {
     id: 'name',
@@ -44,7 +75,24 @@ export const columns = (
     cell: ({ row }) => {
       const firstName = row.original.firstName;
       const lastName = row.original.lastName;
-      return `${firstName} ${lastName}`;
+      const employee = row.original;
+
+      const handleNameClick = () => {
+        if (onView) {
+          onView(employee);
+        } else {
+          window.location.href = `/hr/employees/${employee.id}`;
+        }
+      };
+
+      return (
+        <div
+          className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+          onClick={handleNameClick}
+        >
+          {firstName} {lastName}
+        </div>
+      );
     },
   },
   {
@@ -95,15 +143,9 @@ export const columns = (
       return (
         <div className="flex flex-wrap gap-1">
           {assignments.map((assignment) => (
-            assignment.project ? (
-              <Badge key={assignment.project.id} variant="outline">
-                {assignment.project.name}
-              </Badge>
-            ) : (
-              <Badge key={`unknown-${Math.random()}`} variant="outline" className="text-muted-foreground">
-                Unknown Project
-              </Badge>
-            )
+            <Badge key={assignment.id} variant="outline">
+              {assignment.name}
+            </Badge>
           ))}
         </div>
       );
@@ -114,10 +156,14 @@ export const columns = (
     cell: ({ row }) => {
       const employee = row.original; // Get the full employee object
 
-      // Placeholder functions - These would eventually open modals/pages
+      // Handle view profile
       const handleViewProfile = (emp: Employee) => {
-        alert(`Viewing profile for: ${emp.firstName} ${emp.lastName} (ID: ${emp.id})`);
-        // TODO: Implement actual navigation or modal opening
+        if (onView) {
+          onView(emp);
+        } else {
+          // Fallback to direct navigation
+          window.location.href = `/hr/employees/${emp.id}`;
+        }
       };
 
       const handleEditDetails = (emp: Employee) => {
