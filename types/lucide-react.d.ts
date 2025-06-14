@@ -37,6 +37,10 @@ declare module 'lucide-react' {
   export const MoreHorizontal: LucideIcon;
   export const MoreVertical: LucideIcon;
   export const Calendar: LucideIcon;
+  export const CalendarIcon: LucideIcon;
+  export const ArrowLeft: LucideIcon;
+  export const Award: LucideIcon;
+  export const GraduationCap: LucideIcon;
   export const Clock: LucideIcon;
   export const Mail: LucideIcon;
   export const Phone: LucideIcon;

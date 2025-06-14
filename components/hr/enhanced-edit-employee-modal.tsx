@@ -1,44 +1,52 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/components/ui/use-toast"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar as CalendarIcon, X, Plus } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import { EmployeeIdProofs } from "./employee-id-proofs"
-import { EmployeeDocuments } from "./employee-documents"
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
-// Enhanced schema for comprehensive employee creation
-const employeeFormSchema = z.object({
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
+import { Employee } from "./columns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarIcon, X } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { EmployeeIdProofs } from "./employee-id-proofs";
+import { EmployeeDocuments } from "./employee-documents";
+
+// Enhanced schema for employee updates
+const enhancedEmployeeUpdateSchema = z.object({
   // Basic Information
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
-  position: z.string().min(1, "Position is required"),
-  department: z.string().min(1, "Department is required"),
-  startDate: z.date(),
+  firstName: z.string().min(1, "First name is required").optional(),
+  lastName: z.string().min(1, "Last name is required").optional(),
+  email: z.string().email("Invalid email address").optional(),
+  phone: z.string().optional().nullable(),
+  position: z.string().optional(),
+  department: z.string().optional(),
   salary: z.preprocess(
     (val) => (val === "" || val === null || val === undefined) ? null : parseFloat(String(val)),
     z.number().positive("Salary must be positive").optional().nullable()
   ),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
-  role: z.enum(["employee", "manager", "admin"]).default("employee"),
-  status: z.string().default("active"),
-
+  status: z.string().optional(),
+  role: z.enum(["employee", "admin", "manager"]).optional(),
+  
   // Extended Information
   employeeId: z.string().optional(),
   dateOfBirth: z.date().optional(),
@@ -47,105 +55,155 @@ const employeeFormSchema = z.object({
   nationality: z.string().optional(),
   personalEmail: z.string().email().optional().or(z.literal("")),
   alternatePhone: z.string().optional(),
-
+  
   // Emergency Contact
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
   emergencyContactRelation: z.string().optional(),
-
+  
   // Address
   addressStreet: z.string().optional(),
   addressCity: z.string().optional(),
   addressState: z.string().optional(),
   addressZipCode: z.string().optional(),
   addressCountry: z.string().optional(),
-
+  
   // Work Information
   jobTitle: z.string().optional(),
   workLocation: z.string().optional(),
   hireDate: z.date().optional(),
   contractType: z.enum(["permanent", "contract", "temporary", "intern"]).optional(),
   workType: z.enum(["full_time", "part_time", "contract", "freelance"]).optional(),
-
+  
   // Skills and Bio
   skills: z.array(z.string()).optional(),
   bio: z.string().optional(),
   notes: z.string().optional(),
-})
+});
 
-type EmployeeFormValues = z.infer<typeof employeeFormSchema>
+type EnhancedEmployeeUpdateFormData = z.infer<typeof enhancedEmployeeUpdateSchema>;
 
-export function AddEmployeeDialog() {
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [skills, setSkills] = useState<string[]>([])
-  const [newSkill, setNewSkill] = useState("")
-  const [departments, setDepartments] = useState<string[]>([])
-  const [newEmployeeId, setNewEmployeeId] = useState<string | null>(null)
-  const { toast } = useToast()
+interface Project {
+  id: string;
+  name: string;
+  status: string;
+  projectManager: {
+    employeeId: string;
+    name: string;
+  };
+  teamMembers: Array<{
+    employeeId: string;
+    name: string;
+  }>;
+}
 
-  const form = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeFormSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      position: "",
-      department: "",
-      startDate: new Date(),
-      role: "employee",
-      status: "active",
-      skills: [],
-    },
-  })
+interface EnhancedEditEmployeeModalProps {
+  employee: Employee | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
 
-  // Fetch departments from company data
+export function EnhancedEditEmployeeModal({ 
+  employee, 
+  isOpen, 
+  onClose, 
+  onSuccess 
+}: EnhancedEditEmployeeModalProps) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState("");
+
+  const form = useForm<EnhancedEmployeeUpdateFormData>({
+    resolver: zodResolver(enhancedEmployeeUpdateSchema),
+    defaultValues: {},
+  });
+
+  // Fetch projects for assignment
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchProjects = async () => {
       try {
-        // In a real implementation, you would fetch from an API
-        // For now, using common departments
-        setDepartments([
-          "Engineering",
-          "Sales",
-          "Marketing",
-          "Human Resources",
-          "Finance",
-          "Operations",
-          "Customer Support",
-          "Product",
-          "Design"
-        ])
+        const response = await fetch('/api/projects');
+        if (response.ok) {
+          const data = await response.json();
+          setProjects(data);
+        }
       } catch (error) {
-        console.error('Error fetching departments:', error)
+        console.error('Error fetching projects:', error);
       }
-    }
+    };
 
-    if (open) {
-      fetchDepartments()
+    if (isOpen) {
+      fetchProjects();
     }
-  }, [open])
+  }, [isOpen]);
+
+  // Reset form when employee data changes or modal opens/closes
+  useEffect(() => {
+    if (employee && isOpen) {
+      const formData: any = {
+        firstName: employee.firstName || '',
+        lastName: employee.lastName || '',
+        email: employee.email || '',
+        phone: employee.phone || '',
+        position: employee.position || '',
+        department: employee.department || '',
+        salary: employee.salary || null,
+        status: employee.status || '',
+        role: (employee.role === 'admin' || employee.role === 'manager' || employee.role === 'employee')
+          ? employee.role as 'admin' | 'manager' | 'employee'
+          : 'employee',
+      };
+
+      // Add extended fields if they exist
+      if (employee.employeeId) formData.employeeId = employee.employeeId;
+      if (employee.dateOfBirth) formData.dateOfBirth = new Date(employee.dateOfBirth);
+      if (employee.personalEmail) formData.personalEmail = employee.personalEmail;
+      if (employee.alternatePhone) formData.alternatePhone = employee.alternatePhone;
+      if (employee.emergencyContactName) formData.emergencyContactName = employee.emergencyContactName;
+      if (employee.emergencyContactPhone) formData.emergencyContactPhone = employee.emergencyContactPhone;
+      if (employee.emergencyContactRelation) formData.emergencyContactRelation = employee.emergencyContactRelation;
+      if (employee.jobTitle) formData.jobTitle = employee.jobTitle;
+      if (employee.workLocation) formData.workLocation = employee.workLocation;
+      if (employee.hireDate) formData.hireDate = new Date(employee.hireDate);
+      if (employee.bio) formData.bio = employee.bio;
+      if (employee.notes) formData.notes = employee.notes;
+
+      // Handle address
+      if (employee.address) {
+        if (employee.address.street) formData.addressStreet = employee.address.street;
+        if (employee.address.city) formData.addressCity = employee.address.city;
+        if (employee.address.state) formData.addressState = employee.address.state;
+        if (employee.address.zipCode) formData.addressZipCode = employee.address.zipCode;
+        if (employee.address.country) formData.addressCountry = employee.address.country;
+      }
+
+      form.reset(formData);
+      setSkills(employee.skills || []);
+    } else if (!isOpen) {
+      form.reset({});
+      setSkills([]);
+    }
+  }, [employee, isOpen, form]);
 
   const addSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-      const updatedSkills = [...skills, newSkill.trim()]
-      setSkills(updatedSkills)
-      form.setValue("skills", updatedSkills)
-      setNewSkill("")
+      setSkills([...skills, newSkill.trim()]);
+      setNewSkill("");
     }
-  }
+  };
 
   const removeSkill = (skillToRemove: string) => {
-    const updatedSkills = skills.filter(skill => skill !== skillToRemove)
-    setSkills(updatedSkills)
-    form.setValue("skills", updatedSkills)
-  }
+    setSkills(skills.filter(skill => skill !== skillToRemove));
+  };
 
-  async function onSubmit(data: EmployeeFormValues) {
+  const onSubmit = async (data: EnhancedEmployeeUpdateFormData) => {
+    if (!employee) return;
+    setIsSubmitting(true);
+    
     try {
-      setLoading(true)
-
       // Prepare the data with address object and skills
       const submitData = {
         ...data,
@@ -157,89 +215,83 @@ export function AddEmployeeDialog() {
           zipCode: data.addressZipCode,
           country: data.addressCountry,
         }
-      }
+      };
 
       // Remove address fields from root level
-      delete submitData.addressStreet
-      delete submitData.addressCity
-      delete submitData.addressState
-      delete submitData.addressZipCode
-      delete submitData.addressCountry
+      delete submitData.addressStreet;
+      delete submitData.addressCity;
+      delete submitData.addressState;
+      delete submitData.addressZipCode;
+      delete submitData.addressCountry;
 
-      const response = await fetch("/api/employees", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch(`/api/employees/${employee.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(submitData),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || "Failed to add employee")
+        let errorMsg = "Failed to update employee details.";
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || JSON.stringify(errorData);
+        } catch (parseError) {
+          errorMsg = response.statusText;
+        }
+        throw new Error(errorMsg);
       }
 
-      const employee = await response.json()
-      setNewEmployeeId(employee.id)
-
-      setOpen(false)
-      form.reset()
-      setSkills([])
-
-      toast({
-        title: "Employee Added",
-        description: `${employee.firstName} ${employee.lastName} has been added successfully.`,
-        variant: "default",
-      })
-
-      // Refresh the page to show the new employee
-      window.location.reload()
-    } catch (error) {
-      console.error("Failed to add employee:", error)
+      toast({ title: "Success", description: "Employee details updated." });
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      console.error("Failed to update employee:", error);
+      const errorMsg = error.message || "Failed to update employee details.";
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add employee. Please try again.",
+        description: errorMsg,
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Employee
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Employee</DialogTitle>
+          <DialogTitle>Edit Employee Details</DialogTitle>
           <DialogDescription>
-            Create a comprehensive employee profile with all necessary information.
+            Update {employee?.firstName} {employee?.lastName}'s profile information.
           </DialogDescription>
         </DialogHeader>
-
+        
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="contact">Contact</TabsTrigger>
               <TabsTrigger value="work">Work Info</TabsTrigger>
               <TabsTrigger value="additional">Additional</TabsTrigger>
+              <TabsTrigger value="id-proofs">ID Proofs</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
+
             {/* Basic Information Tab */}
             <TabsContent value="basic" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name *</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input id="firstName" {...form.register("firstName")} />
                   {form.formState.errors.firstName && (
                     <p className="text-red-500 text-sm">{form.formState.errors.firstName.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Label htmlFor="lastName">Last Name</Label>
                   <Input id="lastName" {...form.register("lastName")} />
                   {form.formState.errors.lastName && (
                     <p className="text-red-500 text-sm">{form.formState.errors.lastName.message}</p>
@@ -249,7 +301,7 @@ export function AddEmployeeDialog() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Work Email *</Label>
+                  <Label htmlFor="email">Work Email</Label>
                   <Input id="email" type="email" {...form.register("email")} />
                   {form.formState.errors.email && (
                     <p className="text-red-500 text-sm">{form.formState.errors.email.message}</p>
@@ -398,29 +450,12 @@ export function AddEmployeeDialog() {
             <TabsContent value="work" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="position">Position *</Label>
+                  <Label htmlFor="position">Position</Label>
                   <Input id="position" {...form.register("position")} />
-                  {form.formState.errors.position && (
-                    <p className="text-red-500 text-sm">{form.formState.errors.position.message}</p>
-                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="department">Department *</Label>
-                  <Select onValueChange={(value) => form.setValue("department", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept} value={dept.toLowerCase()}>
-                          {dept}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.department && (
-                    <p className="text-red-500 text-sm">{form.formState.errors.department.message}</p>
-                  )}
+                  <Label htmlFor="department">Department</Label>
+                  <Input id="department" {...form.register("department")} />
                 </div>
               </div>
 
@@ -444,6 +479,22 @@ export function AddEmployeeDialog() {
                   )}
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select onValueChange={(value) => form.setValue("status", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="on_leave">On Leave</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
                   <Select onValueChange={(value) => form.setValue("role", value as any)}>
                     <SelectTrigger>
@@ -455,41 +506,6 @@ export function AddEmployeeDialog() {
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !form.watch("startDate") && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch("startDate") ? (
-                          format(form.watch("startDate")!, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={form.watch("startDate")}
-                        onSelect={(date) => form.setValue("startDate", date || new Date())}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {form.formState.errors.startDate && (
-                    <p className="text-red-500 text-sm">{form.formState.errors.startDate.message}</p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="hireDate">Hire Date</Label>
@@ -552,14 +568,6 @@ export function AddEmployeeDialog() {
                   </Select>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Initial Password</Label>
-                <Input id="password" type="password" {...form.register("password")} placeholder="Set initial password for employee" />
-                {form.formState.errors.password && (
-                  <p className="text-red-500 text-sm">{form.formState.errors.password.message}</p>
-                )}
-              </div>
             </TabsContent>
 
             {/* Additional Information Tab */}
@@ -612,25 +620,47 @@ export function AddEmployeeDialog() {
                 </div>
               </div>
 
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Next Steps</h4>
-                <p className="text-sm text-blue-700">
-                  After creating the employee, you can add ID proofs and documents from their profile page.
-                </p>
+              {/* Project Assignments Display */}
+              <div className="space-y-4">
+                <h4 className="font-medium">Current Project Assignments</h4>
+                {employee?.assignments && employee.assignments.length > 0 ? (
+                  <div className="space-y-2">
+                    {employee.assignments.map((assignment) => (
+                      <div key={assignment.id} className="flex items-center justify-between p-2 border rounded">
+                        <span className="text-sm">{assignment.name}</span>
+                        <Badge variant="outline">Assigned</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No project assignments</p>
+                )}
               </div>
+            </TabsContent>
+
+            {/* ID Proofs Tab */}
+            <TabsContent value="id-proofs" className="space-y-4">
+              {employee && <EmployeeIdProofs employeeId={employee.id} />}
+            </TabsContent>
+
+            {/* Documents Tab */}
+            <TabsContent value="documents" className="space-y-4">
+              {employee && <EmployeeDocuments employeeId={employee.id} />}
             </TabsContent>
           </Tabs>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Employee"}
+            <DialogClose asChild>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

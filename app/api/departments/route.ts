@@ -13,6 +13,23 @@ const departmentSchema = z.object({
   manager: z.string().optional(),
 });
 
+function getDepartmentDescription(deptName: string): string {
+  const descriptions: Record<string, string> = {
+    'engineering': 'Software development and technical teams',
+    'sales': 'Sales and business development',
+    'marketing': 'Marketing and brand management',
+    'human resources': 'HR and people operations',
+    'hr': 'HR and people operations',
+    'finance': 'Finance and accounting',
+    'operations': 'Operations and logistics',
+    'customer support': 'Customer service and support',
+    'product': 'Product management and strategy',
+    'design': 'Design and user experience',
+  };
+
+  return descriptions[deptName.toLowerCase()] || 'Department operations';
+}
+
 export async function GET() {
   try {
     const cookieStore = cookies();
@@ -37,21 +54,64 @@ export async function GET() {
       return new NextResponse('Company not found', { status: 404 });
     }
 
-    // Get unique departments from employees
+    // Get all employees with their details
     const employees = await prisma.employee.findMany({
       where: { companyId: user.companyId },
-      select: { department: true }
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        department: true,
+        position: true,
+        status: true,
+        startDate: true
+      }
     });
 
-    // Extract unique department names
-    const departmentSet = new Set<string>();
-    employees.forEach(emp => departmentSet.add(emp.department));
+    // Group employees by department
+    const departmentGroups = employees.reduce((acc, employee) => {
+      const dept = employee.department || 'Unassigned';
+      if (!acc[dept]) {
+        acc[dept] = {
+          name: dept,
+          employeeCount: 0,
+          employees: [],
+          description: getDepartmentDescription(dept)
+        };
+      }
+      acc[dept].employeeCount++;
+      acc[dept].employees.push(employee);
+      return acc;
+    }, {} as Record<string, any>);
 
-    // Convert to array of department objects
-    const departments = Array.from(departmentSet).map(name => ({
-      name,
-      employeeCount: employees.filter(emp => emp.department === name).length
-    }));
+    // Convert to array
+    const departments = Object.values(departmentGroups);
+
+    // Add default departments with 0 employees if they don't exist
+    const defaultDepartments = [
+      { name: 'Engineering', description: 'Software development and technical teams' },
+      { name: 'Sales', description: 'Sales and business development' },
+      { name: 'Marketing', description: 'Marketing and brand management' },
+      { name: 'Human Resources', description: 'HR and people operations' },
+      { name: 'Finance', description: 'Finance and accounting' },
+      { name: 'Operations', description: 'Operations and logistics' },
+      { name: 'Customer Support', description: 'Customer service and support' },
+      { name: 'Product', description: 'Product management and strategy' },
+      { name: 'Design', description: 'Design and user experience' }
+    ];
+
+    defaultDepartments.forEach(defaultDept => {
+      const deptKey = defaultDept.name.toLowerCase();
+      if (!departmentGroups[deptKey] && !departmentGroups[defaultDept.name]) {
+        departments.push({
+          name: defaultDept.name,
+          employeeCount: 0,
+          employees: [],
+          description: defaultDept.description
+        });
+      }
+    });
 
     return NextResponse.json(departments);
   } catch (error) {

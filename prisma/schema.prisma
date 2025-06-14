@@ -50,6 +50,7 @@ model Company {
   budgets           Budget[]
   attendance        Attendance[]
   approvalWorkflows ApprovalWorkflow[]
+  idProofTypes      IdProofType[] // Company-specific ID proof types
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -110,6 +111,56 @@ model Employee {
   role       String   @default("employee") // employee, admin, manager
   permissions String[] // Array of permissions
   lastLogin  DateTime?
+
+  // Extended profile information
+  employeeId String?  // Badge/Employee ID number
+  avatar     String?  // Profile picture URL
+  dateOfBirth DateTime?
+  gender     String?  // male, female, other, prefer_not_to_say
+  maritalStatus String? // single, married, divorced, widowed
+  nationality String?
+
+  // Contact Information
+  personalEmail String?
+  alternatePhone String?
+  emergencyContactName String?
+  emergencyContactPhone String?
+  emergencyContactRelation String?
+
+  // Address Information
+  address    EmployeeAddress?
+
+  // Professional Information
+  jobTitle   String?
+  workLocation String?
+  manager    String? // Employee ID of manager
+  hireDate   DateTime? // Different from startDate for rehires
+  probationEndDate DateTime?
+  contractType String? // permanent, contract, temporary, intern
+  workType   String? // full_time, part_time, contract, freelance
+
+  // Education & Skills
+  education  EducationRecord[]
+  skills     String[] // Array of skills
+  certifications CertificationRecord[]
+
+  // Financial Information
+  bankAccountNumber String?
+  bankName         String?
+  bankRoutingNumber String?
+  taxId            String?
+
+  // Work Authorization
+  workAuthorizationStatus String? // citizen, permanent_resident, visa, other
+  visaType               String?
+  visaExpiryDate         DateTime?
+
+  // Additional Information
+  bio        String?
+  notes      String? // Internal HR notes
+  documents  EmployeeDocument[]
+  idProofs   EmployeeIdProof[] // Encrypted ID proofs
+
   company    Company  @relation(fields: [companyId], references: [id])
   companyId  String   @db.ObjectId
   sales      Sale[]
@@ -119,6 +170,7 @@ model Employee {
 
   @@index([companyId])
   @@index([role])
+  @@index([employeeId])
 }
 
 model Attendance {
@@ -217,6 +269,64 @@ type ProjectClient {
   name       String
   company    String?
   email      String?
+}
+
+// Employee embedded types
+type EmployeeAddress {
+  street     String?
+  city       String?
+  state      String?
+  zipCode    String?
+  country    String?
+}
+
+type EducationRecord {
+  id          String
+  institution String
+  degree      String
+  fieldOfStudy String?
+  startDate   DateTime?
+  endDate     DateTime?
+  gpa         String?
+  description String?
+}
+
+type CertificationRecord {
+  id           String
+  name         String
+  issuingOrg   String
+  issueDate    DateTime?
+  expiryDate   DateTime?
+  credentialId String?
+  description  String?
+}
+
+type EmployeeDocument {
+  id          String
+  name        String
+  type        String // contract, certificate, id_copy, resume, etc.
+  url         String
+  fileSize    Int? // File size in bytes
+  mimeType    String? // MIME type of the file
+  uploadDate  DateTime
+  uploadedBy  String? // Who uploaded the document
+  description String?
+  isPublic    Boolean // Whether employee can view this document
+}
+
+type EmployeeIdProof {
+  id           String
+  name         String // e.g., "Social Security Number", "Aadhar Card", "Passport"
+  value        String // Encrypted value
+  issuedBy     String? // Issuing authority
+  issueDate    DateTime?
+  expiryDate   DateTime?
+  verified     Boolean
+  verifiedBy   String? // Who verified it
+  verifiedAt   DateTime?
+  notes        String?
+  createdAt    DateTime
+  updatedAt    DateTime
 }
 
 model Task {
@@ -480,4 +590,20 @@ model WorkflowStep {
   @@index([workflowId])
   @@index([approverId])
   @@index([status])
+}
+
+model IdProofType {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   // e.g., "Social Security Number", "Aadhar Card", "Passport"
+  description String?  // Description of the ID proof type
+  isRequired  Boolean  @default(false) // Whether this ID proof is required for all employees
+  hasExpiry   Boolean  @default(false) // Whether this ID proof type has an expiry date
+  format      String?  // Expected format (regex pattern)
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, companyId])
+  @@index([companyId])
 }
