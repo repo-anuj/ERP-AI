@@ -6,11 +6,61 @@ import { useToast } from "@/components/ui/use-toast"
 interface Company {
   id: string
   name: string
+  legalName: string | null
   address: string | null
+  city: string | null
+  state: string | null
+  zipCode: string | null
+  country: string | null
   phone: string | null
   email: string | null
   website: string | null
   logo: string | null
+  companyStamp: string | null
+  tagline: string | null
+
+  // Business Configuration
+  businessType: string | null
+  businessModel: string | null
+  companyStage: string | null
+  primaryGoal: string | null
+  industry: string | null
+
+  // Brand Colors
+  brandColors: {
+    primary: string
+    secondary: string
+    accent: string
+  } | null
+
+  // Financial & Legal
+  defaultCurrency: string
+  taxId: string | null
+  businessRegistrationNumber: string | null
+  vatNumber: string | null
+  panNumber: string | null
+  einNumber: string | null
+  gstNumber: string | null
+  fiscalYearStart: string | null
+  accountingMethod: string | null
+
+  // Operations
+  timezone: string | null
+  language: string | null
+  operatingHours: any | null
+  workingDays: string[] | null
+
+  // Payment Methods
+  paymentMethods: any | null
+  bankAccounts: any | null
+
+  // Dashboard & UI configuration
+  dashboardConfig: any | null
+  featureToggles: any | null
+
+  // Onboarding
+  onboardingCompleted: boolean
+  onboardingStep: number
 }
 
 interface CompanyContextType {

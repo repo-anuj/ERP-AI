@@ -9,11 +9,53 @@ export const runtime = 'nodejs';
 
 const updateCompanySchema = z.object({
   name: z.string().min(1).optional(),
-  address: z.string().min(1).optional(),
-  phone: z.string().min(1).optional(),
+  legalName: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().optional(),
+  phone: z.string().optional(),
   email: z.string().email().optional(),
-  website: z.string().url().optional(),
-  logo: z.string().url().optional(),
+  website: z.string().url().optional().or(z.literal("")),
+  logo: z.string().optional(),
+  companyStamp: z.string().optional(),
+  tagline: z.string().optional(),
+
+  // Business Configuration
+  businessType: z.string().optional(),
+  businessModel: z.string().optional(),
+  companyStage: z.string().optional(),
+  primaryGoal: z.string().optional(),
+  industry: z.string().optional(),
+
+  // Brand Colors
+  brandColors: z.object({
+    primary: z.string().optional(),
+    secondary: z.string().optional(),
+    accent: z.string().optional()
+  }).optional(),
+
+  // Financial & Legal
+  defaultCurrency: z.string().optional(),
+  taxId: z.string().optional(),
+  businessRegistrationNumber: z.string().optional(),
+  vatNumber: z.string().optional(),
+  panNumber: z.string().optional(),
+  einNumber: z.string().optional(),
+  gstNumber: z.string().optional(),
+  fiscalYearStart: z.string().optional(),
+  accountingMethod: z.string().optional(),
+
+  // Operations
+  timezone: z.string().optional(),
+  language: z.string().optional(),
+  operatingHours: z.any().optional(),
+  workingDays: z.array(z.string()).optional(),
+
+  // Payment Methods
+  paymentMethods: z.any().optional(),
+  bankAccounts: z.any().optional(),
 });
 
 export async function GET() {

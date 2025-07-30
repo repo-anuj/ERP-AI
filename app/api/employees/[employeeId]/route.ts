@@ -237,13 +237,43 @@ export async function PATCH(
     }
 
     // Handle password hashing if provided
-    let dataToUpdate = { ...validatedData };
+    let dataToUpdate: any = { ...validatedData };
 
     if (dataToUpdate.password) {
       dataToUpdate.password = await hashPassword(dataToUpdate.password);
     } else {
       // Remove password field if not provided to avoid overwriting with null
       delete dataToUpdate.password;
+    }
+
+    // Handle department - find or create department if provided
+    if (dataToUpdate.department) {
+      const departmentName = dataToUpdate.department as string;
+
+      // First try to find existing department
+      let department = await prisma.department.findFirst({
+        where: {
+          name: {
+            equals: departmentName,
+            mode: 'insensitive'
+          },
+          companyId: user.companyId
+        }
+      });
+
+      // If department doesn't exist, create it
+      if (!department) {
+        department = await prisma.department.create({
+          data: {
+            name: departmentName,
+            companyId: user.companyId
+          }
+        });
+      }
+
+      // Remove the string department and set departmentId instead
+      delete dataToUpdate.department;
+      dataToUpdate.departmentId = department.id;
     }
 
     // Update the employee in the database

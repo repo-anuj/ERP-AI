@@ -38,6 +38,14 @@ export async function GET() {
       // Get employee data
       const employee = await prisma.employee.findUnique({
         where: { id: payload.id },
+        include: {
+          department: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       });
 
       if (!employee) {
@@ -51,7 +59,7 @@ export async function GET() {
 
       // Get combined permissions based on role and department
       const role = employee.role || 'employee';
-      const department = employee.department || '';
+      const department = employee.department?.name || '';
 
       // Special handling for managers and admins - they can access everything
       // For regular employees, access is based on their department

@@ -25,11 +25,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { Employee } from "./columns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, X } from "lucide-react";
+import { Calendar as CalendarIcon, X, Upload, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmployeeIdProofs } from "./employee-id-proofs";
 import { EmployeeDocuments } from "./employee-documents";
+import { EmployeeEducation } from "./employee-education";
+import { EmployeeCertifications } from "./employee-certifications";
 
 // Enhanced schema for employee updates
 const enhancedEmployeeUpdateSchema = z.object({
@@ -115,41 +118,64 @@ export function EnhancedEditEmployeeModal({
   const [projects, setProjects] = useState<Project[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("basic");
+  const [departments, setDepartments] = useState<string[]>([]);
 
   const form = useForm<EnhancedEmployeeUpdateFormData>({
     resolver: zodResolver(enhancedEmployeeUpdateSchema),
     defaultValues: {},
   });
 
-  // Fetch projects for assignment
+  // Fetch projects and departments for assignment
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/projects');
-        if (response.ok) {
-          const data = await response.json();
-          setProjects(data);
+        // Fetch projects
+        const projectsResponse = await fetch('/api/projects');
+        if (projectsResponse.ok) {
+          const projectsData = await projectsResponse.json();
+          setProjects(projectsData);
+        }
+
+        // Fetch departments
+        const departmentsResponse = await fetch('/api/departments?type=dropdown');
+        if (departmentsResponse.ok) {
+          const departmentsData = await departmentsResponse.json();
+          setDepartments(departmentsData);
+        } else {
+          // Fallback departments
+          setDepartments([
+            "Engineering", "Sales", "Marketing", "Human Resources",
+            "Finance", "Operations", "Customer Support", "Product", "Design"
+          ]);
         }
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        console.error('Error fetching data:', error);
+        // Fallback departments
+        setDepartments([
+          "Engineering", "Sales", "Marketing", "Human Resources",
+          "Finance", "Operations", "Customer Support", "Product", "Design"
+        ]);
       }
     };
 
     if (isOpen) {
-      fetchProjects();
+      fetchData();
     }
   }, [isOpen]);
 
-  // Reset form when employee data changes or modal opens/closes
+  // Reset form and tab when employee data changes or modal opens/closes
   useEffect(() => {
     if (employee && isOpen) {
+      setActiveTab("basic"); // Reset to first tab
       const formData: any = {
         firstName: employee.firstName || '',
         lastName: employee.lastName || '',
         email: employee.email || '',
         phone: employee.phone || '',
         position: employee.position || '',
-        department: employee.department || '',
+        department: employee.department?.name || '',
         salary: employee.salary || null,
         status: employee.status || '',
         role: (employee.role === 'admin' || employee.role === 'manager' || employee.role === 'employee')
@@ -182,9 +208,11 @@ export function EnhancedEditEmployeeModal({
 
       form.reset(formData);
       setSkills(employee.skills || []);
+      setAvatarPreview(employee.avatar || null);
     } else if (!isOpen) {
       form.reset({});
       setSkills([]);
+      setAvatarPreview(null);
     }
   }, [employee, isOpen, form]);
 
@@ -199,15 +227,56 @@ export function EnhancedEditEmployeeModal({
     setSkills(skills.filter(skill => skill !== skillToRemove));
   };
 
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Error",
+          description: "Please select a valid image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "Image size should be less than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setAvatarPreview(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const getInitials = () => {
+    if (!employee) return "?";
+    const first = employee.firstName?.[0] || "";
+    const last = employee.lastName?.[0] || "";
+    return (first + last).toUpperCase() || "?";
+  };
+
   const onSubmit = async (data: EnhancedEmployeeUpdateFormData) => {
     if (!employee) return;
     setIsSubmitting(true);
     
     try {
-      // Prepare the data with address object and skills
+      // Prepare the data with address object, skills, and avatar
       const submitData = {
         ...data,
         skills,
+        avatar: avatarPreview || employee.avatar, // Use new avatar or keep existing
         address: {
           street: data.addressStreet,
           city: data.addressCity,
@@ -270,18 +339,62 @@ export function EnhancedEditEmployeeModal({
         </DialogHeader>
         
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="contact">Contact</TabsTrigger>
               <TabsTrigger value="work">Work Info</TabsTrigger>
               <TabsTrigger value="additional">Additional</TabsTrigger>
+              <TabsTrigger value="education">Education</TabsTrigger>
+              <TabsTrigger value="certifications">Certifications</TabsTrigger>
               <TabsTrigger value="id-proofs">ID Proofs</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
 
             {/* Basic Information Tab */}
             <TabsContent value="basic" className="space-y-4">
+              {/* Profile Picture Section */}
+              <div className="flex items-center space-x-6 p-4 bg-muted/30 rounded-lg">
+                <div className="flex flex-col items-center space-y-2">
+                  <Avatar className="h-20 w-20">
+                    {avatarPreview ? (
+                      <AvatarImage src={avatarPreview} alt="Profile Preview" />
+                    ) : employee?.avatar ? (
+                      <AvatarImage src={employee.avatar} alt="Current Profile" />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                        {getInitials()}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex flex-col items-center space-y-2">
+                    <Label htmlFor="avatar-upload" className="cursor-pointer">
+                      <div className="flex items-center space-x-2 px-3 py-1 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                        <Upload className="h-4 w-4" />
+                        <span className="text-sm">Upload Photo</span>
+                      </div>
+                    </Label>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarUpload}
+                    />
+                    <p className="text-xs text-muted-foreground text-center">
+                      JPG, PNG up to 5MB
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-lg">Profile Picture</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Upload a professional photo that will be displayed throughout the system.
+                    This helps colleagues identify team members easily.
+                  </p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
@@ -320,39 +433,27 @@ export function EnhancedEditEmployeeModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !form.watch("dateOfBirth") && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch("dateOfBirth") ? (
-                          format(form.watch("dateOfBirth")!, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={form.watch("dateOfBirth")}
-                        onSelect={(date) => form.setValue("dateOfBirth", date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
+                    {...form.register("dateOfBirth", {
+                      setValueAs: (value) => value ? new Date(value) : undefined
+                    })}
+                    defaultValue={form.watch("dateOfBirth") ? format(form.watch("dateOfBirth")!, "yyyy-MM-dd") : ""}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
-                  <Select onValueChange={(value) => form.setValue("gender", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("gender", value as any)
+                      form.trigger("gender")
+                    }}
+                    value={form.watch("gender")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
@@ -366,7 +467,13 @@ export function EnhancedEditEmployeeModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="maritalStatus">Marital Status</Label>
-                  <Select onValueChange={(value) => form.setValue("maritalStatus", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("maritalStatus", value as any)
+                      form.trigger("maritalStatus")
+                    }}
+                    value={form.watch("maritalStatus")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -455,7 +562,24 @@ export function EnhancedEditEmployeeModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="department">Department</Label>
-                  <Input id="department" {...form.register("department")} />
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("department", value)
+                      form.trigger("department")
+                    }}
+                    value={form.watch("department")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept} value={dept}>
+                          {dept}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -480,7 +604,13 @@ export function EnhancedEditEmployeeModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
-                  <Select onValueChange={(value) => form.setValue("status", value)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("status", value)
+                      form.trigger("status")
+                    }}
+                    value={form.watch("status")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -496,7 +626,13 @@ export function EnhancedEditEmployeeModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select onValueChange={(value) => form.setValue("role", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("role", value as any)
+                      form.trigger("role")
+                    }}
+                    value={form.watch("role")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
@@ -509,39 +645,27 @@ export function EnhancedEditEmployeeModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="hireDate">Hire Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !form.watch("hireDate") && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch("hireDate") ? (
-                          format(form.watch("hireDate")!, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={form.watch("hireDate")}
-                        onSelect={(date) => form.setValue("hireDate", date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input
+                    id="hireDate"
+                    type="date"
+                    {...form.register("hireDate", {
+                      setValueAs: (value) => value ? new Date(value) : undefined
+                    })}
+                    defaultValue={form.watch("hireDate") ? format(form.watch("hireDate")!, "yyyy-MM-dd") : ""}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="contractType">Contract Type</Label>
-                  <Select onValueChange={(value) => form.setValue("contractType", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("contractType", value as any)
+                      form.trigger("contractType")
+                    }}
+                    value={form.watch("contractType")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -555,7 +679,13 @@ export function EnhancedEditEmployeeModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="workType">Work Type</Label>
-                  <Select onValueChange={(value) => form.setValue("workType", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("workType", value as any)
+                      form.trigger("workType")
+                    }}
+                    value={form.watch("workType")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -636,6 +766,16 @@ export function EnhancedEditEmployeeModal({
                   <p className="text-sm text-muted-foreground">No project assignments</p>
                 )}
               </div>
+            </TabsContent>
+
+            {/* Education Tab */}
+            <TabsContent value="education" className="space-y-4">
+              {employee && <EmployeeEducation employeeId={employee.id} />}
+            </TabsContent>
+
+            {/* Certifications Tab */}
+            <TabsContent value="certifications" className="space-y-4">
+              {employee && <EmployeeCertifications employeeId={employee.id} />}
             </TabsContent>
 
             {/* ID Proofs Tab */}

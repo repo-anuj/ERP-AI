@@ -42,7 +42,7 @@ export default function NotificationsPage() {
 
   const handleViewDetails = (notification: any) => {
     if (notification.link) {
-      router.push(notification.link);
+      window.location.href = notification.link;
     }
   };
 

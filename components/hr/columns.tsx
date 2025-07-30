@@ -3,6 +3,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Eye } from 'lucide-react';
+import { MoreHorizontal, Eye, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export type Employee = {
@@ -20,7 +21,10 @@ export type Employee = {
   email: string;
   phone?: string;
   position: string;
-  department: string;
+  department?: {
+    id: string;
+    name: string;
+  };
   startDate: string;
   salary?: number;
   status: string;
@@ -71,11 +75,12 @@ export const columns = (
 ): ColumnDef<Employee>[] => [
   {
     id: 'name',
-    header: 'Name',
+    header: 'Employee',
     cell: ({ row }) => {
       const firstName = row.original.firstName;
       const lastName = row.original.lastName;
       const employee = row.original;
+      const avatar = row.original.avatar;
 
       const handleNameClick = () => {
         if (onView) {
@@ -85,12 +90,32 @@ export const columns = (
         }
       };
 
+      const getInitials = () => {
+        return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+      };
+
       return (
         <div
-          className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+          className="flex items-center space-x-3 cursor-pointer hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
           onClick={handleNameClick}
         >
-          {firstName} {lastName}
+          <Avatar className="h-10 w-10">
+            {avatar ? (
+              <AvatarImage src={avatar} alt={`${firstName} ${lastName}`} />
+            ) : (
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {getInitials() || <User className="h-4 w-4" />}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="font-medium text-foreground hover:text-primary transition-colors">
+              {firstName} {lastName}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {employee.position}
+            </span>
+          </div>
         </div>
       );
     },
@@ -98,17 +123,31 @@ export const columns = (
   {
     accessorKey: 'email',
     header: 'Email',
-  },
-  {
-    accessorKey: 'position',
-    header: 'Position',
+    cell: ({ row }) => {
+      const email = row.getValue('email') as string;
+      return (
+        <span className="text-sm text-muted-foreground">
+          {email}
+        </span>
+      );
+    },
   },
   {
     accessorKey: 'department',
     header: 'Department',
     cell: ({ row }) => {
-      const department = row.getValue('department') as string;
-      return department.charAt(0).toUpperCase() + department.slice(1);
+      const employee = row.original;
+      const departmentName = employee.department?.name;
+
+      if (!departmentName) {
+        return <span className="text-xs text-muted-foreground">Not assigned</span>;
+      }
+
+      return (
+        <span className="text-sm">
+          {departmentName}
+        </span>
+      );
     },
   },
   {
@@ -123,7 +162,7 @@ export const columns = (
     accessorKey: 'status',
     header: 'Status',
     cell: ({ row }) => {
-      const status = row.getValue('status') as string;
+      const status = row.getValue('status') as string || 'active';
       return (
         <Badge variant={status === 'active' ? 'default' : 'secondary'}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -171,8 +210,7 @@ export const columns = (
       };
 
       const handleManageLeave = (emp: Employee) => {
-        alert(`Managing leave for: ${emp.firstName} ${emp.lastName} (ID: ${emp.id})`);
-        // TODO: Implement actual leave management interface
+        window.location.href = `/hr/employees/${emp.id}/leave`;
       };
 
       return (

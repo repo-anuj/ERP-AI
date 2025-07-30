@@ -15,7 +15,7 @@ interface RecentEmployeesProps {
     lastName: string;
     email: string;
     position: string;
-    department: string;
+    department: string | { id: string; name: string } | null;
     createdAt: string | Date;
   }>;
 }
@@ -68,7 +68,7 @@ export function RecentEmployees({ data }: RecentEmployeesProps) {
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground truncate">
-                {employee.position} • {employee.department}
+                {employee.position} • {typeof employee.department === 'string' ? employee.department : employee.department?.name || 'No Department'}
               </p>
             </div>
           </div>

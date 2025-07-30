@@ -82,15 +82,21 @@ async function requestTaskApproval(req: Request) {
     });
 
     // Create a notification for the project manager
-    await createTaskApprovalRequest(
-      task.companyId,
-      taskId,
-      task.name,
-      payload.id,
-      `${payload.firstName} ${payload.lastName}`,
-      task.project.projectManager.employeeId,
-      task.project.name
-    );
+    try {
+      await createTaskApprovalRequest(
+        task.companyId,
+        taskId,
+        task.name,
+        payload.id,
+        `${payload.firstName} ${payload.lastName}`,
+        task.project.projectManager.employeeId,
+        task.project.name
+      );
+      console.log(`[REQUEST_TASK_APPROVAL] Notification sent to manager ${task.project.projectManager.employeeId}`);
+    } catch (notificationError) {
+      console.error('[REQUEST_TASK_APPROVAL] Failed to create notification:', notificationError);
+      // Don't fail the entire request if notification fails
+    }
 
     return NextResponse.json({
       message: "Task approval requested successfully",
@@ -170,17 +176,23 @@ async function respondToTaskApproval(req: Request) {
     });
 
     // Create a notification for the task assignee
-    await createTaskApprovalResponse(
-      task.companyId,
-      taskId,
-      task.name,
-      payload.id,
-      isEmployee ? `${payload.firstName} ${payload.lastName}` : 'Admin',
-      task.assigneeId,
-      task.project.name,
-      approved,
-      comments
-    );
+    try {
+      await createTaskApprovalResponse(
+        task.companyId,
+        taskId,
+        task.name,
+        payload.id,
+        isEmployee ? `${payload.firstName} ${payload.lastName}` : 'Admin',
+        task.assigneeId,
+        task.project.name,
+        approved,
+        comments
+      );
+      console.log(`[RESPOND_TO_TASK_APPROVAL] Notification sent to assignee ${task.assigneeId}`);
+    } catch (notificationError) {
+      console.error('[RESPOND_TO_TASK_APPROVAL] Failed to create notification:', notificationError);
+      // Don't fail the entire request if notification fails
+    }
 
     return NextResponse.json({
       message: `Task ${approved ? 'approved' : 'rejected'} successfully`,
@@ -192,8 +204,8 @@ async function respondToTaskApproval(req: Request) {
   }
 }
 
-// Get tasks awaiting approval
-async function getTasksAwaitingApproval(_req: Request) {
+// Get tasks awaiting approval or recently approved
+async function getTasksAwaitingApproval(req: Request) {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
@@ -209,31 +221,51 @@ async function getTasksAwaitingApproval(_req: Request) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    // Get the company ID
+    // Parse URL to check for status parameter
+    const url = new URL(req.url);
+    const status = url.searchParams.get('status');
+    const isRecentQuery = status === 'recent';
+
+    console.log("[GET_TASKS_APPROVAL] Request from:", payload.email, "Status:", status);
+
+    // Get the company ID and employee information
     let companyId;
+    let currentEmployee = null;
 
-    if (isEmployee) {
-      const employee = await prisma.employee.findUnique({
+    // First try to get user by email (works for both admin users and employees)
+    const user = await prisma.user.findUnique({
+      where: { email: payload.email },
+      include: { company: true }
+    });
+
+    if (user?.company) {
+      companyId = user.company.id;
+
+      // Try to find employee record for this user
+      currentEmployee = await prisma.employee.findFirst({
+        where: {
+          email: payload.email,
+          companyId: user.company.id
+        }
+      });
+
+      console.log("[GET_TASKS_APPROVAL] User found:", user.email, "Employee:", currentEmployee?.id);
+    } else if (isEmployee && payload.id) {
+      // Fallback: try to find employee by ID if user lookup failed
+      currentEmployee = await prisma.employee.findUnique({
         where: { id: payload.id },
-        select: { companyId: true },
+        select: { companyId: true, id: true, email: true, firstName: true, lastName: true },
       });
 
-      if (!employee) {
-        return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      if (currentEmployee) {
+        companyId = currentEmployee.companyId;
+        console.log("[GET_TASKS_APPROVAL] Employee found by ID:", currentEmployee.id);
       }
+    }
 
-      companyId = employee.companyId;
-    } else {
-      const user = await prisma.user.findUnique({
-        where: { email: payload.email },
-        select: { companyId: true },
-      });
-
-      if (!user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-
-      companyId = user.companyId;
+    if (!companyId) {
+      console.error("[GET_TASKS_APPROVAL] No company found for user:", payload.email);
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
     // Get tasks awaiting approval
@@ -241,7 +273,9 @@ async function getTasksAwaitingApproval(_req: Request) {
     // If user is admin, get all tasks awaiting approval
     let tasks;
 
-    if (isEmployee) {
+    if (currentEmployee) {
+      console.log("[GET_TASKS_APPROVAL] Employee requesting tasks, ID:", currentEmployee.id);
+
       // Get all projects for the company
       const allProjects = await prisma.project.findMany({
         where: {
@@ -249,26 +283,41 @@ async function getTasksAwaitingApproval(_req: Request) {
         },
         select: {
           id: true,
+          name: true,
           projectManager: true,
         },
       });
 
+      console.log("[GET_TASKS_APPROVAL] Total projects found:", allProjects.length);
+
       // Filter to find projects where the employee is the manager
       const managedProjects = allProjects.filter(
-        project => project.projectManager.employeeId === payload.id
+        project => project.projectManager.employeeId === currentEmployee.id
       );
+
+      console.log("[GET_TASKS_APPROVAL] Managed projects:", managedProjects.length);
 
       const managedProjectIds = managedProjects.map(project => project.id);
 
-      // Get tasks awaiting approval from managed projects
-      tasks = await prisma.task.findMany({
-        where: {
-          companyId: companyId || undefined,
-          projectId: {
-            in: managedProjectIds,
-          },
-          status: 'awaiting_approval',
+      // Get tasks based on status parameter
+      const whereCondition = {
+        companyId: companyId || undefined,
+        projectId: {
+          in: managedProjectIds,
         },
+        ...(isRecentQuery
+          ? {
+              OR: [
+                { status: 'completed', approvalStatus: 'approved' },
+                { status: 'in_progress', approvalStatus: 'rejected' }
+              ]
+            }
+          : { status: 'awaiting_approval' }
+        )
+      };
+
+      tasks = await prisma.task.findMany({
+        where: whereCondition,
         select: {
           id: true,
           name: true,
@@ -281,20 +330,48 @@ async function getTasksAwaitingApproval(_req: Request) {
           completionPercentage: true,
           projectId: true,
           updatedAt: true,
+          approvalStatus: true,
+          approvedAt: true,
+          approvedById: true,
+          approvedByName: true,
+          rejectionReason: true,
+          createdAt: true,
         },
         orderBy: {
           updatedAt: 'desc',
         },
+        ...(isRecentQuery && { take: 20 }) // Limit recent tasks to 20
       });
 
-      // Project names will be handled later
+      console.log("[GET_TASKS_APPROVAL] Tasks awaiting approval for manager:", tasks.length);
+
+      // Add project names to tasks
+      tasks = tasks.map(task => {
+        const project = allProjects.find(p => p.id === task.projectId);
+        return {
+          ...task,
+          projectName: project?.name || 'Unknown Project'
+        };
+      });
     } else {
-      // Admin or regular user - get all tasks awaiting approval
+      console.log("[GET_TASKS_APPROVAL] Admin requesting all tasks");
+
+      // Admin or regular user - get tasks based on status parameter
+      const whereCondition = {
+        companyId: companyId || undefined,
+        ...(isRecentQuery
+          ? {
+              OR: [
+                { status: 'completed', approvalStatus: 'approved' },
+                { status: 'in_progress', approvalStatus: 'rejected' }
+              ]
+            }
+          : { status: 'awaiting_approval' }
+        )
+      };
+
       tasks = await prisma.task.findMany({
-        where: {
-          companyId: companyId || undefined,
-          status: 'awaiting_approval',
-        },
+        where: whereCondition,
         select: {
           id: true,
           name: true,
@@ -307,11 +384,20 @@ async function getTasksAwaitingApproval(_req: Request) {
           completionPercentage: true,
           projectId: true,
           updatedAt: true,
+          approvalStatus: true,
+          approvedAt: true,
+          approvedById: true,
+          approvedByName: true,
+          rejectionReason: true,
+          createdAt: true,
         },
         orderBy: {
           updatedAt: 'desc',
         },
+        ...(isRecentQuery && { take: 20 }) // Limit recent tasks to 20
       });
+
+      console.log(`[GET_TASKS_APPROVAL] All tasks ${isRecentQuery ? 'recently processed' : 'awaiting approval'}:`, tasks.length);
 
       // Get project names for the tasks
       const projectIds = tasks.map(task => task.projectId).filter(id => id !== null);
@@ -327,34 +413,17 @@ async function getTasksAwaitingApproval(_req: Request) {
         },
       });
 
-      // Project names will be handled later
+      // Add project names to tasks
+      tasks = tasks.map(task => {
+        const project = projects.find(p => p.id === task.projectId);
+        return {
+          ...task,
+          projectName: project?.name || 'Unknown Project'
+        };
+      });
     }
 
-    // Combine both project name maps
-    const projectNameMap = new Map();
-
-    // Get all project IDs from tasks
-    const allProjectIds = tasks.map(task => task.projectId);
-
-    // Get all projects for these IDs
-    const allProjects = await prisma.project.findMany({
-      where: {
-        id: {
-          in: allProjectIds,
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-
-    // Create a map of project IDs to names
-    allProjects.forEach(project => {
-      projectNameMap.set(project.id, project.name);
-    });
-
-    // Format the tasks for the response
+    // Format the tasks for the response (project names already added above)
     const formattedTasks = tasks.map(task => ({
       id: task.id,
       name: task.name,
@@ -362,14 +431,26 @@ async function getTasksAwaitingApproval(_req: Request) {
       status: task.status,
       priority: task.priority,
       assigneeName: task.assigneeName,
-      projectName: projectNameMap.get(task.projectId) || 'Unknown Project',
+      assigneeId: task.assigneeId,
+      projectName: task.projectName || 'Unknown Project',
       completionPercentage: task.completionPercentage || 0,
       dueDate: task.dueDate,
-      requestedAt: task.updatedAt,
+      requestedAt: task.createdAt || task.updatedAt, // Use createdAt as issue date
+      // Additional fields for recently approved/rejected tasks
+      ...(isRecentQuery && {
+        approvalStatus: task.approvalStatus,
+        approvedAt: task.approvedAt,
+        approvedBy: task.approvedByName || 'Unknown',
+        approvedById: task.approvedById,
+        rejectionReason: task.rejectionReason,
+      })
     }));
+
+    console.log(`[GET_TASKS_APPROVAL] Returning formatted tasks (${isRecentQuery ? 'recent' : 'pending'}):`, formattedTasks.length);
 
     return NextResponse.json({
       tasks: formattedTasks,
+      type: isRecentQuery ? 'recent' : 'pending'
     });
   } catch (error) {
     console.error("[GET_TASKS_AWAITING_APPROVAL]", error);
@@ -377,7 +458,7 @@ async function getTasksAwaitingApproval(_req: Request) {
   }
 }
 
-// Export the handlers with permission checks
-export const GET = withPermission(getTasksAwaitingApproval, PERMISSIONS.APPROVE_TASKS);
+// Export the handlers - removing permission wrapper for GET to allow broader access
+export const GET = getTasksAwaitingApproval;
 export const POST = requestTaskApproval;
 export const PATCH = withPermission(respondToTaskApproval, PERMISSIONS.APPROVE_TASKS);

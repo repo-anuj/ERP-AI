@@ -24,6 +24,9 @@ async function getEmployeePermissions(req: NextRequest, { params }: { params: { 
     // Get the employee
     const employee = await prisma.employee.findUnique({
       where: { id: employeeId },
+      include: {
+        department: true
+      }
     });
 
     if (!employee) {
@@ -39,7 +42,7 @@ async function getEmployeePermissions(req: NextRequest, { params }: { params: { 
 
     // Otherwise, return permissions based on role and department
     const role = employee.role || 'employee';
-    const department = employee.department || '';
+    const department = employee.department?.name || '';
     const permissions = getCombinedPermissions(role, department);
 
     return NextResponse.json({

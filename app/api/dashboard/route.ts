@@ -104,7 +104,7 @@ export async function GET() {
     // Count employees by department
     const departmentCounts: Record<string, number> = {};
     employees.forEach(emp => {
-      const dept = emp.department;
+      const dept = emp.department?.name || 'Unassigned';
       departmentCounts[dept] = (departmentCounts[dept] || 0) + 1;
     });
 
@@ -146,7 +146,8 @@ export async function GET() {
           where: {
             status: { not: 'returned' }
           }
-        }
+        },
+        department: true
       },
       take: 5
     });
@@ -158,7 +159,7 @@ export async function GET() {
           id: employee.id,
           name: `${employee.firstName} ${employee.lastName}`,
           position: employee.position,
-          department: employee.department,
+          department: employee.department?.name || 'Unassigned',
           totalSales,
           salesCount: employee.sales.length
         };

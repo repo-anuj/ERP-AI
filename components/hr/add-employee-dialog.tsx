@@ -15,7 +15,8 @@ import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar as CalendarIcon, X, Plus } from "lucide-react"
+import { Calendar as CalendarIcon, X, Plus, Upload, User, ChevronLeft, ChevronRight } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { EmployeeIdProofs } from "./employee-id-proofs"
@@ -71,6 +72,9 @@ const employeeFormSchema = z.object({
   skills: z.array(z.string()).optional(),
   bio: z.string().optional(),
   notes: z.string().optional(),
+
+  // Profile Picture
+  avatar: z.string().optional(),
 })
 
 type EmployeeFormValues = z.infer<typeof employeeFormSchema>
@@ -82,6 +86,7 @@ export function AddEmployeeDialog() {
   const [newSkill, setNewSkill] = useState("")
   const [departments, setDepartments] = useState<string[]>([])
   const [newEmployeeId, setNewEmployeeId] = useState<string | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const { toast } = useToast()
 
   const form = useForm<EmployeeFormValues>({
@@ -104,8 +109,28 @@ export function AddEmployeeDialog() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        // In a real implementation, you would fetch from an API
-        // For now, using common departments
+        const response = await fetch('/api/departments?type=dropdown')
+        if (response.ok) {
+          const departmentList = await response.json()
+          setDepartments(departmentList)
+        } else {
+          console.error('Failed to fetch departments:', response.statusText)
+          // Fallback to default departments
+          setDepartments([
+            "Engineering",
+            "Sales",
+            "Marketing",
+            "Human Resources",
+            "Finance",
+            "Operations",
+            "Customer Support",
+            "Product",
+            "Design"
+          ])
+        }
+      } catch (error) {
+        console.error('Error fetching departments:', error)
+        // Fallback to default departments
         setDepartments([
           "Engineering",
           "Sales",
@@ -117,8 +142,6 @@ export function AddEmployeeDialog() {
           "Product",
           "Design"
         ])
-      } catch (error) {
-        console.error('Error fetching departments:', error)
       }
     }
 
@@ -142,6 +165,48 @@ export function AddEmployeeDialog() {
     form.setValue("skills", updatedSkills)
   }
 
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Error",
+          description: "Please select a valid image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "Image size should be less than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setAvatarPreview(result);
+        form.setValue("avatar", result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const getInitials = () => {
+    const firstName = form.watch("firstName") || "";
+    const lastName = form.watch("lastName") || "";
+    const firstInitial = firstName.charAt(0) || "";
+    const lastInitial = lastName.charAt(0) || "";
+    return (firstInitial + lastInitial).toUpperCase() || "?";
+  };
+
   async function onSubmit(data: EmployeeFormValues) {
     try {
       setLoading(true)
@@ -150,13 +215,18 @@ export function AddEmployeeDialog() {
       const submitData = {
         ...data,
         skills,
-        address: {
-          street: data.addressStreet,
-          city: data.addressCity,
-          state: data.addressState,
-          zipCode: data.addressZipCode,
-          country: data.addressCountry,
-        }
+        // Only include address if at least one field is filled
+        address: (data.addressStreet || data.addressCity || data.addressState || data.addressZipCode || data.addressCountry) ? {
+          street: data.addressStreet || null,
+          city: data.addressCity || null,
+          state: data.addressState || null,
+          zipCode: data.addressZipCode || null,
+          country: data.addressCountry || null,
+        } : null,
+        // Convert startDate to ISO string
+        startDate: data.startDate.toISOString(),
+        // Ensure salary is a number or null
+        salary: data.salary ? Number(data.salary) : null,
       }
 
       // Remove address fields from root level
@@ -166,6 +236,8 @@ export function AddEmployeeDialog() {
       delete submitData.addressZipCode
       delete submitData.addressCountry
 
+      console.log("[ADD_EMPLOYEE] Submitting data:", submitData);
+
       const response = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -174,15 +246,29 @@ export function AddEmployeeDialog() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || "Failed to add employee")
+        console.error("[ADD_EMPLOYEE] Error response:", errorData);
+
+        // Handle specific error types
+        if (response.status === 409) {
+          throw new Error("An employee with this email already exists")
+        } else if (response.status === 400) {
+          throw new Error(errorData.details ?
+            `Validation error: ${JSON.stringify(errorData.details)}` :
+            "Please check your input data"
+          )
+        } else {
+          throw new Error(errorData.message || `Server error (${response.status})`)
+        }
       }
 
       const employee = await response.json()
+      console.log("[ADD_EMPLOYEE] Employee created:", employee.id);
       setNewEmployeeId(employee.id)
 
       setOpen(false)
       form.reset()
       setSkills([])
+      setAvatarPreview(null)
 
       toast({
         title: "Employee Added",
@@ -230,6 +316,46 @@ export function AddEmployeeDialog() {
             </TabsList>
             {/* Basic Information Tab */}
             <TabsContent value="basic" className="space-y-4">
+              {/* Profile Picture Section */}
+              <div className="flex items-center space-x-6 p-4 bg-muted/30 rounded-lg">
+                <div className="flex flex-col items-center space-y-2">
+                  <Avatar className="h-20 w-20">
+                    {avatarPreview ? (
+                      <AvatarImage src={avatarPreview} alt="Profile Preview" />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                        {getInitials()}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex flex-col items-center space-y-2">
+                    <Label htmlFor="avatar-upload" className="cursor-pointer">
+                      <div className="flex items-center space-x-2 px-3 py-1 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                        <Upload className="h-4 w-4" />
+                        <span className="text-sm">Upload Photo</span>
+                      </div>
+                    </Label>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarUpload}
+                    />
+                    <p className="text-xs text-muted-foreground text-center">
+                      JPG, PNG up to 5MB
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-lg">Profile Picture</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Upload a professional photo for the new employee. This will be displayed
+                    throughout the system and helps colleagues identify team members.
+                  </p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name *</Label>
@@ -268,39 +394,27 @@ export function AddEmployeeDialog() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !form.watch("dateOfBirth") && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch("dateOfBirth") ? (
-                          format(form.watch("dateOfBirth")!, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={form.watch("dateOfBirth")}
-                        onSelect={(date) => form.setValue("dateOfBirth", date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
+                    {...form.register("dateOfBirth", {
+                      setValueAs: (value) => value ? new Date(value) : undefined
+                    })}
+                    defaultValue={form.watch("dateOfBirth") ? format(form.watch("dateOfBirth")!, "yyyy-MM-dd") : ""}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
-                  <Select onValueChange={(value) => form.setValue("gender", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("gender", value as any)
+                      form.trigger("gender")
+                    }}
+                    value={form.watch("gender")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
@@ -314,7 +428,13 @@ export function AddEmployeeDialog() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="maritalStatus">Marital Status</Label>
-                  <Select onValueChange={(value) => form.setValue("maritalStatus", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("maritalStatus", value as any)
+                      form.trigger("maritalStatus")
+                    }}
+                    value={form.watch("maritalStatus")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -406,13 +526,19 @@ export function AddEmployeeDialog() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="department">Department *</Label>
-                  <Select onValueChange={(value) => form.setValue("department", value)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("department", value)
+                      form.trigger("department") // Trigger validation
+                    }}
+                    value={form.watch("department")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select department" />
                     </SelectTrigger>
                     <SelectContent>
                       {departments.map((dept) => (
-                        <SelectItem key={dept} value={dept.toLowerCase()}>
+                        <SelectItem key={dept} value={dept}>
                           {dept}
                         </SelectItem>
                       ))}
@@ -445,7 +571,13 @@ export function AddEmployeeDialog() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select onValueChange={(value) => form.setValue("role", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("role", value as any)
+                      form.trigger("role")
+                    }}
+                    value={form.watch("role")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
@@ -461,71 +593,41 @@ export function AddEmployeeDialog() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Start Date *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !form.watch("startDate") && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch("startDate") ? (
-                          format(form.watch("startDate")!, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={form.watch("startDate")}
-                        onSelect={(date) => form.setValue("startDate", date || new Date())}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    {...form.register("startDate", {
+                      setValueAs: (value) => value ? new Date(value) : new Date()
+                    })}
+                    defaultValue={form.watch("startDate") ? format(form.watch("startDate")!, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
+                  />
                   {form.formState.errors.startDate && (
                     <p className="text-red-500 text-sm">{form.formState.errors.startDate.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="hireDate">Hire Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !form.watch("hireDate") && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch("hireDate") ? (
-                          format(form.watch("hireDate")!, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={form.watch("hireDate")}
-                        onSelect={(date) => form.setValue("hireDate", date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input
+                    id="hireDate"
+                    type="date"
+                    {...form.register("hireDate", {
+                      setValueAs: (value) => value ? new Date(value) : undefined
+                    })}
+                    defaultValue={form.watch("hireDate") ? format(form.watch("hireDate")!, "yyyy-MM-dd") : ""}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="contractType">Contract Type</Label>
-                  <Select onValueChange={(value) => form.setValue("contractType", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("contractType", value as any)
+                      form.trigger("contractType")
+                    }}
+                    value={form.watch("contractType")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -539,7 +641,13 @@ export function AddEmployeeDialog() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="workType">Work Type</Label>
-                  <Select onValueChange={(value) => form.setValue("workType", value as any)}>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("workType", value as any)
+                      form.trigger("workType")
+                    }}
+                    value={form.watch("workType")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>

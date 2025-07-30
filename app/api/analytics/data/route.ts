@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { withRetry } from '@/lib/db-utils';
-import { Sale, SaleItem, Employee, InventoryItem } from '@prisma/client';
+import { Sale, SaleItem, Employee, InventoryItem, Department } from '@prisma/client';
 import { analyticsCache } from '@/lib/analytics-cache';
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +12,10 @@ export const runtime = 'nodejs';
 type DateRange = {
   startDate?: string;
   endDate?: string;
+};
+
+type EmployeeWithDepartment = Employee & {
+  department: Department | null;
 };
 
 // Define types for analytics data
@@ -450,6 +454,9 @@ export async function POST(req: Request) {
             companyId,
             ...(filters.employees || {})
           },
+          include: {
+            department: true
+          },
           skip: modules.length > 1 ? 0 : skip,
           take: modules.length > 1 ? 100 : pageSize,
           orderBy: { createdAt: 'desc' }
@@ -461,7 +468,7 @@ export async function POST(req: Request) {
         // Department distribution
         const departmentCounts: Record<string, number> = {};
         employees.forEach(emp => {
-          const dept = emp.department;
+          const dept = emp.department?.name || 'Unassigned';
           departmentCounts[dept] = (departmentCounts[dept] || 0) + 1;
         });
 
@@ -588,7 +595,7 @@ export async function POST(req: Request) {
       if (result.employees?.employees && result.sales?.transactions) {
         const employeeSalesPerformance: EmployeeSalesPerformance[] = [];
 
-        result.employees.employees.forEach((emp: Employee) => {
+        result.employees.employees.forEach((emp: EmployeeWithDepartment) => {
           const empSales = (result.sales.transactions as SaleWithRelations[]).filter(
             sale => sale.employee?.id === emp.id
           );
@@ -597,7 +604,7 @@ export async function POST(req: Request) {
             id: emp.id,
             name: `${emp.firstName} ${emp.lastName}`,
             position: emp.position,
-            department: emp.department,
+            department: emp.department?.name || 'Unassigned',
             salesCount: empSales.length,
             totalRevenue: empSales.reduce((sum: number, sale: SaleWithRelations) => sum + sale.total, 0),
             averageSale: empSales.length > 0

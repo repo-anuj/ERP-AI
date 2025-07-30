@@ -66,7 +66,7 @@ export function EditEmployeeModal({ employee, isOpen, onClose, onSuccess }: Edit
         email: employee.email || '',
         phone: employee.phone || '',
         position: employee.position || '',
-        department: employee.department || '',
+        department: typeof employee.department === 'string' ? employee.department : employee.department?.name || '',
         salary: employee.salary || null,
         status: employee.status || '',
         // Cast the role to the expected enum type or default to 'employee'

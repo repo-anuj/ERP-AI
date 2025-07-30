@@ -26,7 +26,8 @@ import {
   PlayCircle,
   Trash2,
   Users,
-  XCircle
+  XCircle,
+  ExternalLink
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -42,6 +43,8 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ClientAccessDialog } from '@/components/projects/client-access-dialog';
+import { ReportGeneratorDialog } from '@/components/projects/report-generator-dialog';
 import { useRouter } from 'next/navigation';
 
 export type ProjectMember = {
@@ -735,6 +738,8 @@ export const columns: ColumnDef<Project>[] = [
       const { toast } = useToast();
       const [isDetailsOpen, setIsDetailsOpen] = useState(false);
       const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+      const [isClientAccessOpen, setIsClientAccessOpen] = useState(false);
+      const [isReportGeneratorOpen, setIsReportGeneratorOpen] = useState(false);
       const project = row.original;
       const router = useRouter();
 
@@ -800,7 +805,7 @@ export const columns: ColumnDef<Project>[] = [
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 md:hidden"
-              onClick={() => router.push(`/projects/edit/${project.id}`)}
+              onClick={() => window.location.href = `/projects/edit/${project.id}`}
             >
               <span className="sr-only">Edit</span>
               <Edit className="h-4 w-4" />
@@ -819,13 +824,22 @@ export const columns: ColumnDef<Project>[] = [
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push(`/projects/edit/${project.id}`)}>
+                <DropdownMenuItem onClick={() => window.location.href = `/projects/edit/${project.id}`}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={copyToClipboard}>
                   <Copy className="mr-2 h-4 w-4" />
                   Copy Info
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsClientAccessOpen(true)}>
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Client Portal
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsReportGeneratorOpen(true)}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Report
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-red-600" onClick={() => setIsDeleteOpen(true)}>
@@ -849,6 +863,24 @@ export const columns: ColumnDef<Project>[] = [
             isOpen={isDeleteOpen}
             onClose={() => setIsDeleteOpen(false)}
             onDelete={handleDelete}
+          />
+
+          {/* Client Access Dialog */}
+          <ClientAccessDialog
+            isOpen={isClientAccessOpen}
+            onClose={() => setIsClientAccessOpen(false)}
+            projectId={project.id}
+            projectName={project.name}
+            clientEmail={project.client?.email}
+          />
+
+          {/* Report Generator Dialog */}
+          <ReportGeneratorDialog
+            isOpen={isReportGeneratorOpen}
+            onClose={() => setIsReportGeneratorOpen(false)}
+            projectId={project.id}
+            projectName={project.name}
+            clientEmail={project.client?.email}
           />
         </>
       );

@@ -9,34 +9,101 @@ generator client {
 }
 
 model User {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  email         String         @unique
-  password      String
-  firstName     String?
-  lastName      String?
-  image         String?
-  bio           String?
-  role          String?
-  location      String?
-  darkMode      Boolean        @default(false)
-  compactView   Boolean        @default(false)
-  company       Company?       @relation(fields: [companyId], references: [id])
-  companyId     String?        @db.ObjectId
-  notifications Notification[]
-  transactions  Transaction[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                   String         @id @default(auto()) @map("_id") @db.ObjectId
+  email                String         @unique
+  password             String
+  firstName            String?
+  lastName             String?
+  image                String?
+  bio                  String?
+  role                 String?
+  location             String?
+  darkMode             Boolean        @default(false)
+  compactView          Boolean        @default(false)
+  onboardingCompleted  Boolean        @default(false)
+  company              Company?       @relation(fields: [companyId], references: [id])
+  companyId            String?        @db.ObjectId
+  notifications        Notification[]
+  transactions         Transaction[]
+  pushSubscriptions    PushSubscription[]
+  auditLogs            AuditLog[]
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 }
 
 model Company {
   id                String             @id @default(auto()) @map("_id") @db.ObjectId
   name              String
+  legalName         String?
   address           String?
   phone             String?
   email             String?
   website           String?
   logo              String?
   defaultCurrency   String              @default("USD")
+
+  // Enhanced onboarding fields
+  onboardingStep    Int                @default(0)
+  onboardingCompleted Boolean          @default(false)
+  onboardingData    Json?              // Store all onboarding responses
+
+  // Business configuration
+  businessType      String?            // manufacturing, service, retail, consulting, technology, healthcare, education, agriculture, logistics, finance
+  businessModel     String?            // b2b, b2c, b2b2c, marketplace, saas
+  companyStage      String?            // startup, growing, established, enterprise
+  primaryGoal       String?            // inventory_management, sales_tracking, employee_management, financial_control, project_management, all_in_one
+  industry          String?            // Detailed industry classification
+
+  // Branding & Identity
+  brandColors       Json?              // { primary: "#color", secondary: "#color", accent: "#color" }
+  companyStamp      String?            // URL to company stamp image
+  tagline           String?
+  socialMedia       Json?              // { linkedin, twitter, facebook, instagram }
+
+  // Legal & Financial
+  taxId             String?            // GST number, EIN, VAT number, etc.
+  businessRegistrationNumber String?
+  vatNumber         String?
+  panNumber         String?            // India specific
+  einNumber         String?            // US specific
+  gstNumber         String?            // India specific
+  businessLicense   String?
+  fiscalYearStart   String?            // "April" or "January"
+  accountingMethod  String?            // "cash" or "accrual"
+
+  // Location & Operations
+  country           String?
+  state             String?
+  city              String?
+  zipCode           String?
+  timezone          String?
+  language          String?            @default("en")
+  operatingHours    Json?              // Weekly schedule with open/close times
+  workingDays       String[]           // ["monday", "tuesday", ...]
+  holidays          Json?              // Array of holiday dates and names
+
+  // Business Operations
+  manufacturingDetails Json?           // Production capacity, machinery, certifications
+  serviceDetails    Json?              // Service types, areas, appointment duration
+  retailDetails     Json?              // Store locations, POS system, online store
+
+  // Financial Configuration
+  bankAccounts      Json?              // Array of bank account details
+  paymentMethods    Json?              // Accepted payment methods
+  payrollFrequency  String?            // weekly, biweekly, monthly
+  payrollProvider   String?
+
+  // Integrations
+  paymentGateways   Json?              // Payment gateway configurations
+  emailProvider     Json?              // Email service configuration
+  smsProvider       Json?              // SMS service configuration
+  cloudStorage      Json?              // Cloud storage configuration
+
+  // Dashboard & UI configuration
+  dashboardConfig   Json?              // User's dashboard layout and widgets
+  featureToggles    Json?              // Enabled/disabled features
+
+  // Existing relations
   users             User[]
   inventory         InventoryItem[]
   employees         Employee[]
@@ -51,6 +118,55 @@ model Company {
   attendance        Attendance[]
   approvalWorkflows ApprovalWorkflow[]
   idProofTypes      IdProofType[] // Company-specific ID proof types
+  departments       Department[]
+  locations         Location[]
+  vehicles          Vehicle[]
+
+  // Reward System Relations
+  rewardTypes       RewardType[]
+  badges            Badge[]
+  achievements      Achievement[]
+  rewards           Reward[]
+
+  // Attendance Relations
+  attendancePolicies AttendancePolicy[]
+  shifts            Shift[]
+
+  // Leave Relations
+  leaveTypes        LeaveType[]
+  leaveApplications LeaveApplication[]
+  employeeLeaveBalances EmployeeLeaveBalance[]
+
+  // Performance Relations
+  performanceTemplates PerformanceTemplate[]
+  performanceReviews   PerformanceReview[]
+  performanceGoals     PerformanceGoal[]
+  performanceFeedbacks PerformanceFeedback[]
+
+  // Payroll Relations
+  salaryStructures  SalaryStructure[]
+  payrolls          Payroll[]
+  payslips          Payslip[]
+  taxCalculations   TaxCalculation[]
+  taxDeclarations   TaxDeclaration[]
+  form16s           Form16[]
+  bankFiles         BankFile[]
+
+  // Recruitment & Onboarding Relations
+  jobPostings       JobPosting[]
+  candidates        Candidate[]
+  jobApplications   JobApplication[]
+  interviews        Interview[]
+  candidateEvaluations CandidateEvaluation[]
+  offers            Offer[]
+  onboardingWorkflows OnboardingWorkflow[]
+  onboardingInstances OnboardingInstance[]
+  backgroundChecks  BackgroundCheck[]
+  recruitmentMetrics RecruitmentMetrics[]
+
+  // Audit Relations
+  auditLogs         AuditLog[]
+
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -78,6 +194,23 @@ model Notification {
   @@index([entityType, entityId])
 }
 
+model PushSubscription {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String   @db.ObjectId
+  endpoint   String
+  p256dhKey  String
+  authKey    String
+  userAgent  String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+  @@index([isActive])
+}
+
 model InventoryItem {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
   name         String
@@ -90,10 +223,13 @@ model InventoryItem {
   reorderPoint Int          @default(10)
   company      Company      @relation(fields: [companyId], references: [id])
   companyId    String       @db.ObjectId
+  location     Location?    @relation(fields: [locationId], references: [id])
+  locationId   String?      @db.ObjectId
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
   @@index([companyId])
+  @@index([locationId])
 }
 
 model Employee {
@@ -103,7 +239,13 @@ model Employee {
   email      String   @unique
   phone      String?
   position   String
-  department String
+
+  // Department and Location relationships
+  department Department? @relation(fields: [departmentId], references: [id])
+  departmentId String?   @db.ObjectId
+  location   Location?   @relation(fields: [locationId], references: [id])
+  locationId String?     @db.ObjectId
+
   startDate  DateTime
   salary     Float?
   status     String   @default("active")
@@ -165,10 +307,45 @@ model Employee {
   companyId  String   @db.ObjectId
   sales      Sale[]
   attendance Attendance[]
+  chatMessages ProjectChat[]
+
+  // Reward System Relations
+  rewards      Reward[]
+  badges       EmployeeBadge[]
+  achievements EmployeeAchievement[]
+  points       EmployeePoints?
+
+  // Attendance Relations
+  attendancePolicy   AttendancePolicy? @relation(fields: [attendancePolicyId], references: [id])
+  attendancePolicyId String?           @db.ObjectId
+  shifts             EmployeeShift[]
+
+  // Leave Relations
+  leaveApplications  LeaveApplication[]
+  leaveBalances      EmployeeLeaveBalance[]
+
+  // Performance Relations
+  performanceReviews PerformanceReview[]
+  performanceGoals   PerformanceGoal[]
+  performanceFeedbacks PerformanceFeedback[]
+
+  // Payroll Relations
+  salaryStructures  SalaryStructure[]
+  payrolls          Payroll[]
+  payslips          Payslip[]
+  taxCalculations   TaxCalculation[]
+  taxDeclarations   TaxDeclaration[]
+  form16s           Form16[]
+
+  // Onboarding Relations
+  onboardingInstances OnboardingInstance[]
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@index([companyId])
+  @@index([departmentId])
+  @@index([locationId])
   @@index([role])
   @@index([employeeId])
 }
@@ -178,10 +355,27 @@ model Attendance {
   employee   Employee @relation(fields: [employeeId], references: [id])
   employeeId String   @db.ObjectId
   date       DateTime @default(now())
-  checkIn    DateTime @default(now())
+  checkIn    DateTime?
   checkOut   DateTime?
-  status     String   @default("present") // present, absent, late, half-day, leave
+  status     String   @default("present") // present, absent, late, half-day, leave, holiday
   notes      String?
+
+  // Enhanced tracking
+  totalHours    Float?   // Total hours worked
+  overtimeHours Float?   // Overtime hours
+  breakDuration Float?   // Break time in hours
+  isLate        Boolean  @default(false)
+  isEarlyLeave  Boolean  @default(false)
+
+  // Location tracking
+  checkInLocation  String? // GPS coordinates or location name
+  checkOutLocation String?
+
+  // Approval workflow
+  approvedBy    String?  @db.ObjectId // Manager who approved
+  approvedAt    DateTime?
+  isApproved    Boolean  @default(true)
+
   company    Company  @relation(fields: [companyId], references: [id])
   companyId  String   @db.ObjectId
   createdAt  DateTime @default(now())
@@ -190,6 +384,409 @@ model Attendance {
   @@index([employeeId])
   @@index([companyId])
   @@index([date])
+  @@index([status])
+}
+
+model AttendancePolicy {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  name              String   // "Standard Policy", "Flexible Hours", etc.
+  description       String?
+
+  // Work schedule
+  workingDays       String[] // ["monday", "tuesday", "wednesday", "thursday", "friday"]
+  startTime         String   // "09:00"
+  endTime           String   // "17:00"
+  breakDuration     Float    @default(1.0) // Break time in hours
+
+  // Attendance rules
+  lateThreshold     Int      @default(15) // Minutes after start time considered late
+  halfDayThreshold  Float    @default(4.0) // Hours required for half day
+  fullDayThreshold  Float    @default(8.0) // Hours required for full day
+  overtimeThreshold Float    @default(8.0) // Hours after which overtime starts
+
+  // Rewards integration
+  perfectAttendancePoints Int @default(50) // Points for perfect monthly attendance
+  earlyArrivalPoints     Int @default(5)  // Points for arriving early
+
+  isDefault         Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  company           Company  @relation(fields: [companyId], references: [id])
+  companyId         String   @db.ObjectId
+
+  // Employees using this policy
+  employees         Employee[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([isDefault])
+}
+
+model Shift {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   // "Morning Shift", "Night Shift", etc.
+  startTime   String   // "09:00"
+  endTime     String   // "17:00"
+  description String?
+
+  // Shift details
+  isActive    Boolean  @default(true)
+  color       String?  // For calendar display
+
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+
+  // Employee shift assignments
+  employeeShifts EmployeeShift[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model EmployeeShift {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String   @db.ObjectId
+  shift      Shift    @relation(fields: [shiftId], references: [id])
+  shiftId    String   @db.ObjectId
+
+  // Schedule details
+  startDate  DateTime
+  endDate    DateTime?
+  daysOfWeek String[] // ["monday", "tuesday", "wednesday"]
+
+  isActive   Boolean  @default(true)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([shiftId])
+  @@index([startDate])
+}
+
+// ============================================================================
+// LEAVE MANAGEMENT MODELS
+// ============================================================================
+
+model LeaveType {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  name              String   // "Annual Leave", "Sick Leave", "Personal Leave"
+  description       String?
+
+  // Leave configuration
+  maxDaysPerYear    Int      @default(20) // Maximum days allowed per year
+  carryOverDays     Int      @default(5)  // Days that can be carried to next year
+  minNoticeRequired Int      @default(1)  // Minimum days notice required
+  maxConsecutiveDays Int?    // Maximum consecutive days allowed
+
+  // Approval requirements
+  requiresApproval  Boolean  @default(true)
+  approvalLevels    Int      @default(1) // Number of approval levels required
+
+  // Accrual settings
+  accrualRate       Float    @default(1.67) // Days accrued per month
+  accrualStartDate  String   @default("hire_date") // "hire_date" or "year_start"
+
+  // Leave rules
+  allowHalfDays     Boolean  @default(true)
+  allowNegativeBalance Boolean @default(false)
+  isActive          Boolean  @default(true)
+
+  company           Company  @relation(fields: [companyId], references: [id])
+  companyId         String   @db.ObjectId
+
+  // Leave applications
+  leaveApplications LeaveApplication[]
+  employeeLeaveBalances EmployeeLeaveBalance[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([isActive])
+}
+
+model LeaveApplication {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+  employeeId      String    @db.ObjectId
+  leaveType       LeaveType @relation(fields: [leaveTypeId], references: [id])
+  leaveTypeId     String    @db.ObjectId
+
+  // Leave details
+  startDate       DateTime
+  endDate         DateTime
+  totalDays       Float     // Support for half days (0.5, 1.0, 1.5, etc.)
+  reason          String
+  isHalfDay       Boolean   @default(false)
+  halfDayPeriod   String?   // "morning" or "afternoon"
+
+  // Application status
+  status          String    @default("pending") // "pending", "approved", "rejected", "cancelled"
+  appliedAt       DateTime  @default(now())
+
+  // Approval workflow
+  approvals       LeaveApproval[]
+  currentApprovalLevel Int  @default(1)
+
+  // Additional details
+  emergencyContact String?
+  workHandover     String?   // Work handover notes
+  attachments      String[]  // File URLs for medical certificates, etc.
+
+  company         Company   @relation(fields: [companyId], references: [id])
+  companyId       String    @db.ObjectId
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([leaveTypeId])
+  @@index([companyId])
+  @@index([status])
+  @@index([startDate])
+}
+
+model LeaveApproval {
+  id                String           @id @default(auto()) @map("_id") @db.ObjectId
+  leaveApplication  LeaveApplication @relation(fields: [leaveApplicationId], references: [id])
+  leaveApplicationId String          @db.ObjectId
+
+  // Approval details
+  approverLevel     Int              // 1, 2, 3, etc.
+  approverId        String?          @db.ObjectId // Manager/HR who approved
+  approverName      String?          // Name of approver
+  approverEmail     String?          // Email of approver
+
+  status            String           @default("pending") // "pending", "approved", "rejected"
+  comments          String?          // Approval/rejection comments
+  approvedAt        DateTime?
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([leaveApplicationId])
+  @@index([approverId])
+  @@index([status])
+}
+
+model EmployeeLeaveBalance {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+  employeeId      String    @db.ObjectId
+  leaveType       LeaveType @relation(fields: [leaveTypeId], references: [id])
+  leaveTypeId     String    @db.ObjectId
+
+  // Balance tracking
+  year            Int       // Leave year (e.g., 2024)
+  totalEntitled   Float     // Total days entitled for the year
+  totalUsed       Float     @default(0) // Total days used
+  totalPending    Float     @default(0) // Total days in pending applications
+  carryOver       Float     @default(0) // Days carried over from previous year
+
+  // Calculated fields
+  availableBalance Float    @default(0) // totalEntitled + carryOver - totalUsed - totalPending
+
+  // Accrual tracking
+  lastAccrualDate DateTime?
+  nextAccrualDate DateTime?
+
+  company         Company   @relation(fields: [companyId], references: [id])
+  companyId       String    @db.ObjectId
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([employeeId, leaveTypeId, year])
+  @@index([employeeId])
+  @@index([leaveTypeId])
+  @@index([companyId])
+  @@index([year])
+}
+
+// ============================================================================
+// PERFORMANCE MANAGEMENT MODELS
+// ============================================================================
+
+model PerformanceTemplate {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  name              String   // "Annual Review", "Quarterly Check-in", "Probation Review"
+  description       String?
+
+  // Template configuration
+  reviewType        String   @default("annual") // "annual", "quarterly", "monthly", "probation", "custom"
+  frequency         String   @default("yearly") // "yearly", "quarterly", "monthly", "one-time"
+  duration          Int      @default(30) // Review period in days
+
+  // Review sections and criteria
+  sections          Json     // Array of review sections with criteria
+  ratingScale       Json     // Rating scale configuration (1-5, 1-10, etc.)
+
+  // Workflow settings
+  selfReviewEnabled Boolean  @default(true)
+  managerReviewEnabled Boolean @default(true)
+  peerReviewEnabled Boolean  @default(false)
+  skipLevelReviewEnabled Boolean @default(false)
+
+  // Automation settings
+  autoAssignReviews Boolean  @default(false)
+  reminderSettings  Json?    // Reminder configuration
+
+  isActive          Boolean  @default(true)
+  isDefault         Boolean  @default(false)
+
+  company           Company  @relation(fields: [companyId], references: [id])
+  companyId         String   @db.ObjectId
+
+  // Performance reviews using this template
+  performanceReviews PerformanceReview[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([isActive])
+  @@index([isDefault])
+}
+
+model PerformanceReview {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee          Employee @relation(fields: [employeeId], references: [id])
+  employeeId        String   @db.ObjectId
+  template          PerformanceTemplate @relation(fields: [templateId], references: [id])
+  templateId        String   @db.ObjectId
+
+  // Review period
+  reviewPeriodStart DateTime
+  reviewPeriodEnd   DateTime
+  reviewType        String   // "annual", "quarterly", "monthly", "probation"
+
+  // Review status
+  status            String   @default("draft") // "draft", "in_progress", "pending_approval", "completed", "cancelled"
+  overallRating     Float?   // Overall performance rating
+  overallComments   String?  // Manager's overall comments
+
+  // Review participants
+  reviewerId        String?  @db.ObjectId // Primary reviewer (usually manager)
+  reviewerName      String?
+  reviewerEmail     String?
+
+  // Review completion tracking
+  selfReviewCompleted Boolean @default(false)
+  managerReviewCompleted Boolean @default(false)
+  finalReviewCompleted Boolean @default(false)
+
+  // Important dates
+  dueDate           DateTime
+  completedAt       DateTime?
+
+  company           Company  @relation(fields: [companyId], references: [id])
+  companyId         String   @db.ObjectId
+
+  // Related data
+  goals             PerformanceGoal[]
+  feedbacks         PerformanceFeedback[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([templateId])
+  @@index([companyId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model PerformanceGoal {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee          Employee @relation(fields: [employeeId], references: [id])
+  employeeId        String   @db.ObjectId
+  performanceReview PerformanceReview? @relation(fields: [reviewId], references: [id])
+  reviewId          String?  @db.ObjectId
+
+  // Goal details
+  title             String
+  description       String
+  category          String   @default("performance") // "performance", "development", "behavioral", "project"
+  priority          String   @default("medium") // "low", "medium", "high", "critical"
+
+  // SMART goal criteria
+  isSpecific        Boolean  @default(false)
+  isMeasurable      Boolean  @default(false)
+  isAchievable      Boolean  @default(false)
+  isRelevant        Boolean  @default(false)
+  isTimeBound       Boolean  @default(false)
+
+  // Goal tracking
+  targetValue       Float?   // Target metric value
+  currentValue      Float?   // Current progress value
+  unit              String?  // Unit of measurement
+  progressPercent   Float    @default(0) // Progress percentage (0-100)
+
+  // Timeline
+  startDate         DateTime
+  targetDate        DateTime
+  completedDate     DateTime?
+
+  // Status and outcome
+  status            String   @default("active") // "active", "completed", "cancelled", "on_hold"
+  achievementLevel  String?  // "exceeded", "met", "partially_met", "not_met"
+  finalComments     String?
+
+  company           Company  @relation(fields: [companyId], references: [id])
+  companyId         String   @db.ObjectId
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([reviewId])
+  @@index([companyId])
+  @@index([status])
+  @@index([targetDate])
+}
+
+model PerformanceFeedback {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee          Employee @relation(fields: [employeeId], references: [id])
+  employeeId        String   @db.ObjectId
+  performanceReview PerformanceReview? @relation(fields: [reviewId], references: [id])
+  reviewId          String?  @db.ObjectId
+
+  // Feedback details
+  feedbackType      String   // "self", "manager", "peer", "skip_level", "subordinate", "360"
+  feedbackCategory  String   // "strengths", "areas_for_improvement", "achievements", "goals", "general"
+
+  // Feedback content
+  rating            Float?   // Numerical rating if applicable
+  comments          String   // Feedback comments
+  isAnonymous       Boolean  @default(false)
+
+  // Feedback provider
+  providerId        String?  @db.ObjectId // ID of person providing feedback
+  providerName      String?  // Name of feedback provider
+  providerEmail     String?  // Email of feedback provider
+  providerRole      String?  // Role/relationship to employee
+
+  // Feedback status
+  status            String   @default("draft") // "draft", "submitted", "reviewed", "acknowledged"
+  isVisible         Boolean  @default(true) // Whether feedback is visible to employee
+
+  company           Company  @relation(fields: [companyId], references: [id])
+  companyId         String   @db.ObjectId
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([reviewId])
+  @@index([companyId])
+  @@index([feedbackType])
+  @@index([status])
 }
 
 model Customer {
@@ -249,12 +846,159 @@ model Project {
   notes                String?
   tasks                Task[]
   milestones           Milestone[]
+  chatMessages         ProjectChat[]
+  clientAccess         ClientAccess?
+  reports              ProjectReport[]
+  templateUsage        TemplateUsage[]
   company              Company         @relation(fields: [companyId], references: [id])
   companyId            String          @db.ObjectId
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
 
   @@index([companyId])
+}
+
+// Client Access Control for Projects
+model ClientAccess {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  project           Project  @relation(fields: [projectId], references: [id])
+  projectId         String   @unique @db.ObjectId
+  clientEmail       String
+  accessToken       String   @unique
+  permissions       String[] // view_progress, view_documents, view_budget, comment, approve_milestones
+  isActive          Boolean  @default(true)
+  lastAccessAt      DateTime?
+  expiresAt         DateTime?
+  notificationPrefs Json?    // Email, frequency preferences
+  companyId         String   @db.ObjectId
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+// Project Reports for Automated Generation
+model ProjectReport {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  project       Project  @relation(fields: [projectId], references: [id])
+  projectId     String   @db.ObjectId
+  reportType    String   // weekly, milestone, completion, custom
+  title         String
+  content       Json     // Report data and content
+  generatedAt   DateTime @default(now())
+  sentAt        DateTime?
+  recipients    String[] // Email addresses
+  status        String   @default("generated") // generated, sent, failed
+  scheduledFor  DateTime?
+  isAutomatic   Boolean  @default(false)
+  template      String?  // Template used for generation
+  companyId     String   @db.ObjectId
+  createdBy     String?  // User who generated the report
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([reportType])
+  @@index([scheduledFor])
+  @@index([companyId])
+}
+
+// Project Templates for Reusable Project Creation
+model ProjectTemplate {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  name                 String
+  description          String?
+  category             String   // web_development, mobile_app, marketing, construction, etc.
+  industry             String   // technology, healthcare, finance, manufacturing, etc.
+  type                 String   // internal, client, research, maintenance
+  isPublic             Boolean  @default(false) // Available to all companies
+
+  // Template Configuration
+  estimatedDuration    Int?     // Days
+  estimatedHours       Float?
+  defaultBudget        Float?
+  priority             String   @default("medium") // low, medium, high
+  riskLevel            String   @default("medium") // low, medium, high
+
+  // Template Content
+  objectives           String?  // Project objectives
+  deliverables         String?  // Key deliverables
+  successCriteria      String?  // Success criteria
+  notes                String?  // Additional notes
+  tags                 String[] // Template tags
+
+  // Predefined Milestones
+  milestones           Json[]   // Array of milestone objects
+
+  // Predefined Tasks
+  tasks                Json[]   // Array of task templates
+
+  // Required Skills/Roles
+  requiredRoles        String[] // Required team roles
+  requiredSkills       String[] // Required skills
+  teamSize             Int?     // Recommended team size
+
+  // Usage Statistics
+  usageCount           Int      @default(0)
+  lastUsed             DateTime?
+
+  // Ownership
+  companyId            String?  @db.ObjectId // null for public templates
+  createdBy            String?  // User who created the template
+  createdByName        String?
+
+  // Relations
+  templateUsage        TemplateUsage[]
+
+  // Metadata
+  version              String   @default("1.0")
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([category])
+  @@index([industry])
+  @@index([isPublic])
+  @@index([companyId])
+  @@index([isActive])
+}
+
+// Template Usage Tracking
+model TemplateUsage {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  template     ProjectTemplate @relation(fields: [templateId], references: [id])
+  templateId   String          @db.ObjectId
+  project      Project         @relation(fields: [projectId], references: [id])
+  projectId    String          @db.ObjectId
+  companyId    String          @db.ObjectId
+  usedBy       String          // User ID who used the template
+  usedByName   String          // User name
+  usedAt       DateTime        @default(now())
+
+  @@index([templateId])
+  @@index([projectId])
+  @@index([companyId])
+}
+
+model ProjectChat {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId String   @db.ObjectId
+  sender    Employee @relation(fields: [senderId], references: [id])
+  senderId  String   @db.ObjectId
+  content   String
+  type      String   @default("message") // message, approval_request, approval_response, system
+  task      Task?    @relation(fields: [taskId], references: [id])
+  taskId    String?  @db.ObjectId
+  tags      String[]
+  companyId String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([senderId])
+  @@index([companyId])
+  @@index([createdAt])
 }
 
 type ProjectMember {
@@ -353,6 +1097,7 @@ model Task {
   approvedAt           DateTime?
   rejectionReason      String?
   companyId            String   @db.ObjectId
+  chatMessages         ProjectChat[]
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -508,6 +1253,43 @@ model FinanceAuditLog {
   @@index([performedAt])
 }
 
+// General audit log for tracking all system changes
+model AuditLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Who performed the action
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?  @db.ObjectId
+  userEmail   String?  // Fallback if user is deleted
+  userName    String?  // User name at time of action
+
+  // What was done
+  action      String   // CREATE, UPDATE, DELETE, APPROVE, REJECT, etc.
+  entityType  String   // EMPLOYEE, LEAVE_APPLICATION, PERFORMANCE_REVIEW, etc.
+  entityId    String   // ID of the affected entity
+
+  // Additional context
+  details     Json?    // Flexible JSON field for action-specific details
+  changes     Json?    // Before/after values for updates
+  ipAddress   String?  // IP address of the user
+  userAgent   String?  // Browser/client information
+
+  // Company context
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+
+  // Timestamps
+  performedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([action])
+  @@index([performedAt])
+}
+
 model Budget {
   id              String           @id @default(auto()) @map("_id") @db.ObjectId
   name            String
@@ -606,4 +1388,1310 @@ model IdProofType {
 
   @@unique([name, companyId])
   @@index([companyId])
+}
+
+// New models for enhanced onboarding
+model OnboardingTemplate {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  industry      String   // manufacturing, service, retail, etc.
+  businessType  String   // More specific business type
+  template      Json     // Complete template configuration
+  isActive      Boolean  @default(true)
+  version       String   @default("1.0")
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([industry])
+  @@index([businessType])
+}
+
+model Department {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  manager     String?    // Employee ID of department head
+  budget      Float?
+  location    String?
+  company     Company    @relation(fields: [companyId], references: [id])
+  companyId   String     @db.ObjectId
+  employees   Employee[]
+
+  // Recruitment Relations
+  jobPostings JobPosting[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([companyId])
+  @@unique([name, companyId])
+}
+
+model Location {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  address     String?
+  city        String?
+  state       String?
+  country     String?
+  zipCode     String?
+  phone       String?
+  email       String?
+  type        String     // headquarters, branch, warehouse, retail, manufacturing
+  isMain      Boolean    @default(false)
+  capacity    Int?       // Number of people/items it can hold
+  manager     String?    // Employee ID of location manager
+  company     Company    @relation(fields: [companyId], references: [id])
+  companyId   String     @db.ObjectId
+  employees   Employee[]
+  inventory   InventoryItem[]
+
+  // Recruitment Relations
+  jobPostings JobPosting[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([companyId])
+  @@index([type])
+}
+
+model Vehicle {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleNumber   String
+  type            String   // truck, van, car, bike, forklift
+  make            String?
+  model           String?
+  year            Int?
+  capacity        Float?   // Weight or volume capacity
+  driver          String?  // Employee ID of assigned driver
+  status          String   @default("active") // active, maintenance, retired
+
+  // Insurance details
+  insuranceProvider String?
+  policyNumber    String?
+  insuranceExpiry DateTime?
+
+  // Registration details
+  registrationNumber String?
+  registrationExpiry DateTime?
+
+  // Maintenance
+  lastMaintenance DateTime?
+  nextMaintenance DateTime?
+
+  company         Company  @relation(fields: [companyId], references: [id])
+  companyId       String   @db.ObjectId
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([type])
+  @@unique([vehicleNumber, companyId])
+}
+
+model CountryConfig {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  code            String   @unique // ISO country code
+  name            String
+  currency        String
+  currencySymbol  String
+  taxSystem       String
+  taxFields       Json     // Array of tax field configurations
+  fiscalYear      String
+  dateFormat      String
+  phoneFormat     String
+  addressFormat   String[] // Order of address fields
+  businessTypes   String[] // Available business types for this country
+  requiredDocs    String[] // Required documents for business registration
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ============================================================================
+// REWARD SYSTEM MODELS
+// ============================================================================
+
+model RewardType {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   // "Task Completion", "Perfect Attendance", "Certification"
+  description String?
+  category    String   // "performance", "attendance", "learning", "collaboration"
+  pointValue  Int      // Base points awarded
+  icon        String?  // Icon identifier
+  color       String?  // Color theme
+  isActive    Boolean  @default(true)
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+
+  // Reward instances
+  rewards     Reward[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([category])
+}
+
+model Badge {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   // "Early Bird", "Team Player", "Innovation Champion"
+  description String?
+  category    String   // "attendance", "collaboration", "innovation", "performance"
+  icon        String   // Badge icon/image
+  color       String   // Badge color theme
+  criteria    Json     // Criteria for earning this badge
+  rarity      String   @default("common") // "common", "rare", "epic", "legendary"
+  pointsRequired Int?  // Points needed to unlock
+  isActive    Boolean  @default(true)
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+
+  // Employee badges
+  employeeBadges EmployeeBadge[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([category])
+}
+
+model Achievement {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   // "First Week Champion", "Learning Enthusiast"
+  description String?
+  category    String   // "milestone", "streak", "goal", "special"
+  icon        String   // Achievement icon
+  criteria    Json     // Achievement criteria and triggers
+  pointReward Int      // Points awarded for achievement
+  badgeReward String?  @db.ObjectId // Optional badge awarded
+  isRepeatable Boolean @default(false) // Can be earned multiple times
+  isActive    Boolean  @default(true)
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String   @db.ObjectId
+
+  // Employee achievements
+  employeeAchievements EmployeeAchievement[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([category])
+}
+
+model Reward {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  employee    Employee   @relation(fields: [employeeId], references: [id])
+  employeeId  String     @db.ObjectId
+  rewardType  RewardType @relation(fields: [rewardTypeId], references: [id])
+  rewardTypeId String    @db.ObjectId
+  points      Int        // Points awarded
+  reason      String?    // Specific reason for reward
+  metadata    Json?      // Additional data (task details, etc.)
+  awardedBy   String?    @db.ObjectId // User who awarded (if manual)
+  isAutomatic Boolean    @default(true) // Auto-awarded vs manual
+  company     Company    @relation(fields: [companyId], references: [id])
+  companyId   String     @db.ObjectId
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([employeeId])
+  @@index([companyId])
+  @@index([createdAt])
+}
+
+model EmployeeBadge {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String   @db.ObjectId
+  badge      Badge    @relation(fields: [badgeId], references: [id])
+  badgeId    String   @db.ObjectId
+  earnedAt   DateTime @default(now())
+  reason     String?  // Why the badge was earned
+  metadata   Json?    // Additional context
+
+  @@unique([employeeId, badgeId])
+  @@index([employeeId])
+  @@index([earnedAt])
+}
+
+model EmployeeAchievement {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  employee      Employee    @relation(fields: [employeeId], references: [id])
+  employeeId    String      @db.ObjectId
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  achievementId String      @db.ObjectId
+  earnedAt      DateTime    @default(now())
+  progress      Json?       // Progress tracking data
+  isCompleted   Boolean     @default(true)
+
+  @@index([employeeId])
+  @@index([achievementId])
+  @@index([earnedAt])
+}
+
+model EmployeePoints {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  employeeId      String   @unique @db.ObjectId
+  totalPoints     Int      @default(0)
+  availablePoints Int      @default(0) // Points available for redemption
+  lifetimePoints  Int      @default(0) // All-time points earned
+  currentLevel    Int      @default(1)
+  pointsToNextLevel Int    @default(100)
+
+  // Monthly/Yearly tracking
+  monthlyPoints   Json     @default("{}") // { "2024-01": 150, "2024-02": 200 }
+  yearlyPoints    Json     @default("{}") // { "2024": 1500, "2023": 1200 }
+
+  lastUpdated     DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@index([totalPoints])
+  @@index([currentLevel])
+}
+
+// ============================================================================
+// INDIAN PAYROLL SYSTEM MODELS
+// ============================================================================
+
+// Salary Structure for Indian employees
+model SalaryStructure {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  employeeId      String   @db.ObjectId
+  
+  // Basic salary components
+  basicSalary     Float    // Basic salary amount
+  hra             Float?   // House Rent Allowance
+  conveyance      Float?   // Conveyance allowance
+  medicalAllowance Float?  // Medical allowance
+  specialAllowance Float?  // Special allowance
+  otherAllowances Json?    // Other allowances in JSON format
+  
+  // Statutory deductions
+  pfEmployeeRate  Float    @default(0.12) // Employee PF contribution rate (12%)
+  pfEmployerRate  Float    @default(0.12) // Employer PF contribution rate (12%)
+  esiEmployeeRate Float    @default(0.0075) // Employee ESI rate (0.75%)
+  esiEmployerRate Float    @default(0.0325) // Employer ESI rate (3.25%)
+  
+  // Tax settings
+  professionalTax Float?   // Monthly professional tax
+  tdsRate         Float?   // TDS rate if applicable
+  
+  // Salary limits for statutory compliance
+  pfApplicable    Boolean  @default(true)
+  esiApplicable   Boolean  @default(true)
+  
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  isActive        Boolean  @default(true)
+  
+  company         Company  @relation(fields: [companyId], references: [id])
+  companyId       String   @db.ObjectId
+
+  // Payroll records using this salary structure
+  payrolls        Payroll[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([employeeId])
+  @@index([companyId])
+  @@index([effectiveFrom])
+}
+
+// Monthly payroll records
+model Payroll {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  employeeId      String   @db.ObjectId
+
+  // Reference to salary structure used for this payroll
+  salaryStructure SalaryStructure @relation(fields: [salaryStructureId], references: [id])
+  salaryStructureId String        @db.ObjectId
+
+  payrollMonth    Int      // Month (1-12)
+  payrollYear     Int      // Year (e.g., 2024)
+  
+  // Salary components
+  basicSalary     Float
+  hra             Float    @default(0)
+  conveyance      Float    @default(0)
+  medicalAllowance Float   @default(0)
+  specialAllowance Float   @default(0)
+  otherAllowances Float    @default(0)
+  grossSalary     Float    // Total before deductions
+  
+  // Deductions
+  pfEmployee      Float    @default(0) // Employee PF contribution
+  pfEmployer      Float    @default(0) // Employer PF contribution
+  esiEmployee     Float    @default(0) // Employee ESI contribution
+  esiEmployer     Float    @default(0) // Employer ESI contribution
+  professionalTax Float    @default(0)
+  tds             Float    @default(0) // Tax Deducted at Source
+  otherDeductions Float    @default(0)
+  totalDeductions Float    // Total deductions
+  
+  // Overtime and bonuses
+  overtimeHours   Float    @default(0)
+  overtimeAmount  Float    @default(0)
+  bonus           Float    @default(0)
+  incentives      Float    @default(0)
+  
+  // Final amounts
+  netSalary       Float    // Salary after deductions
+  
+  // Processing details
+  paymentDate     DateTime?
+  paymentMode     String?  // "bank_transfer", "cash", "cheque"
+  paymentReference String? // Bank reference number
+  status          String   @default("draft") // "draft", "processed", "paid", "cancelled"
+  
+  // Days calculation
+  workingDays     Int      @default(0)
+  presentDays     Int      @default(0)
+  leaveDays       Int      @default(0)
+  lopDays         Int      @default(0) // Loss of Pay days
+  
+  company         Company  @relation(fields: [companyId], references: [id])
+  companyId       String   @db.ObjectId
+  
+  payslip         Payslip?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([employeeId, payrollMonth, payrollYear])
+  @@index([employeeId])
+  @@index([companyId])
+  @@index([payrollMonth, payrollYear])
+  @@index([status])
+  @@index([salaryStructureId])
+}
+
+// Payslip generation and storage
+model Payslip {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  payroll         Payroll  @relation(fields: [payrollId], references: [id])
+  payrollId       String   @unique @db.ObjectId
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  employeeId      String   @db.ObjectId
+  
+  payslipNumber   String   @unique // Unique payslip number
+  
+  // Employee details at the time of payslip generation
+  employeeName    String
+  employeeId_     String   // Employee ID/Badge number
+  designation     String
+  department      String?
+  
+  // Bank details
+  bankAccount     String?
+  bankName        String?
+  
+  // Payslip content (JSON format for flexibility)
+  payslipData     Json     // Complete payslip data in JSON
+  
+  // Generation details
+  generatedAt     DateTime @default(now())
+  generatedBy     String?  @db.ObjectId // User who generated
+  
+  // Email and download tracking
+  emailSent       Boolean  @default(false)
+  emailSentAt     DateTime?
+  downloadCount   Int      @default(0)
+  lastDownloadAt  DateTime?
+  
+  company         Company  @relation(fields: [companyId], references: [id])
+  companyId       String   @db.ObjectId
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([employeeId])
+  @@index([companyId])
+  @@index([generatedAt])
+}
+
+// Tax calculations and TDS records
+model TaxCalculation {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  employeeId      String   @db.ObjectId
+  
+  financialYear   String   // "2024-25"
+  
+  // Income details
+  grossIncome     Float
+  standardDeduction Float  @default(50000) // Current standard deduction
+  hra_exemption   Float    @default(0)
+  section80C      Float    @default(0) // 80C deductions
+  section80D      Float    @default(0) // Medical insurance
+  otherDeductions Float    @default(0)
+  
+  // Tax calculation
+  taxableIncome   Float
+  incomeTax       Float
+  educationCess   Float    // 4% on income tax
+  totalTax        Float
+  
+  // TDS details
+  tdsDeducted     Float    @default(0)
+  tdsBalance      Float    @default(0) // Remaining tax to be paid/refund
+  
+  company         Company  @relation(fields: [companyId], references: [id])
+  companyId       String   @db.ObjectId
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([employeeId, financialYear])
+  @@index([employeeId])
+  @@index([companyId])
+  @@index([financialYear])
+}
+
+// Tax declarations submitted by employees
+model TaxDeclaration {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee              Employee @relation(fields: [employeeId], references: [id])
+  employeeId            String   @db.ObjectId
+
+  financialYear         String   // "2024-25"
+
+  // Section 80C deductions (max 1.5 lakh)
+  section80C            Float    @default(0)
+
+  // Section 80D - Medical insurance (max 75k)
+  section80D            Float    @default(0)
+
+  // Section 80E - Education loan interest
+  section80E            Float    @default(0)
+
+  // Section 80G - Donations
+  section80G            Float    @default(0)
+
+  // Section 80TTA - Savings account interest (max 10k)
+  section80TTA          Float    @default(0)
+
+  // Section 80TTB - Senior citizen savings interest (max 50k)
+  section80TTB          Float    @default(0)
+
+  // House rent and home loan
+  houseRentPaid         Float    @default(0)
+  homeLoanInterest      Float    @default(0)
+
+  // Other income and previous employer details
+  otherIncome           Float    @default(0)
+  previousEmployerSalary Float   @default(0)
+  previousEmployerTds   Float    @default(0)
+
+  // Tax regime choice
+  taxRegime             String   @default("new") // "old" or "new"
+
+  // Additional structured data
+  declarationData       Json?
+
+  // Document attachments
+  documents             String[] // Document IDs or URLs
+
+  // Status and approval workflow
+  status                String   @default("draft") // "draft", "submitted", "approved", "rejected"
+  submittedAt           DateTime?
+  approvedAt            DateTime?
+  approvedBy            String?  @db.ObjectId
+  rejectionReason       String?
+
+  company               Company  @relation(fields: [companyId], references: [id])
+  companyId             String   @db.ObjectId
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([employeeId, financialYear])
+  @@index([employeeId])
+  @@index([companyId])
+  @@index([financialYear])
+  @@index([status])
+}
+
+// Form 16 generation and storage
+model Form16 {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  employeeId      String   @db.ObjectId
+  
+  financialYear   String   // "2024-25"
+  
+  // Employer details
+  employerTAN     String?  // Tax Deduction Account Number
+  employerPAN     String?  // Permanent Account Number
+  
+  // Employee details
+  employeePAN     String?
+  
+  // Form 16 data (JSON format)
+  form16Data      Json     // Complete Form 16 data
+  
+  // Generation details
+  generatedAt     DateTime @default(now())
+  generatedBy     String?  @db.ObjectId
+  
+  // Download tracking
+  downloadCount   Int      @default(0)
+  lastDownloadAt  DateTime?
+  
+  company         Company  @relation(fields: [companyId], references: [id])
+  companyId       String   @db.ObjectId
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([employeeId, financialYear])
+  @@index([employeeId])
+  @@index([companyId])
+  @@index([financialYear])
+}
+
+// Bank file generation for salary transfer
+model BankFile {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  fileName        String   // Generated file name
+  fileType        String   // "NEFT", "RTGS", "IMPS", etc.
+  payrollMonth    Int
+  payrollYear     Int
+  
+  // File details
+  totalEmployees  Int
+  totalAmount     Float
+  fileContent     String   // Base64 encoded file content
+  
+  // Processing details
+  generatedAt     DateTime @default(now())
+  generatedBy     String?  @db.ObjectId
+  processedAt     DateTime?
+  status          String   @default("generated") // "generated", "sent", "processed", "failed"
+  
+  // Bank details
+  bankName        String?
+  processingDate  DateTime?
+  
+  company         Company  @relation(fields: [companyId], references: [id])
+  companyId       String   @db.ObjectId
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([companyId])
+  @@index([payrollMonth, payrollYear])
+  @@index([status])
+}
+
+// ============================================================================
+// RECRUITMENT & ONBOARDING SYSTEM MODELS
+// ============================================================================
+
+// Job Posting Management
+model JobPosting {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String   // Job title
+  description     String   // Job description
+  requirements    String   // Job requirements
+  responsibilities String  // Job responsibilities
+
+  // Job Details
+  department      Department? @relation(fields: [departmentId], references: [id])
+  departmentId    String?     @db.ObjectId
+  location        Location?   @relation(fields: [locationId], references: [id])
+  locationId      String?     @db.ObjectId
+  jobType         String      // "full_time", "part_time", "contract", "internship"
+  experienceLevel String      // "entry", "mid", "senior", "executive"
+
+  // Compensation
+  salaryMin       Float?      // Minimum salary
+  salaryMax       Float?      // Maximum salary
+  currency        String      @default("INR")
+  benefits        String[]    // Array of benefits
+
+  // Application Settings
+  applicationDeadline DateTime?
+  maxApplications     Int?        // Maximum number of applications
+  isActive            Boolean     @default(true)
+  isPublished         Boolean     @default(false)
+  publishedAt         DateTime?
+
+  // SEO and External Posting
+  slug            String?     // URL slug for public posting
+  metaDescription String?     // SEO meta description
+  keywords        String[]    // Keywords for search
+  externalJobBoards String[]  // Job boards where posted
+
+  // Approval Workflow
+  status          String      @default("draft") // "draft", "pending_approval", "approved", "published", "closed", "cancelled"
+  approvedBy      String?     @db.ObjectId
+  approvedAt      DateTime?
+
+  // Analytics
+  viewCount       Int         @default(0)
+  applicationCount Int        @default(0)
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+
+  // Relations
+  applications    JobApplication[]
+  interviews      Interview[]
+  offers          Offer[]
+
+  createdBy       String?     @db.ObjectId // User who created
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([locationId])
+  @@index([status])
+  @@index([isActive])
+  @@index([publishedAt])
+  @@index([slug])
+}
+
+// Candidate Management
+model Candidate {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName       String
+  lastName        String
+  email           String
+  phone           String?
+
+  // Personal Information
+  dateOfBirth     DateTime?
+  gender          String?
+  nationality     String?
+  currentLocation String?
+
+  // Contact Information
+  address         CandidateAddress?
+  linkedinUrl     String?
+  portfolioUrl    String?
+  githubUrl       String?
+
+  // Professional Information
+  currentCompany  String?
+  currentPosition String?
+  totalExperience Float?      // Years of experience
+  currentSalary   Float?
+  expectedSalary  Float?
+  noticePeriod    Int?        // Notice period in days
+
+  // Documents
+  resumeUrl       String?
+  coverLetterUrl  String?
+  portfolioUrl_   String?
+
+  // Skills and Education
+  skills          String[]
+  education       CandidateEducation[]
+  experience      CandidateExperience[]
+  certifications  CandidateCertification[]
+
+  // Source and Tracking
+  source          String?     // "job_board", "referral", "social_media", "company_website", "recruiter"
+  referredBy      String?     // Employee ID if referred
+  tags            String[]    // Custom tags
+
+  // Status and Notes
+  status          String      @default("new") // "new", "screening", "interviewing", "offered", "hired", "rejected", "withdrawn"
+  overallRating   Float?      // Overall candidate rating (1-10)
+  notes           String?     // Internal notes
+
+  // Privacy and Consent
+  dataConsent     Boolean     @default(false)
+  marketingConsent Boolean    @default(false)
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+
+  // Relations
+  applications    JobApplication[]
+  interviews      Interview[]
+  offers          Offer[]
+  evaluations     CandidateEvaluation[]
+  backgroundChecks BackgroundCheck[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([email, companyId])
+  @@index([companyId])
+  @@index([status])
+  @@index([source])
+  @@index([email])
+}
+
+// Job Application Tracking
+model JobApplication {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  jobPosting      JobPosting  @relation(fields: [jobPostingId], references: [id])
+  jobPostingId    String      @db.ObjectId
+  candidate       Candidate   @relation(fields: [candidateId], references: [id])
+  candidateId     String      @db.ObjectId
+
+  // Application Details
+  appliedAt       DateTime    @default(now())
+  source          String?     // How they found the job
+  coverLetter     String?     // Cover letter text
+  customAnswers   Json?       // Answers to custom questions
+
+  // Application Status
+  status          String      @default("applied") // "applied", "screening", "shortlisted", "interviewing", "offered", "hired", "rejected", "withdrawn"
+  stage           String      @default("application") // Current stage in pipeline
+
+  // Screening
+  screeningScore  Float?      // Automated screening score
+  screeningNotes  String?     // Screening notes
+  screenedBy      String?     @db.ObjectId
+  screenedAt      DateTime?
+
+  // Rejection/Withdrawal
+  rejectionReason String?
+  rejectedBy      String?     @db.ObjectId
+  rejectedAt      DateTime?
+  withdrawnReason String?
+  withdrawnAt     DateTime?
+
+  // Communication
+  lastContactDate DateTime?
+  nextFollowUpDate DateTime?
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+
+  // Relations
+  interviews      Interview[]
+  evaluations     CandidateEvaluation[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([jobPostingId, candidateId])
+  @@index([companyId])
+  @@index([jobPostingId])
+  @@index([candidateId])
+  @@index([status])
+  @@index([stage])
+  @@index([appliedAt])
+}
+
+// Interview Management
+model Interview {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  jobPosting      JobPosting  @relation(fields: [jobPostingId], references: [id])
+  jobPostingId    String      @db.ObjectId
+  candidate       Candidate   @relation(fields: [candidateId], references: [id])
+  candidateId     String      @db.ObjectId
+  application     JobApplication? @relation(fields: [applicationId], references: [id])
+  applicationId   String?     @db.ObjectId
+
+  // Interview Details
+  title           String      // Interview title/round name
+  type            String      // "phone", "video", "in_person", "technical", "hr", "panel", "final"
+  round           Int         @default(1) // Interview round number
+  duration        Int?        // Duration in minutes
+
+  // Scheduling
+  scheduledAt     DateTime
+  endTime         DateTime?
+  timezone        String?
+  location        String?     // Physical location or meeting link
+  meetingLink     String?     // Video call link
+
+  // Interview Panel
+  interviewers    InterviewPanel[]
+  primaryInterviewer String?  @db.ObjectId // Main interviewer
+
+  // Status and Results
+  status          String      @default("scheduled") // "scheduled", "in_progress", "completed", "cancelled", "no_show"
+  overallRating   Float?      // Overall interview rating
+  recommendation  String?     // "hire", "no_hire", "maybe", "next_round"
+
+  // Feedback and Notes
+  feedback        String?     // Interview feedback
+  strengths       String?     // Candidate strengths
+  concerns        String?     // Areas of concern
+  technicalNotes  String?     // Technical assessment notes
+
+  // Logistics
+  reminderSent    Boolean     @default(false)
+  feedbackSubmitted Boolean   @default(false)
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+
+  // Relations
+  evaluations     CandidateEvaluation[]
+
+  createdBy       String?     @db.ObjectId
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([companyId])
+  @@index([jobPostingId])
+  @@index([candidateId])
+  @@index([applicationId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@index([type])
+}
+
+// Interview Panel Members
+model InterviewPanel {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  interview       Interview   @relation(fields: [interviewId], references: [id])
+  interviewId     String      @db.ObjectId
+
+  // Interviewer Details
+  interviewerId   String      @db.ObjectId // Employee ID
+  interviewerName String
+  interviewerEmail String
+  role            String?     // "primary", "secondary", "observer", "technical", "hr"
+
+  // Participation
+  isRequired      Boolean     @default(true)
+  hasAccepted     Boolean     @default(false)
+  responseDate    DateTime?
+
+  // Feedback
+  rating          Float?      // Individual rating from this interviewer
+  feedback        String?     // Individual feedback
+  recommendation  String?     // Individual recommendation
+  feedbackSubmitted Boolean   @default(false)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([interviewId])
+  @@index([interviewerId])
+}
+
+// Candidate Evaluation and Scoring
+model CandidateEvaluation {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  candidate       Candidate   @relation(fields: [candidateId], references: [id])
+  candidateId     String      @db.ObjectId
+  application     JobApplication? @relation(fields: [applicationId], references: [id])
+  applicationId   String?     @db.ObjectId
+  interview       Interview?  @relation(fields: [interviewId], references: [id])
+  interviewId     String?     @db.ObjectId
+
+  // Evaluation Details
+  evaluationType  String      // "resume_screening", "phone_screening", "technical", "behavioral", "final"
+  evaluatorId     String      @db.ObjectId // Employee who evaluated
+  evaluatorName   String
+
+  // Scoring Criteria
+  technicalSkills Float?      // Score for technical skills (1-10)
+  communication   Float?      // Communication skills score
+  problemSolving  Float?      // Problem solving ability
+  culturalFit     Float?      // Cultural fit score
+  experience      Float?      // Relevant experience score
+  motivation      Float?      // Motivation and enthusiasm
+
+  // Overall Assessment
+  overallScore    Float?      // Overall score (1-10)
+  recommendation  String?     // "strong_hire", "hire", "maybe", "no_hire", "strong_no_hire"
+
+  // Detailed Feedback
+  strengths       String?     // Key strengths
+  weaknesses      String?     // Areas for improvement
+  comments        String?     // Additional comments
+
+  // Custom Criteria (JSON for flexibility)
+  customScores    Json?       // Custom scoring criteria
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([applicationId])
+  @@index([interviewId])
+  @@index([evaluatorId])
+  @@index([evaluationType])
+}
+
+// Offer Management
+model Offer {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  candidate       Candidate   @relation(fields: [candidateId], references: [id])
+  candidateId     String      @db.ObjectId
+  jobPosting      JobPosting? @relation(fields: [jobPostingId], references: [id])
+  jobPostingId    String?     @db.ObjectId
+
+  // Offer Details
+  position        String      // Job position offered
+  department      String?     // Department
+  location        String?     // Work location
+  startDate       DateTime?   // Proposed start date
+
+  // Compensation Package
+  baseSalary      Float       // Base salary offered
+  currency        String      @default("INR")
+  salaryFrequency String      @default("monthly") // "monthly", "annually"
+
+  // Additional Compensation
+  bonus           Float?      // Signing bonus
+  equity          String?     // Equity details
+  benefits        String[]    // Benefits offered
+
+  // Employment Terms
+  employmentType  String      // "full_time", "part_time", "contract"
+  probationPeriod Int?        // Probation period in months
+  noticePeriod    Int?        // Notice period in days
+
+  // Offer Status
+  status          String      @default("draft") // "draft", "pending_approval", "sent", "accepted", "declined", "expired", "withdrawn"
+  sentAt          DateTime?
+  responseDeadline DateTime?
+  respondedAt     DateTime?
+
+  // Approval Workflow
+  approvedBy      String?     @db.ObjectId
+  approvedAt      DateTime?
+  approvalComments String?
+
+  // Negotiation
+  negotiationRounds Int       @default(0)
+  negotiationHistory Json?    // History of negotiations
+
+  // Documents
+  offerLetterUrl  String?     // Generated offer letter
+  contractUrl     String?     // Employment contract
+
+  // Response Details
+  candidateResponse String?   // Acceptance/decline reason
+  counterOffer    Json?       // Counter offer details
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+
+  createdBy       String?     @db.ObjectId
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([jobPostingId])
+  @@index([status])
+  @@index([sentAt])
+  @@index([responseDeadline])
+}
+
+// Onboarding Workflow Management
+model OnboardingWorkflow {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  name            String      // Workflow name
+  description     String?     // Workflow description
+
+  // Workflow Configuration
+  isDefault       Boolean     @default(false)
+  isActive        Boolean     @default(true)
+  department      String?     // Department-specific workflow
+  position        String?     // Position-specific workflow
+
+  // Workflow Steps
+  tasks           OnboardingTask[]
+
+  // Duration and Timeline
+  estimatedDays   Int?        // Estimated completion days
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+
+  // Usage tracking
+  instances       OnboardingInstance[]
+
+  createdBy       String?     @db.ObjectId
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([companyId])
+  @@index([isDefault])
+  @@index([isActive])
+  @@index([department])
+}
+
+// Onboarding Task Templates
+model OnboardingTask {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  workflow        OnboardingWorkflow @relation(fields: [workflowId], references: [id])
+  workflowId      String      @db.ObjectId
+
+  // Task Details
+  title           String      // Task title
+  description     String?     // Task description
+  instructions    String?     // Detailed instructions
+
+  // Task Configuration
+  category        String      // "documentation", "equipment", "training", "introduction", "system_access"
+  priority        String      @default("medium") // "low", "medium", "high", "critical"
+  estimatedHours  Float?      // Estimated time to complete
+
+  // Dependencies and Sequencing
+  orderIndex      Int         // Order in workflow
+  dependencies    String[]    @db.ObjectId // Task IDs this depends on
+
+  // Assignment
+  assigneeType    String      // "hr", "manager", "it", "employee", "buddy"
+  assigneeRole    String?     // Specific role if needed
+
+  // Completion Requirements
+  requiresApproval Boolean    @default(false)
+  requiresDocument Boolean    @default(false)
+  documentTypes   String[]    // Required document types
+
+  // Automation
+  isAutomated     Boolean     @default(false)
+  automationConfig Json?      // Automation configuration
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([workflowId])
+  @@index([category])
+  @@index([orderIndex])
+}
+
+// Onboarding Instance (Per Employee)
+model OnboardingInstance {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  workflow        OnboardingWorkflow @relation(fields: [workflowId], references: [id])
+  workflowId      String      @db.ObjectId
+  employee        Employee    @relation(fields: [employeeId], references: [id])
+  employeeId      String      @db.ObjectId
+
+  // Instance Details
+  startDate       DateTime    @default(now())
+  expectedEndDate DateTime?
+  actualEndDate   DateTime?
+
+  // Progress Tracking
+  status          String      @default("in_progress") // "not_started", "in_progress", "completed", "on_hold"
+  completionPercentage Float  @default(0)
+
+  // Task Instances
+  taskInstances   OnboardingTaskInstance[]
+
+  // Assignment
+  hrAssignee      String?     @db.ObjectId // HR person responsible
+  managerAssignee String?     @db.ObjectId // Manager responsible
+  buddyAssignee   String?     @db.ObjectId // Buddy/mentor assigned
+
+  // Notes and Communication
+  notes           String?     // General notes
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([companyId])
+  @@index([workflowId])
+  @@index([employeeId])
+  @@index([status])
+}
+
+// Individual Task Instance
+model OnboardingTaskInstance {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  instance        OnboardingInstance @relation(fields: [instanceId], references: [id])
+  instanceId      String      @db.ObjectId
+
+  // Task Reference
+  taskTitle       String      // Copy of task title
+  taskDescription String?     // Copy of task description
+  taskCategory    String      // Copy of task category
+
+  // Assignment
+  assigneeId      String?     @db.ObjectId // Actual assignee
+  assigneeName    String?     // Assignee name
+  assigneeType    String      // Type of assignee
+
+  // Status and Progress
+  status          String      @default("pending") // "pending", "in_progress", "completed", "skipped", "blocked"
+  startedAt       DateTime?
+  completedAt     DateTime?
+  dueDate         DateTime?
+
+  // Completion Details
+  completionNotes String?     // Notes on completion
+  documentsUploaded String[]  // Uploaded document URLs
+
+  // Approval
+  requiresApproval Boolean    @default(false)
+  approvedBy      String?     @db.ObjectId
+  approvedAt      DateTime?
+  approvalComments String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([instanceId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// Background Verification
+model BackgroundCheck {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  candidate       Candidate   @relation(fields: [candidateId], references: [id])
+  candidateId     String      @db.ObjectId
+
+  // Check Details
+  checkType       String      // "employment", "education", "criminal", "reference", "identity", "address"
+  vendor          String?     // Verification vendor
+  referenceNumber String?     // Vendor reference number
+
+  // Status and Results
+  status          String      @default("initiated") // "initiated", "in_progress", "completed", "failed", "cancelled"
+  result          String?     // "clear", "discrepancy", "unable_to_verify", "adverse"
+
+  // Details
+  requestedAt     DateTime    @default(now())
+  completedAt     DateTime?
+  expectedDate    DateTime?
+
+  // Verification Details
+  verificationData Json?      // Detailed verification results
+  documents       String[]    // Supporting documents
+
+  // Comments and Notes
+  vendorComments  String?     // Comments from verification vendor
+  internalNotes   String?     // Internal HR notes
+
+  // Cost
+  cost            Float?      // Cost of verification
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+
+  initiatedBy     String?     @db.ObjectId
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([checkType])
+  @@index([status])
+  @@index([requestedAt])
+}
+
+// Recruitment Analytics and Reporting
+model RecruitmentMetrics {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Time Period
+  periodType      String      // "daily", "weekly", "monthly", "quarterly", "yearly"
+  periodStart     DateTime
+  periodEnd       DateTime
+
+  // Job Posting Metrics
+  jobPostingsCreated Int      @default(0)
+  jobPostingsPublished Int    @default(0)
+  jobPostingViews    Int      @default(0)
+
+  // Application Metrics
+  totalApplications  Int      @default(0)
+  qualifiedApplications Int   @default(0)
+  applicationConversionRate Float @default(0)
+
+  // Interview Metrics
+  interviewsScheduled Int     @default(0)
+  interviewsCompleted Int     @default(0)
+  interviewNoShowRate Float   @default(0)
+
+  // Hiring Metrics
+  offersExtended     Int      @default(0)
+  offersAccepted     Int      @default(0)
+  offerAcceptanceRate Float   @default(0)
+  totalHires         Int      @default(0)
+
+  // Time Metrics
+  averageTimeToHire  Float?   // Days from application to hire
+  averageTimeToInterview Float? // Days from application to first interview
+  averageTimeToOffer Float?   // Days from application to offer
+
+  // Cost Metrics
+  totalRecruitmentCost Float? // Total cost for the period
+  costPerHire        Float?   // Average cost per hire
+
+  // Source Effectiveness
+  sourceMetrics      Json?    // Breakdown by source
+
+  // Quality Metrics
+  averageCandidateRating Float? // Average candidate quality rating
+  hiringManagerSatisfaction Float? // Hiring manager satisfaction score
+
+  company            Company  @relation(fields: [companyId], references: [id])
+  companyId          String   @db.ObjectId
+
+  generatedAt        DateTime @default(now())
+
+  @@unique([companyId, periodType, periodStart])
+  @@index([companyId])
+  @@index([periodType])
+  @@index([periodStart])
+}
+
+// Embedded Types for Recruitment System
+type CandidateAddress {
+  street     String?
+  city       String?
+  state      String?
+  zipCode    String?
+  country    String?
+}
+
+type CandidateEducation {
+  id          String
+  institution String
+  degree      String
+  fieldOfStudy String?
+  startDate   DateTime?
+  endDate     DateTime?
+  gpa         String?
+  description String?
+}
+
+type CandidateExperience {
+  id          String
+  company     String
+  position    String
+  startDate   DateTime?
+  endDate     DateTime?
+  isCurrent   Boolean
+  description String?
+  skills      String[]
+}
+
+type CandidateCertification {
+  id           String
+  name         String
+  issuingOrg   String
+  issueDate    DateTime?
+  expiryDate   DateTime?
+  credentialId String?
+  description  String?
 }

@@ -55,11 +55,42 @@ export async function createNotification(params: CreateNotificationParams) {
       link: params.actionUrl, // Store actionUrl in link field
     };
 
-    // Only add user connection if recipientId is provided
+    // Handle recipient ID based on type
     if (params.recipientId) {
+      let userId = params.recipientId;
+
+      // If recipient is an employee, find the corresponding user
+      if (params.recipientType === 'employee') {
+        const employee = await prisma.employee.findUnique({
+          where: { id: params.recipientId },
+          select: { email: true, companyId: true }
+        });
+
+        if (employee) {
+          // Find the user with the same email in the same company
+          const user = await prisma.user.findFirst({
+            where: {
+              email: employee.email,
+              companyId: employee.companyId
+            },
+            select: { id: true }
+          });
+
+          if (user) {
+            userId = user.id;
+          } else {
+            console.warn(`No user found for employee ${params.recipientId} with email ${employee.email}`);
+            return null; // Skip notification if no corresponding user found
+          }
+        } else {
+          console.warn(`Employee ${params.recipientId} not found`);
+          return null; // Skip notification if employee not found
+        }
+      }
+
       notificationData.user = {
         connect: {
-          id: params.recipientId,
+          id: userId,
         },
       };
     }
@@ -163,8 +194,10 @@ export async function createDepartmentNotification(
       where: {
         companyId,
         department: {
-          equals: department,
-          mode: 'insensitive',
+          name: {
+            equals: department,
+            mode: 'insensitive',
+          }
         },
       },
       select: {
@@ -378,6 +411,100 @@ export async function createBudgetNotification(
     });
   } catch (error) {
     console.error('Error creating budget notification:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a notification for client portal access
+ */
+export async function createClientPortalAccessNotification(
+  companyId: string,
+  projectId: string,
+  projectName: string,
+  clientEmail: string,
+  actionType: 'access_granted' | 'access_revoked' | 'access_used',
+  actorId: string,
+  actorName: string
+) {
+  try {
+    let title = '';
+    let message = '';
+    const actionUrl = `/projects?id=${projectId}`;
+
+    switch (actionType) {
+      case 'access_granted':
+        title = 'Client Portal Access Granted';
+        message = `${actorName} granted client portal access to ${clientEmail} for project "${projectName}"`;
+        break;
+      case 'access_revoked':
+        title = 'Client Portal Access Revoked';
+        message = `${actorName} revoked client portal access for ${clientEmail} from project "${projectName}"`;
+        break;
+      case 'access_used':
+        title = 'Client Portal Accessed';
+        message = `Client ${clientEmail} accessed the portal for project "${projectName}"`;
+        break;
+    }
+
+    return createNotification({
+      title,
+      message,
+      type: 'info',
+      category: 'project',
+      priority: actionType === 'access_used' ? 'normal' : 'high',
+      isActionRequired: false,
+      actionUrl,
+      senderId: actorId,
+      senderType: 'user',
+      senderName: actorName,
+      relatedItemId: projectId,
+      relatedItemType: 'project',
+      actionData: { clientEmail, actionType },
+      companyId,
+    });
+  } catch (error) {
+    console.error('Error creating client portal access notification:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a notification for project report generation
+ */
+export async function createProjectReportNotification(
+  companyId: string,
+  projectId: string,
+  projectName: string,
+  reportType: string,
+  recipients: string[],
+  actorId: string,
+  actorName: string,
+  isAutomatic: boolean = false
+) {
+  try {
+    const title = isAutomatic ? 'Automated Project Report Sent' : 'Project Report Generated';
+    const message = `${isAutomatic ? 'Automated' : actorName} ${reportType} report sent to ${recipients.length} recipient(s) for project "${projectName}"`;
+    const actionUrl = `/projects?id=${projectId}`;
+
+    return createNotification({
+      title,
+      message,
+      type: 'success',
+      category: 'project',
+      priority: 'normal',
+      isActionRequired: false,
+      actionUrl,
+      senderId: actorId,
+      senderType: isAutomatic ? 'system' : 'user',
+      senderName: isAutomatic ? 'System' : actorName,
+      relatedItemId: projectId,
+      relatedItemType: 'project',
+      actionData: { reportType, recipients, isAutomatic },
+      companyId,
+    });
+  } catch (error) {
+    console.error('Error creating project report notification:', error);
     throw error;
   }
 }

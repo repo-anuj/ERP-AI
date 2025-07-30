@@ -89,7 +89,7 @@ export function BudgetAlerts({ threshold = 90 }: BudgetAlertsProps) {
   };
 
   const handleViewBudget = (budgetId: string) => {
-    router.push(`/dashboard/finance/budgets?id=${budgetId}`);
+    window.location.href = `/dashboard/finance/budgets?id=${budgetId}`;
   };
 
   const getSeverityBadge = (severity: string) => {

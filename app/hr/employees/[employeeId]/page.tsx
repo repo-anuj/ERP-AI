@@ -31,6 +31,11 @@ import {
 import { formatDate } from '@/lib/utils';
 import { EmployeeIdProofs } from '@/components/hr/employee-id-proofs';
 import { EmployeeDocuments } from '@/components/hr/employee-documents';
+import { EmployeeEducation } from '@/components/hr/employee-education';
+import { EmployeeCertifications } from '@/components/hr/employee-certifications';
+import { EmployeeRewardDashboard } from '@/components/hr/employee-reward-dashboard';
+import { ManualRewardAward } from '@/components/hr/manual-reward-award';
+import { EmployeeLeaveApplication } from '@/components/hr/employee-leave-application';
 import { EnhancedEditEmployeeModal } from '@/components/hr/enhanced-edit-employee-modal';
 
 interface Employee {
@@ -40,7 +45,10 @@ interface Employee {
   email: string;
   phone?: string;
   position: string;
-  department: string;
+  department?: {
+    id: string;
+    name: string;
+  } | string;
   startDate: string;
   salary?: number;
   status: string;
@@ -187,9 +195,9 @@ export default function EmployeeProfilePage() {
             <p className="text-sm text-muted-foreground">
               The employee you're looking for doesn't exist or you don't have permission to view it.
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => router.push('/hr')}
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = '/hr'}
               className="mt-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -239,10 +247,10 @@ export default function EmployeeProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
-            onClick={() => router.push('/hr')}
+            onClick={() => window.location.href = '/hr'}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to HR
@@ -252,7 +260,7 @@ export default function EmployeeProfilePage() {
               {employee.firstName} {employee.lastName}
             </h2>
             <p className="text-muted-foreground">
-              {employee.position} • {employee.department}
+              {employee.position} • {typeof employee.department === 'string' ? employee.department : employee.department?.name || 'No Department'}
             </p>
           </div>
         </div>
@@ -297,7 +305,7 @@ export default function EmployeeProfilePage() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Building className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{employee.department}</span>
+                    <span className="text-sm">{typeof employee.department === 'string' ? employee.department : employee.department?.name || 'No Department'}</span>
                   </div>
                   {employee.employeeId && (
                     <div className="flex items-center space-x-2">
@@ -322,12 +330,15 @@ export default function EmployeeProfilePage() {
 
       {/* Detailed Information Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
+          <TabsTrigger value="rewards">Rewards</TabsTrigger>
+          <TabsTrigger value="leave">Leave</TabsTrigger>
           <TabsTrigger value="education">Education</TabsTrigger>
+          <TabsTrigger value="certifications">Certifications</TabsTrigger>
           <TabsTrigger value="id-proofs">ID Proofs</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
         </TabsList>
@@ -663,93 +674,48 @@ export default function EmployeeProfilePage() {
           </Card>
         </TabsContent>
 
+        {/* Rewards Tab */}
+        <TabsContent value="rewards" className="space-y-4">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-medium">Employee Rewards</h3>
+              <p className="text-muted-foreground">
+                View {employee.firstName}'s reward progress and award manual rewards
+              </p>
+            </div>
+            <ManualRewardAward
+              employeeId={employee.id}
+              employeeName={`${employee.firstName} ${employee.lastName}`}
+              onRewardAwarded={() => {
+                // Refresh the page or trigger a refresh of the reward dashboard
+                window.location.reload();
+              }}
+            />
+          </div>
+          <EmployeeRewardDashboard employeeId={employee.id} />
+        </TabsContent>
+
+        {/* Leave Tab */}
+        <TabsContent value="leave" className="space-y-4">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-medium">Employee Leave Management</h3>
+              <p className="text-muted-foreground">
+                Manage {employee.firstName}'s leave applications and balances
+              </p>
+            </div>
+          </div>
+          <EmployeeLeaveApplication employeeId={employee.id} />
+        </TabsContent>
+
         {/* Education Tab */}
         <TabsContent value="education" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Education */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <GraduationCap className="h-5 w-5" />
-                  <span>Education</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {employee.education && employee.education.length > 0 ? (
-                  <div className="space-y-4">
-                    {employee.education.map((edu) => (
-                      <div key={edu.id} className="border rounded-lg p-4">
-                        <h4 className="font-medium">{edu.degree}</h4>
-                        <p className="text-sm text-muted-foreground">{edu.institution}</p>
-                        {edu.fieldOfStudy && (
-                          <p className="text-sm">Field: {edu.fieldOfStudy}</p>
-                        )}
-                        <div className="flex items-center justify-between text-sm text-muted-foreground mt-2">
-                          {edu.startDate && edu.endDate && (
-                            <span>
-                              {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
-                            </span>
-                          )}
-                          {edu.gpa && <span>GPA: {edu.gpa}</span>}
-                        </div>
-                        {edu.description && (
-                          <p className="text-sm text-muted-foreground mt-2">{edu.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No education records</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <EmployeeEducation employeeId={employee.id} />
+        </TabsContent>
 
-            {/* Certifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Award className="h-5 w-5" />
-                  <span>Certifications</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {employee.certifications && employee.certifications.length > 0 ? (
-                  <div className="space-y-4">
-                    {employee.certifications.map((cert) => (
-                      <div key={cert.id} className="border rounded-lg p-4">
-                        <h4 className="font-medium">{cert.name}</h4>
-                        <p className="text-sm text-muted-foreground">{cert.issuingOrg}</p>
-                        {cert.credentialId && (
-                          <p className="text-sm">ID: {cert.credentialId}</p>
-                        )}
-                        <div className="flex items-center justify-between text-sm text-muted-foreground mt-2">
-                          {cert.issueDate && (
-                            <span>Issued: {formatDate(cert.issueDate)}</span>
-                          )}
-                          {cert.expiryDate && (
-                            <span className={new Date(cert.expiryDate) < new Date() ? 'text-red-500' : ''}>
-                              Expires: {formatDate(cert.expiryDate)}
-                            </span>
-                          )}
-                        </div>
-                        {cert.description && (
-                          <p className="text-sm text-muted-foreground mt-2">{cert.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Award className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No certifications</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+        {/* Certifications Tab */}
+        <TabsContent value="certifications" className="space-y-4">
+          <EmployeeCertifications employeeId={employee.id} />
         </TabsContent>
 
         {/* ID Proofs Tab */}
@@ -765,7 +731,12 @@ export default function EmployeeProfilePage() {
 
       {/* Edit Modal */}
       <EnhancedEditEmployeeModal
-        employee={employee}
+        employee={{
+          ...employee,
+          department: typeof employee.department === 'string'
+            ? { id: '', name: employee.department }
+            : employee.department
+        }}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSuccess={handleEditSuccess}

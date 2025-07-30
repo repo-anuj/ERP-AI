@@ -114,7 +114,7 @@ export default function TestApprovalPage() {
   };
 
   // Approve a task
-  const handleApprove = async (taskId: string, comments?: string) => {
+  const handleApprove = async (taskId: string, data: { comments?: string; qualityRating?: number; bonusRecommendation?: boolean; nextActions?: string; notifyStakeholders?: boolean; }) => {
     // In a real app, this would be an API call
     // For demo purposes, we'll just update the local state
     setTasks(tasks.map(task =>
@@ -131,12 +131,12 @@ export default function TestApprovalPage() {
 
     toast({
       title: "Task Approved",
-      description: "The task has been approved successfully.",
+      description: `The task has been approved successfully.${data.comments ? ` Comments: ${data.comments}` : ''}`,
     });
   };
 
   // Reject a task
-  const handleReject = async (taskId: string, comments?: string) => {
+  const handleReject = async (taskId: string, data: { comments: string; rejectionReason: string; requiredChanges?: string; estimatedRevisionTime?: number; scheduleFollowUp?: boolean; followUpDate?: string; }) => {
     // In a real app, this would be an API call
     // For demo purposes, we'll just update the local state
     setTasks(tasks.map(task =>
@@ -147,14 +147,14 @@ export default function TestApprovalPage() {
             approvalStatus: 'rejected',
             approvedByName: 'Manager',
             approvedAt: new Date(),
-            rejectionReason: comments,
+            rejectionReason: data.rejectionReason,
           }
         : task
     ));
 
     toast({
       title: "Task Rejected",
-      description: "The task has been rejected and sent back to the assignee.",
+      description: `The task has been rejected: ${data.rejectionReason}${data.comments ? ` - ${data.comments}` : ''}`,
     });
   };
 

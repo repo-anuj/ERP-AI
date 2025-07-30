@@ -45,7 +45,7 @@ export function withPermission(
 
         // Get permissions based on role and department
         const role = employee.role || 'employee';
-        const department = employee.department || '';
+        const department = employee.departmentId || '';
 
         // Use custom permissions if defined, otherwise use role-based permissions
         userPermissions = employee.permissions && employee.permissions.length > 0

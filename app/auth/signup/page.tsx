@@ -88,7 +88,7 @@ export default function SignUpPage() {
       
       console.log("Redirecting to onboarding...")
       // Redirect to onboarding
-      router.push("/auth/onboarding")
+      window.location.href = "/auth/onboarding"
     } catch (error) {
       console.error("Signup failed:", error)
       toast({

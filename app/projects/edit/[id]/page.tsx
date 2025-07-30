@@ -225,7 +225,7 @@ export default function ProjectEditPage() {
             variant="ghost"
             size="icon"
             className="mr-2"
-            onClick={() => router.push('/projects')}
+            onClick={() => window.location.href = '/projects'}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -244,7 +244,7 @@ export default function ProjectEditPage() {
             variant="ghost"
             size="icon"
             className="mr-2"
-            onClick={() => router.push('/projects')}
+            onClick={() => window.location.href = '/projects'}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -253,7 +253,7 @@ export default function ProjectEditPage() {
         <div className="flex flex-col items-center justify-center h-96">
           <p className="text-muted-foreground">The requested project could not be found.</p>
           <Button
-            onClick={() => router.push('/projects')}
+            onClick={() => window.location.href = '/projects'}
             className="mt-4"
           >
             Return to Projects
@@ -271,7 +271,7 @@ export default function ProjectEditPage() {
             variant="ghost"
             size="icon"
             className="mr-2"
-            onClick={() => router.push('/projects')}
+            onClick={() => window.location.href = '/projects'}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>

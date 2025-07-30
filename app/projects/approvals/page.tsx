@@ -13,81 +13,39 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 
-// Mock data for testing - will be replaced with API calls
-const mockTasks = [
-  {
-    id: '1',
-    name: 'Implement User Authentication',
-    description: 'Add user authentication functionality to the application',
-    status: 'awaiting_approval',
-    priority: 'high',
-    assigneeName: 'John Doe',
-    projectName: 'ERP System',
-    completionPercentage: 100,
-    dueDate: new Date('2023-12-15'),
-    requestedAt: new Date('2023-12-10'),
-  },
-  {
-    id: '2',
-    name: 'Design Dashboard UI',
-    description: 'Create UI design for the main dashboard',
-    status: 'awaiting_approval',
-    priority: 'medium',
-    assigneeName: 'Jane Smith',
-    projectName: 'ERP System',
-    completionPercentage: 100,
-    dueDate: new Date('2023-12-20'),
-    requestedAt: new Date('2023-12-12'),
-  },
-  {
-    id: '3',
-    name: 'Optimize Database Queries',
-    description: 'Improve performance of database queries',
-    status: 'awaiting_approval',
-    priority: 'low',
-    assigneeName: 'Bob Johnson',
-    projectName: 'Inventory Management',
-    completionPercentage: 90,
-    dueDate: new Date('2023-12-25'),
-    requestedAt: new Date('2023-12-14'),
-  },
-];
+interface Task {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  priority: string;
+  assigneeName: string;
+  assigneeId: string;
+  projectName: string;
+  completionPercentage: number;
+  dueDate: Date;
+  requestedAt?: Date;
+  estimatedHours?: number;
+  actualHours?: number;
+  startDate?: Date;
+  notes?: string;
+  businessImpact?: 'low' | 'medium' | 'high' | 'critical';
+  estimatedValue?: number;
+  blockedTasks?: number;
+}
 
-const mockRecentlyApproved = [
-  {
-    id: '4',
-    name: 'Setup CI/CD Pipeline',
-    description: 'Configure continuous integration and deployment',
-    status: 'completed',
-    priority: 'high',
-    assigneeName: 'Alice Williams',
-    projectName: 'ERP System',
-    completionPercentage: 100,
-    dueDate: new Date('2023-12-05'),
-    requestedAt: new Date('2023-12-01'),
-    approvedAt: new Date('2023-12-03'),
-    approvedBy: 'Manager',
-  },
-  {
-    id: '5',
-    name: 'Create API Documentation',
-    description: 'Document all API endpoints',
-    status: 'completed',
-    priority: 'medium',
-    assigneeName: 'Charlie Brown',
-    projectName: 'Inventory Management',
-    completionPercentage: 100,
-    dueDate: new Date('2023-12-10'),
-    requestedAt: new Date('2023-12-05'),
-    approvedAt: new Date('2023-12-07'),
-    approvedBy: 'Manager',
-  },
-];
+interface ApprovedTask extends Task {
+  approvedAt: Date;
+  approvedBy: string;
+  approvedById: string;
+  rejectionReason?: string;
+  approvalStatus: 'approved' | 'rejected';
+}
 
 export default function ApprovalsPage() {
-  const [tasks, setTasks] = useState(mockTasks);
-  const [recentlyApproved, setRecentlyApproved] = useState(mockRecentlyApproved);
-  const [loading, setLoading] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [recentlyApproved, setRecentlyApproved] = useState<ApprovedTask[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
@@ -97,23 +55,78 @@ export default function ApprovalsPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  // Fetch tasks awaiting approval - in a real app, this would be an API call
+  // Fetch tasks awaiting approval and recently approved tasks
   const fetchTasks = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // In a real app, this would be an API call
-      // const response = await fetch('/api/projects/tasks/approval');
-      // const data = await response.json();
-      // setTasks(data.tasks);
+      console.log('[APPROVALS_PAGE] Fetching tasks awaiting approval...');
 
-      // Using mock data for now
-      setTasks(mockTasks);
-      setRecentlyApproved(mockRecentlyApproved);
+      // Fetch pending approval tasks
+      const pendingResponse = await fetch('/api/projects/tasks/approval');
+      if (!pendingResponse.ok) {
+        console.error('[APPROVALS_PAGE] Failed to fetch pending tasks:', pendingResponse.statusText);
+        const errorText = await pendingResponse.text();
+        console.error('[APPROVALS_PAGE] Error details:', errorText);
+        throw new Error(`Failed to fetch pending tasks: ${pendingResponse.statusText}`);
+      }
+      const pendingData = await pendingResponse.json();
+
+      console.log('[APPROVALS_PAGE] Pending tasks received:', pendingData.tasks?.length || 0);
+
+      // Fetch recently approved/rejected tasks
+      const approvedResponse = await fetch('/api/projects/tasks/approval?status=recent');
+      if (!approvedResponse.ok) {
+        console.warn('[APPROVALS_PAGE] Failed to fetch approved tasks:', approvedResponse.statusText);
+        // Continue with empty approved tasks instead of throwing error
+      }
+      const approvedData = approvedResponse.ok ? await approvedResponse.json() : { tasks: [] };
+
+      console.log('[APPROVALS_PAGE] Recently approved tasks received:', approvedData.tasks?.length || 0);
+
+      // Format tasks for the UI
+      const formattedPendingTasks = (pendingData.tasks || []).map((task: any) => ({
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        assigneeName: task.assigneeName,
+        assigneeId: task.assigneeId || '',
+        projectName: task.projectName,
+        completionPercentage: task.completionPercentage || 100,
+        dueDate: new Date(task.dueDate),
+        requestedAt: task.requestedAt ? new Date(task.requestedAt) : new Date(),
+        estimatedHours: task.estimatedHours,
+        actualHours: task.actualHours,
+        startDate: task.startDate ? new Date(task.startDate) : undefined,
+        notes: task.notes,
+        businessImpact: task.businessImpact,
+        estimatedValue: task.estimatedValue,
+        blockedTasks: task.blockedTasks
+      }));
+
+      const formattedApprovedTasks = (approvedData.tasks || []).map((task: any) => ({
+        ...task,
+        dueDate: new Date(task.dueDate),
+        requestedAt: task.requestedAt ? new Date(task.requestedAt) : new Date(),
+        approvedAt: new Date(task.approvedAt),
+        startDate: task.startDate ? new Date(task.startDate) : undefined,
+      }));
+
+      setTasks(formattedPendingTasks);
+      setRecentlyApproved(formattedApprovedTasks);
+
+      console.log('[APPROVALS_PAGE] Tasks updated successfully');
     } catch (error) {
       console.error('Error fetching approval tasks:', error);
       setError('Failed to load tasks awaiting approval. Please try again.');
+      toast({
+        title: 'Error',
+        description: 'Failed to load approval tasks. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -151,38 +164,34 @@ export default function ApprovalsPage() {
   const projectNames = Array.from(new Set(allProjectNames));
 
   // Handle task approval
-  const handleApprove = async (taskId: string, comments?: string) => {
+  const handleApprove = async (taskId: string, data: any) => {
     try {
-      // In a real app, this would be an API call
-      // const response = await fetch('/api/projects/tasks/approval', {
-      //   method: 'PATCH',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     taskId,
-      //     approved: true,
-      //     comments,
-      //   }),
-      // });
+      console.log('[APPROVALS_PAGE] Approving task:', taskId, data);
 
-      // For demo purposes, we'll just update the local state
-      const approvedTask = tasks.find(task => task.id === taskId);
-      if (approvedTask) {
-        // Remove from pending tasks
-        setTasks(tasks.filter(task => task.id !== taskId));
+      const response = await fetch(`/api/projects/tasks/approval`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId,
+          approved: true,
+          comments: data.comments,
+          qualityRating: data.qualityRating,
+          bonusRecommendation: data.bonusRecommendation,
+          nextActions: data.nextActions,
+          notifyStakeholders: data.notifyStakeholders
+        }),
+      });
 
-        // Add to recently approved
-        setRecentlyApproved([
-          {
-            ...approvedTask,
-            status: 'completed',
-            approvedAt: new Date(),
-            approvedBy: 'Manager',
-          },
-          ...recentlyApproved,
-        ]);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve task');
       }
+
+      const result = await response.json();
+      console.log('[APPROVALS_PAGE] Task approved successfully:', result);
+
+      // Refresh the tasks list
+      await fetchTasks();
 
       toast({
         title: 'Task Approved',
@@ -192,30 +201,42 @@ export default function ApprovalsPage() {
       console.error('Error approving task:', error);
       toast({
         title: 'Error',
-        description: 'Failed to approve task. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to approve task. Please try again.',
         variant: 'destructive',
       });
     }
   };
 
   // Handle task rejection
-  const handleReject = async (taskId: string, comments?: string) => {
+  const handleReject = async (taskId: string, data: any) => {
     try {
-      // In a real app, this would be an API call
-      // const response = await fetch('/api/projects/tasks/approval', {
-      //   method: 'PATCH',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     taskId,
-      //     approved: false,
-      //     comments,
-      //   }),
-      // });
+      console.log('[APPROVALS_PAGE] Rejecting task:', taskId, data);
 
-      // For demo purposes, we'll just update the local state
-      setTasks(tasks.filter(task => task.id !== taskId));
+      const response = await fetch(`/api/projects/tasks/approval`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId,
+          approved: false,
+          comments: data.comments,
+          rejectionReason: data.rejectionReason,
+          requiredChanges: data.requiredChanges,
+          estimatedRevisionTime: data.estimatedRevisionTime,
+          scheduleFollowUp: data.scheduleFollowUp,
+          followUpDate: data.followUpDate
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reject task');
+      }
+
+      const result = await response.json();
+      console.log('[APPROVALS_PAGE] Task rejected successfully:', result);
+
+      // Refresh the tasks list
+      await fetchTasks();
 
       toast({
         title: 'Task Rejected',
@@ -225,7 +246,7 @@ export default function ApprovalsPage() {
       console.error('Error rejecting task:', error);
       toast({
         title: 'Error',
-        description: 'Failed to reject task. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to reject task. Please try again.',
         variant: 'destructive',
       });
     }
@@ -240,7 +261,7 @@ export default function ApprovalsPage() {
 
   // View task details
   const viewTaskDetails = (taskId: string) => {
-    router.push(`/projects?taskId=${taskId}`);
+    window.location.href = `/projects?taskId=${taskId}`;
   };
 
   return (
@@ -346,33 +367,82 @@ export default function ApprovalsPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              {/* Header Row */}
+              <div className="grid grid-cols-12 gap-4 p-3 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground">
+                <div className="col-span-3">Task Name</div>
+                <div className="col-span-2">Project</div>
+                <div className="col-span-2">Assignee</div>
+                <div className="col-span-2">Issue Date</div>
+                <div className="col-span-2">Approved Date</div>
+                <div className="col-span-1">Actions</div>
+              </div>
+
+              {/* Task Rows */}
               {filteredRecentlyApproved.map(task => (
-                <div key={task.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-medium">{task.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Project: {task.projectName} • Assigned to: {task.assigneeName}
-                      </p>
+                <div key={task.id} className="grid grid-cols-12 gap-4 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                  <div className="col-span-3">
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <h3 className="font-medium text-sm">{task.name}</h3>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs mt-1 ${
+                            task.approvalStatus === 'approved'
+                              ? 'bg-green-500/10 text-green-600 border-green-500/20'
+                              : 'bg-red-500/10 text-red-600 border-red-500/20'
+                          }`}
+                        >
+                          {task.approvalStatus === 'approved' ? 'Approved' : 'Rejected'}
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
-                      Approved
+                  </div>
+
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium">{task.projectName}</p>
+                    <Badge variant="outline" className={`text-xs mt-1 ${
+                      task.priority === 'high' ? 'border-red-500/20 text-red-600' :
+                      task.priority === 'medium' ? 'border-yellow-500/20 text-yellow-600' :
+                      'border-green-500/20 text-green-600'
+                    }`}>
+                      {task.priority}
                     </Badge>
                   </div>
-                  {task.description && (
-                    <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
-                  )}
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Approved by {task.approvedBy} on {new Date(task.approvedAt).toLocaleDateString()}
+
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium">{task.assigneeName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {task.completionPercentage}% completed
+                    </p>
                   </div>
-                  <div className="mt-3">
+
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium">
+                      {task.requestedAt ? new Date(task.requestedAt).toLocaleDateString() : 'N/A'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {task.requestedAt ? new Date(task.requestedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+                    </p>
+                  </div>
+
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium">
+                      {new Date(task.approvedAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(task.approvedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </p>
+                  </div>
+
+                  <div className="col-span-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => viewTaskDetails(task.id)}
+                      className="h-8 px-2 text-xs"
                     >
-                      View Details
+                      View
                     </Button>
                   </div>
                 </div>

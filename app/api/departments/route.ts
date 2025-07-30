@@ -13,7 +13,11 @@ const departmentSchema = z.object({
   manager: z.string().optional(),
 });
 
-function getDepartmentDescription(deptName: string): string {
+function getDepartmentDescription(deptName: string | null | undefined): string {
+  if (!deptName || typeof deptName !== 'string') {
+    return 'Department operations';
+  }
+
   const descriptions: Record<string, string> = {
     'engineering': 'Software development and technical teams',
     'sales': 'Sales and business development',
@@ -25,12 +29,13 @@ function getDepartmentDescription(deptName: string): string {
     'customer support': 'Customer service and support',
     'product': 'Product management and strategy',
     'design': 'Design and user experience',
+    'unassigned': 'Employees not assigned to any department',
   };
 
   return descriptions[deptName.toLowerCase()] || 'Department operations';
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
@@ -54,7 +59,37 @@ export async function GET() {
       return new NextResponse('Company not found', { status: 404 });
     }
 
-    // Get all employees with their details
+    // Check if this is a request for dropdown options
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+
+    if (type === 'dropdown') {
+      // Return simple list of department names for dropdowns
+      const existingDepartments = await prisma.department.findMany({
+        where: { companyId: user.companyId },
+        select: { name: true }
+      });
+
+      const defaultDepartments = [
+        'Engineering',
+        'Sales',
+        'Marketing',
+        'Human Resources',
+        'Finance',
+        'Operations',
+        'Customer Support',
+        'Product',
+        'Design'
+      ];
+
+      // Combine existing and default departments, remove duplicates
+      const existingNames = existingDepartments.map(d => d.name);
+      const allDepartments = Array.from(new Set([...existingNames, ...defaultDepartments]));
+
+      return NextResponse.json(allDepartments);
+    }
+
+    // Original logic for department overview with employee counts
     const employees = await prisma.employee.findMany({
       where: { companyId: user.companyId },
       select: {
@@ -62,7 +97,12 @@ export async function GET() {
         firstName: true,
         lastName: true,
         email: true,
-        department: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
         position: true,
         status: true,
         startDate: true
@@ -71,17 +111,17 @@ export async function GET() {
 
     // Group employees by department
     const departmentGroups = employees.reduce((acc, employee) => {
-      const dept = employee.department || 'Unassigned';
-      if (!acc[dept]) {
-        acc[dept] = {
-          name: dept,
+      const deptName = employee.department?.name || 'Unassigned';
+      if (!acc[deptName]) {
+        acc[deptName] = {
+          name: deptName,
           employeeCount: 0,
           employees: [],
-          description: getDepartmentDescription(dept)
+          description: getDepartmentDescription(deptName)
         };
       }
-      acc[dept].employeeCount++;
-      acc[dept].employees.push(employee);
+      acc[deptName].employeeCount++;
+      acc[deptName].employees.push(employee);
       return acc;
     }, {} as Record<string, any>);
 
@@ -146,20 +186,47 @@ export async function POST(req: Request) {
     const data = await req.json();
     const validatedData = departmentSchema.parse(data);
 
-    // Since we don't have a Department model, we'll just return the validated data
-    // In a real implementation, you would create a new department in the database
-    const department = {
-      id: 'placeholder-id',
-      ...validatedData,
-      companyId: user.companyId,
-      employeeCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    // Check if department with same name already exists
+    const existingDepartment = await prisma.department.findFirst({
+      where: {
+        name: {
+          equals: validatedData.name,
+          mode: 'insensitive'
+        },
+        companyId: user.companyId
+      }
+    });
 
-    return NextResponse.json(department);
+    if (existingDepartment) {
+      return NextResponse.json(
+        { error: 'Department with this name already exists' },
+        { status: 400 }
+      );
+    }
+
+    // Create the department
+    const department = await prisma.department.create({
+      data: {
+        name: validatedData.name,
+        description: validatedData.description,
+        manager: validatedData.manager,
+        companyId: user.companyId
+      }
+    });
+
+    return NextResponse.json({
+      ...department,
+      employeeCount: 0,
+      employees: []
+    });
   } catch (error) {
     console.error('Error creating department:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.errors },
+        { status: 400 }
+      );
+    }
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

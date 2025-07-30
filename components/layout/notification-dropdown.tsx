@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +39,7 @@ export function NotificationDropdown() {
 
     // Navigate to the link if provided
     if (notification.link) {
-      router.push(notification.link);
+      window.location.href = notification.link;
       setOpen(false);
     }
   };

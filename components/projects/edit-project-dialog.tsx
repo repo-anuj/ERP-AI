@@ -47,10 +47,12 @@ type ProjectFormValues = z.infer<typeof projectFormSchema>
 
 type Employee = {
   id: string;
-  firstName: string;
-  lastName: string;
+  firstName: string | { name: string };
+  lastName: string | { name: string };
   position: string;
-  department: string;
+  department: string | { name: string };
+  status?: string;
+  role?: string;
 }
 
 interface EditProjectDialogProps {
@@ -154,7 +156,14 @@ export function EditProjectDialog({ projectId, open, onOpenChange, onProjectUpda
           throw new Error("Failed to fetch employees")
         }
         const data = await response.json()
-        setEmployees(data)
+
+        // Filter employees to show only active employees
+        const activeEmployees = data.filter((emp: Employee) =>
+          emp.status === 'active' || !emp.status
+        )
+
+        console.log('Fetched active employees for edit:', activeEmployees.length)
+        setEmployees(activeEmployees)
       } catch (error) {
         console.error("Error fetching employees:", error)
         toast({
@@ -203,7 +212,17 @@ export function EditProjectDialog({ projectId, open, onOpenChange, onProjectUpda
   // Get employee name by ID
   const getEmployeeName = (id: string) => {
     const employee = employees.find(emp => emp.id === id)
-    return employee ? `${employee.firstName} ${employee.lastName}` : ""
+    if (!employee) return ""
+
+    // Handle both string and object cases for firstName/lastName
+    const firstName = typeof employee.firstName === 'string'
+      ? employee.firstName
+      : (employee.firstName as { name: string }).name
+    const lastName = typeof employee.lastName === 'string'
+      ? employee.lastName
+      : (employee.lastName as { name: string }).name
+
+    return `${firstName} ${lastName}`.trim()
   }
 
   async function onSubmit(data: ProjectFormValues) {
@@ -496,11 +515,21 @@ export function EditProjectDialog({ projectId, open, onOpenChange, onProjectUpda
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {employees.map((employee) => (
-                            <SelectItem key={employee.id} value={employee.id}>
-                              {employee.firstName} {employee.lastName} - {employee.position}
-                            </SelectItem>
-                          ))}
+                          {employees.map((employee) => {
+                            const firstName = typeof employee.firstName === 'string'
+                              ? employee.firstName
+                              : (employee.firstName as { name: string }).name
+                            const lastName = typeof employee.lastName === 'string'
+                              ? employee.lastName
+                              : (employee.lastName as { name: string }).name
+                            const fullName = `${firstName} ${lastName}`.trim()
+
+                            return (
+                              <SelectItem key={employee.id} value={employee.id}>
+                                {fullName} - {employee.position}
+                              </SelectItem>
+                            )
+                          })}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -514,21 +543,36 @@ export function EditProjectDialog({ projectId, open, onOpenChange, onProjectUpda
                     {employees.length > 0 ? (
                       employees
                         .filter(emp => emp.id !== form.getValues("projectManagerId"))
-                        .map((employee) => (
-                          <div key={employee.id} className="flex items-center space-x-2 py-2">
-                            <Checkbox 
-                              id={`employee-${employee.id}`} 
-                              checked={selectedTeamMembers.includes(employee.id)}
-                              onCheckedChange={() => toggleTeamMember(employee.id)}
-                            />
-                            <label 
-                              htmlFor={`employee-${employee.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {employee.firstName} {employee.lastName} - {employee.position} ({employee.department})
-                            </label>
-                          </div>
-                        ))
+                        .map((employee) => {
+                          const firstName = typeof employee.firstName === 'string'
+                            ? employee.firstName
+                            : (employee.firstName as { name: string }).name
+                          const lastName = typeof employee.lastName === 'string'
+                            ? employee.lastName
+                            : (employee.lastName as { name: string }).name
+                          const fullName = `${firstName} ${lastName}`.trim()
+
+                          // Handle department - it can be an object {id, name} or a string
+                          const departmentName = typeof employee.department === 'string'
+                            ? employee.department
+                            : (employee.department as { name: string }).name
+
+                          return (
+                            <div key={employee.id} className="flex items-center space-x-2 py-2">
+                              <Checkbox
+                                id={`employee-${employee.id}`}
+                                checked={selectedTeamMembers.includes(employee.id)}
+                                onCheckedChange={() => toggleTeamMember(employee.id)}
+                              />
+                              <label
+                                htmlFor={`employee-${employee.id}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {fullName} - {employee.position} ({departmentName})
+                              </label>
+                            </div>
+                          )
+                        })
                     ) : (
                       <p className="text-sm text-muted-foreground">Loading employees...</p>
                     )}

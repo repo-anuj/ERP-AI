@@ -37,6 +37,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setError(null)
       const response = await fetch("/api/user")
 
+      if (response.status === 401) {
+        // User is not authenticated, clear user state
+        setUser(null)
+        return
+      }
+
       if (!response.ok) {
         throw new Error("Failed to fetch user data")
       }
@@ -46,6 +52,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Failed to fetch user:", error)
       setError(error instanceof Error ? error.message : "An error occurred")
+      setUser(null) // Clear user on error
       toast({
         title: "Error",
         description: "Failed to load user data",

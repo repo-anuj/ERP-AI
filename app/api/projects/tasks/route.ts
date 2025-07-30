@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { RewardTriggers } from '@/lib/reward-service';
 export const dynamic = 'force-dynamic';
 
 // Schema for task validation
@@ -229,6 +230,27 @@ export async function PUT(req: Request) {
         dependencies: validatedData.dependencies || []
       }
     });
+
+    // Check if task was just completed and trigger reward
+    if (existingTask.status !== 'completed' && validatedData.status === 'completed') {
+      try {
+        // Award task completion reward
+        await RewardTriggers.onTaskCompletion(
+          validatedData.assigneeId,
+          companyId,
+          {
+            id: updatedTask.id,
+            name: updatedTask.name,
+            projectId: updatedTask.projectId,
+            projectName: project.name
+          }
+        );
+        console.log(`Awarded task completion reward to employee ${validatedData.assigneeId}`);
+      } catch (rewardError) {
+        console.error('Error awarding task completion reward:', rewardError);
+        // Don't fail the task update if reward fails
+      }
+    }
 
     return NextResponse.json(updatedTask);
   } catch (error) {

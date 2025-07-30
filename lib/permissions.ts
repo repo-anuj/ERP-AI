@@ -41,6 +41,12 @@ export const PERMISSIONS = {
   // Admin permissions
   MANAGE_ROLES: 'manage_roles',
   MANAGE_COMPANY: 'manage_company',
+
+  // Employee-specific permissions
+  VIEW_EMPLOYEE_DASHBOARD: 'view_employee_dashboard',
+  VIEW_EMPLOYEE_PROJECTS: 'view_employee_projects',
+  MANAGE_EMPLOYEE_TASKS: 'manage_employee_tasks',
+  VIEW_EMPLOYEE_SETTINGS: 'view_employee_settings',
 };
 
 // Define role-based permission sets
@@ -134,6 +140,12 @@ export const ROLE_PERMISSIONS = {
   ],
 
   employee: [
+    // Employee-specific permissions
+    PERMISSIONS.VIEW_EMPLOYEE_DASHBOARD,
+    PERMISSIONS.VIEW_EMPLOYEE_PROJECTS,
+    PERMISSIONS.MANAGE_EMPLOYEE_TASKS,
+    PERMISSIONS.VIEW_EMPLOYEE_SETTINGS,
+
     // Settings (limited)
     PERMISSIONS.VIEW_SETTINGS,
   ],
@@ -226,6 +238,12 @@ export const PERMISSION_ROUTES = {
   [PERMISSIONS.MANAGE_SETTINGS]: ['/settings'],
   [PERMISSIONS.MANAGE_ROLES]: ['/settings/roles'],
   [PERMISSIONS.MANAGE_COMPANY]: ['/settings/company'],
+
+  // Employee-specific routes
+  [PERMISSIONS.VIEW_EMPLOYEE_DASHBOARD]: ['/employee/dashboard'],
+  [PERMISSIONS.VIEW_EMPLOYEE_PROJECTS]: ['/employee/projects'],
+  [PERMISSIONS.MANAGE_EMPLOYEE_TASKS]: ['/employee/tasks'],
+  [PERMISSIONS.VIEW_EMPLOYEE_SETTINGS]: ['/employee/settings'],
 };
 
 // Get all accessible routes for a set of permissions

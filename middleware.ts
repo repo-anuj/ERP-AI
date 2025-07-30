@@ -13,7 +13,7 @@ const departmentAccess: Record<DepartmentType, string[]> = {
   sales: ['sales', 'inventory', 'settings'],
   engineering: ['projects', 'settings'],
   finance: ['finance', 'sales', 'inventory', 'settings'],
-  employee: ['settings']
+  employee: ['employee', 'settings']
 }
 
 // Define department home pages
@@ -23,8 +23,8 @@ const departmentHomePage: Record<DepartmentType, string> = {
   hr: '/hr',
   sales: '/sales',
   engineering: '/projects',
-  finance: '/dashboard/finance',
-  employee: '/settings'
+  finance: '/finance',
+  employee: '/employee/dashboard'
 }
 
 export async function middleware(request: NextRequest) {
@@ -105,15 +105,24 @@ export async function middleware(request: NextRequest) {
             const role = verifiedToken.role || 'employee'
             const department = (verifiedToken.department?.toLowerCase() || 'employee') as DepartmentType
 
+            // If accessing root path, redirect employees to their dashboard
+            if (request.nextUrl.pathname === '/') {
+                return NextResponse.redirect(new URL('/employee/dashboard', request.url))
+            }
+
+            // Allow access to employee-specific routes
+            if (pathSegment === 'employee') {
+                return NextResponse.next()
+            }
+
             // Determine allowed sections based on role and department
             let allowedSections: string[] = []
 
             if (role === 'admin') {
-                // Admin can access everything
+                // Admin employees can access everything
                 allowedSections = departmentAccess.admin
             } else if (role === 'manager') {
-                // Managers get manager access plus their department access
-                // Create a new array to avoid mutation issues
+                // Manager employees get manager access plus their department access
                 allowedSections = [...departmentAccess.manager]
 
                 // Get department access safely
@@ -126,24 +135,14 @@ export async function middleware(request: NextRequest) {
                     }
                 }
             } else {
-                // Regular employees get their department access
-                allowedSections = departmentAccess[department] || departmentAccess.employee
+                // Regular employees get their department access plus employee routes
+                allowedSections = [...(departmentAccess[department] || []), ...departmentAccess.employee]
             }
 
             // Check if the current path is allowed
             if (!allowedSections.includes(pathSegment) && pathSegment !== '') {
-                // Redirect to department home page if trying to access unauthorized section
-                const homePage = departmentHomePage[department] || '/settings'
-                return NextResponse.redirect(new URL(homePage, request.url))
-            }
-
-            // If accessing root path, redirect to department home page
-            if (pathSegment === '' && request.nextUrl.pathname === '/') {
-                // Don't redirect admins and managers from dashboard
-                if (role !== 'admin' && role !== 'manager') {
-                    const homePage = departmentHomePage[department] || '/settings'
-                    return NextResponse.redirect(new URL(homePage, request.url))
-                }
+                // Redirect to employee dashboard for unauthorized access
+                return NextResponse.redirect(new URL('/employee/dashboard', request.url))
             }
         }
 

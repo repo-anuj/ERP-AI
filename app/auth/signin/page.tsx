@@ -85,8 +85,7 @@ export default function SignInPage() {
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       // Redirect to dashboard
-      router.push("/")
-      router.refresh()
+      window.location.href = "/"
     } catch (error) {
       console.error("Sign-in error:", error)
       toast({

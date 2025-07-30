@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Users, Briefcase, Clock, TrendingUp } from 'lucide-react';
+import { Plus, Users, Briefcase, Clock, TrendingUp, BarChart } from 'lucide-react';
 import { AddEmployeeDialog } from '@/components/hr/add-employee-dialog';
 import { DataTable } from '@/components/hr/data-table';
 import { columns, Employee } from '@/components/hr/columns';
@@ -10,6 +10,7 @@ import { EnhancedEditEmployeeModal } from '@/components/hr/enhanced-edit-employe
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Settings } from 'lucide-react';
 
 export default function HRPage() {
@@ -67,7 +68,8 @@ export default function HRPage() {
   };
 
   const handleViewEmployee = (employee: Employee) => {
-    router.push(`/hr/employees/${employee.id}`);
+    // Use window.location for navigation to ensure it works properly
+    window.location.href = `/hr/employees/${employee.id}`;
   };
 
   const handleCloseEditModal = () => {
@@ -120,13 +122,18 @@ export default function HRPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Human Resources</h2>
         <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/hr/settings')}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Button>
+          <Link href="/hr/analytics">
+            <Button variant="outline">
+              <BarChart className="mr-2 h-4 w-4" />
+              Analytics
+            </Button>
+          </Link>
+          <Link href="/hr/settings">
+            <Button variant="outline">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
+          </Link>
           <AddEmployeeDialog />
         </div>
       </div>
@@ -188,7 +195,7 @@ export default function HRPage() {
 
         <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Attendance Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">Attendance Today</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -198,19 +205,23 @@ export default function HRPage() {
               </div>
             ) : employees.length > 0 ? (
               <div className="text-center">
-                <div className="text-3xl font-bold">N/A</div>
-                <p className="text-xs text-muted-foreground mt-1">Attendance tracking not set up</p>
-                <Button variant="outline" size="sm" className="mt-2">
-                  Set Up Tracking
-                </Button>
+                <div className="text-3xl font-bold">{employees.filter(e => e.status === 'active').length}</div>
+                <p className="text-xs text-muted-foreground mt-1">Active employees</p>
+                <Link href="/hr/attendance">
+                  <Button variant="outline" size="sm" className="mt-2">
+                    View Attendance
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div className="text-center space-y-3">
-                <Plus className="h-8 w-8 mx-auto text-muted-foreground" />
+                <Clock className="h-8 w-8 mx-auto text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">No attendance data yet</p>
-                <Button variant="outline" size="sm" className="mt-2">
-                  Track Attendance
-                </Button>
+                <Link href="/hr/attendance">
+                  <Button variant="outline" size="sm" className="mt-2">
+                    Set Up Attendance
+                  </Button>
+                </Link>
               </div>
             )}
           </CardContent>
