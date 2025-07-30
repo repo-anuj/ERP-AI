@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
 
 
 export const dynamic = 'force-dynamic';
@@ -149,27 +150,49 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const {
-      title,
-      description,
-      requirements,
-      responsibilities,
-      departmentId,
-      locationId,
-      jobType,
-      experienceLevel,
-      salaryMin,
-      salaryMax,
-      currency,
-      benefits,
-      applicationDeadline,
-      maxApplications,
-      keywords,
-      externalJobBoards,
-      metaDescription,
-      isPublished,
-      status,
-    } = body;
+
+    // Use the same validation schema as create endpoint for consistency
+    const jobPostingUpdateSchema = z.object({
+      title: z.string().min(2, "Title must be at least 2 characters").optional(),
+      description: z.string().min(10, "Description must be at least 10 characters").optional(),
+      requirements: z.string().min(10, "Requirements must be at least 10 characters").optional(),
+      responsibilities: z.string().optional().nullable(),
+      departmentId: z.string().optional().nullable(),
+      locationId: z.string().optional().nullable(),
+      jobType: z.enum(["full_time", "part_time", "contract", "temporary", "internship"]).optional(),
+      experienceLevel: z.enum(["entry", "mid", "senior", "executive"]).optional(),
+      salaryMin: z.union([z.string(), z.number()]).transform((val) => {
+        if (typeof val === 'string') {
+          const parsed = parseFloat(val);
+          return isNaN(parsed) || val === '' ? null : parsed;
+        }
+        return val;
+      }).optional().nullable(),
+      salaryMax: z.union([z.string(), z.number()]).transform((val) => {
+        if (typeof val === 'string') {
+          const parsed = parseFloat(val);
+          return isNaN(parsed) || val === '' ? null : parsed;
+        }
+        return val;
+      }).optional().nullable(),
+      currency: z.string().optional(),
+      benefits: z.array(z.string()).optional(),
+      applicationDeadline: z.string().optional().nullable(),
+      maxApplications: z.union([z.string(), z.number()]).transform((val) => {
+        if (typeof val === 'string') {
+          const parsed = parseInt(val, 10);
+          return isNaN(parsed) || val === '' ? null : parsed;
+        }
+        return val;
+      }).optional().nullable(),
+      keywords: z.array(z.string()).optional(),
+      externalJobBoards: z.array(z.string()).optional(),
+      metaDescription: z.string().optional().nullable(),
+      isPublished: z.boolean().optional(),
+      status: z.string().optional(),
+    });
+
+    const validatedData = jobPostingUpdateSchema.parse(body);
 
     // Check if job posting exists and belongs to company
     const existingJobPosting = await prisma.jobPosting.findFirst({
@@ -182,49 +205,50 @@ export async function PUT(
     if (!existingJobPosting) {
       return new NextResponse('Job posting not found', { status: 404 });
     }
-    // Prepare update data
+    // Prepare update data using validated data
     const updateData: any = {};
 
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (requirements !== undefined) updateData.requirements = requirements;
-    if (responsibilities !== undefined) updateData.responsibilities = responsibilities;
-    if (departmentId !== undefined) updateData.departmentId = departmentId || null;
-    if (locationId !== undefined) updateData.locationId = locationId || null;
-    if (jobType !== undefined) updateData.jobType = jobType;
-    if (experienceLevel !== undefined) updateData.experienceLevel = experienceLevel;
-    if (salaryMin !== undefined) updateData.salaryMin = salaryMin ? parseFloat(salaryMin) : null;
-    if (salaryMax !== undefined) updateData.salaryMax = salaryMax ? parseFloat(salaryMax) : null;
-    if (currency !== undefined) updateData.currency = currency;
-    if (benefits !== undefined) updateData.benefits = benefits;
-    if (applicationDeadline !== undefined) {
-      updateData.applicationDeadline = applicationDeadline ? new Date(applicationDeadline) : null;
+    if (validatedData.title !== undefined) updateData.title = validatedData.title;
+    if (validatedData.description !== undefined) updateData.description = validatedData.description;
+    if (validatedData.requirements !== undefined) updateData.requirements = validatedData.requirements;
+    if (validatedData.responsibilities !== undefined) updateData.responsibilities = validatedData.responsibilities;
+    if (validatedData.departmentId !== undefined) updateData.departmentId = validatedData.departmentId || null;
+    if (validatedData.locationId !== undefined) updateData.locationId = validatedData.locationId || null;
+    if (validatedData.jobType !== undefined) updateData.jobType = validatedData.jobType;
+    if (validatedData.experienceLevel !== undefined) updateData.experienceLevel = validatedData.experienceLevel;
+    if (validatedData.salaryMin !== undefined) updateData.salaryMin = validatedData.salaryMin;
+    if (validatedData.salaryMax !== undefined) updateData.salaryMax = validatedData.salaryMax;
+    if (validatedData.currency !== undefined) updateData.currency = validatedData.currency;
+    if (validatedData.benefits !== undefined) updateData.benefits = validatedData.benefits;
+    if (validatedData.applicationDeadline !== undefined) {
+      updateData.applicationDeadline = validatedData.applicationDeadline ? new Date(validatedData.applicationDeadline) : null;
     }
-    if (maxApplications !== undefined) {
-      updateData.maxApplications = maxApplications ? parseInt(maxApplications) : null;
+    if (validatedData.maxApplications !== undefined) updateData.maxApplications = validatedData.maxApplications;
+    if (validatedData.keywords !== undefined) updateData.keywords = validatedData.keywords;
+    if (validatedData.externalJobBoards !== undefined) {
+      updateData.externalJobBoards = validatedData.externalJobBoards;
+      console.log("[JOB_POSTINGS_PUT] Updated distribution platforms:", validatedData.externalJobBoards);
     }
-    if (keywords !== undefined) updateData.keywords = keywords;
-    if (externalJobBoards !== undefined) updateData.externalJobBoards = externalJobBoards;
-    if (metaDescription !== undefined) updateData.metaDescription = metaDescription;
+    if (validatedData.metaDescription !== undefined) updateData.metaDescription = validatedData.metaDescription;
 
     // Handle publishing status
-    if (isPublished !== undefined) {
-      updateData.isPublished = isPublished;
-      if (isPublished && !existingJobPosting.publishedAt) {
+    if (validatedData.isPublished !== undefined) {
+      updateData.isPublished = validatedData.isPublished;
+      if (validatedData.isPublished && !existingJobPosting.publishedAt) {
         updateData.publishedAt = new Date();
         updateData.status = 'published';
-      } else if (!isPublished) {
+      } else if (!validatedData.isPublished) {
         updateData.status = 'draft';
       }
     }
 
-    if (status !== undefined) {
-      updateData.status = status;
+    if (validatedData.status !== undefined) {
+      updateData.status = validatedData.status;
     }
 
     // Update slug if title changed
-    if (title && title !== existingJobPosting.title) {
-      const newSlug = title
+    if (validatedData.title && validatedData.title !== existingJobPosting.title) {
+      const newSlug = validatedData.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');

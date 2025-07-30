@@ -140,16 +140,16 @@ export function TaxCalculationTable({
                 </Badge>
               </TableCell>
               <TableCell>
-                <div className="font-medium">₹{calculation.grossAnnualSalary.toLocaleString()}</div>
+                <div className="font-medium">₹{calculation.grossAnnualSalary?.toLocaleString() || '0'}</div>
               </TableCell>
               <TableCell>
-                <div className="font-medium">₹{calculation.taxableIncome.toLocaleString()}</div>
+                <div className="font-medium">₹{calculation.taxableIncome?.toLocaleString() || '0'}</div>
               </TableCell>
               <TableCell>
-                <div className="font-medium text-red-600">₹{calculation.totalTaxAfterRebate.toLocaleString()}</div>
+                <div className="font-medium text-red-600">₹{calculation.totalTaxAfterRebate?.toLocaleString() || '0'}</div>
               </TableCell>
               <TableCell>
-                <div className="font-medium text-orange-600">₹{calculation.monthlyTds.toLocaleString()}</div>
+                <div className="font-medium text-orange-600">₹{calculation.monthlyTds?.toLocaleString() || '0'}</div>
               </TableCell>
               <TableCell>
                 <DropdownMenu>

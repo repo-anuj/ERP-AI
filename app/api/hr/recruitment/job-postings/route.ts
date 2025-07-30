@@ -17,12 +17,30 @@ const jobPostingSchema = z.object({
   locationId: z.string().optional().nullable(),
   jobType: z.enum(["full_time", "part_time", "contract", "temporary", "internship"]).default("full_time"),
   experienceLevel: z.enum(["entry", "mid", "senior", "executive"]).default("mid"),
-  salaryMin: z.number().min(0).optional().nullable(),
-  salaryMax: z.number().min(0).optional().nullable(),
+  salaryMin: z.union([z.string(), z.number()]).transform((val) => {
+    if (typeof val === 'string') {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) || val === '' ? null : parsed;
+    }
+    return val;
+  }).optional().nullable(),
+  salaryMax: z.union([z.string(), z.number()]).transform((val) => {
+    if (typeof val === 'string') {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) || val === '' ? null : parsed;
+    }
+    return val;
+  }).optional().nullable(),
   currency: z.string().default("USD"),
   benefits: z.array(z.string()).default([]),
   applicationDeadline: z.string().optional().nullable(),
-  maxApplications: z.number().min(1).optional().nullable(),
+  maxApplications: z.union([z.string(), z.number()]).transform((val) => {
+    if (typeof val === 'string') {
+      const parsed = parseInt(val, 10);
+      return isNaN(parsed) || val === '' ? null : parsed;
+    }
+    return val;
+  }).optional().nullable(),
   keywords: z.array(z.string()).default([]),
   externalJobBoards: z.array(z.string()).default([]),
   metaDescription: z.string().optional().nullable(),
@@ -190,6 +208,7 @@ export async function POST(request: NextRequest) {
     });
 
     console.log("[JOB_POSTINGS_POST] Creating job posting with data:", jobPostingData);
+    console.log("[JOB_POSTINGS_POST] Distribution platforms:", jobPostingData.externalJobBoards);
 
     // Create job posting
     const jobPosting = await prisma.jobPosting.create({

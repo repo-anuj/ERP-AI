@@ -64,7 +64,7 @@ export async function GET(request: Request) {
     const type = searchParams.get('type');
 
     if (type === 'dropdown') {
-      // Return simple list of department names for dropdowns
+      // Return simple list of department names for dropdowns (legacy support)
       const existingDepartments = await prisma.department.findMany({
         where: { companyId: user.companyId },
         select: { name: true }
@@ -87,6 +87,42 @@ export async function GET(request: Request) {
       const allDepartments = Array.from(new Set([...existingNames, ...defaultDepartments]));
 
       return NextResponse.json(allDepartments);
+    }
+
+    if (type === 'simple') {
+      // Return department records with id and name for job posting dropdowns
+      const existingDepartments = await prisma.department.findMany({
+        where: { companyId: user.companyId },
+        select: { id: true, name: true }
+      });
+
+      const defaultDepartments = [
+        'Engineering',
+        'Sales',
+        'Marketing',
+        'Human Resources',
+        'Finance',
+        'Operations',
+        'Customer Support',
+        'Product',
+        'Design'
+      ];
+
+      // Create missing default departments
+      const existingNames = existingDepartments.map(d => d.name);
+      const missingDepartments = defaultDepartments.filter(name => !existingNames.includes(name));
+
+      for (const deptName of missingDepartments) {
+        const newDept = await prisma.department.create({
+          data: {
+            name: deptName,
+            companyId: user.companyId
+          }
+        });
+        existingDepartments.push({ id: newDept.id, name: newDept.name });
+      }
+
+      return NextResponse.json(existingDepartments);
     }
 
     // Original logic for department overview with employee counts

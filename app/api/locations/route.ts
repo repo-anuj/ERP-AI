@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Company not found', { status: 404 });
     }
 
-    const locations = await prisma.location.findMany({
+    let locations = await prisma.location.findMany({
       where: {
         companyId: user.companyId,
       },
@@ -60,6 +60,30 @@ export async function GET(request: NextRequest) {
         { name: 'asc' }
       ]
     });
+
+    // If no locations exist, create a default main location based on company info
+    if (locations.length === 0) {
+      console.log("[LOCATIONS_GET] No locations found, creating default location");
+
+      const defaultLocation = await prisma.location.create({
+        data: {
+          name: user.company?.name ? `${user.company.name} Headquarters` : 'Main Office',
+          address: user.company?.address || '',
+          city: user.company?.city || '',
+          state: user.company?.state || '',
+          country: user.company?.country || '',
+          zipCode: user.company?.zipCode || '',
+          phone: user.company?.phone || '',
+          email: user.company?.email || '',
+          type: 'headquarters',
+          isMain: true,
+          companyId: user.companyId,
+        }
+      });
+
+      locations = [defaultLocation];
+      console.log("[LOCATIONS_GET] Default location created:", defaultLocation.id);
+    }
 
     return NextResponse.json(locations);
 

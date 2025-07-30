@@ -95,10 +95,11 @@ export default function JobPostingsPage() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('/api/departments');
+      const response = await fetch('/api/departments?type=simple');
       if (!response.ok) throw new Error('Failed to fetch departments');
       const data = await response.json();
-      setDepartments(data.departments || []);
+      // API returns array directly, not wrapped in object
+      setDepartments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching departments:', error);
     }
@@ -109,7 +110,8 @@ export default function JobPostingsPage() {
       const response = await fetch('/api/locations');
       if (!response.ok) throw new Error('Failed to fetch locations');
       const data = await response.json();
-      setLocations(data.locations || []);
+      // API returns array directly, not wrapped in object
+      setLocations(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching locations:', error);
     }

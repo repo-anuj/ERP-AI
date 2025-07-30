@@ -7,8 +7,9 @@ import { DepartmentManagement } from '@/components/hr/department-management';
 import { RewardManagement } from '@/components/hr/reward-management';
 import { LeaveManagement } from '@/components/hr/leave-management';
 import { PerformanceManagement } from '@/components/hr/performance-management';
+import { JobPostingSettings } from '@/components/hr/job-posting-settings';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield, Users, Award, Calendar, Target } from 'lucide-react';
+import { ArrowLeft, Shield, Users, Award, Calendar, Target, Globe } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HRSettingsPage() {
@@ -35,10 +36,14 @@ export default function HRSettingsPage() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="departments" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="departments" className="flex items-center space-x-2">
             <Users className="h-4 w-4" />
             <span>Departments</span>
+          </TabsTrigger>
+          <TabsTrigger value="job-posting" className="flex items-center space-x-2">
+            <Globe className="h-4 w-4" />
+            <span>Job Posting</span>
           </TabsTrigger>
           <TabsTrigger value="rewards" className="flex items-center space-x-2">
             <Award className="h-4 w-4" />
@@ -80,6 +85,24 @@ export default function HRSettingsPage() {
         {/* Departments Tab */}
         <TabsContent value="departments" className="space-y-6">
           <DepartmentManagement />
+        </TabsContent>
+
+        {/* Job Posting Tab */}
+        <TabsContent value="job-posting" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Globe className="h-5 w-5" />
+                <span>Job Posting Distribution</span>
+              </CardTitle>
+              <CardDescription>
+                Configure where your job postings are automatically distributed and manage platform integrations.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <JobPostingSettings />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Rewards Tab */}

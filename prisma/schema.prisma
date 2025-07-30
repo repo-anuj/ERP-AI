@@ -167,6 +167,9 @@ model Company {
   // Audit Relations
   auditLogs         AuditLog[]
 
+  // Job Board Settings
+  jobBoardSettings  JobBoardSettings?
+
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -2694,4 +2697,33 @@ type CandidateCertification {
   expiryDate   DateTime?
   credentialId String?
   description  String?
+}
+
+// Job Board Settings for external job posting distribution
+model JobBoardSettings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  companyId String   @unique @db.ObjectId
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  // Platform configurations (stored as JSON for flexibility)
+  linkedin  Json?    // { enabled: boolean, apiKey?: string, companyId?: string, autoPost: boolean, status: string, lastSync?: string }
+  indeed    Json?    // { enabled: boolean, apiKey?: string, employerId?: string, autoPost: boolean, status: string, lastSync?: string }
+  website   Json?    // { enabled: boolean, autoPublish: boolean, seoOptimized: boolean, status: string }
+  glassdoor Json?    // { enabled: boolean, apiKey?: string, autoPost: boolean, status: string, lastSync?: string }
+  naukri    Json?    // { enabled: boolean, apiKey?: string, autoPost: boolean, status: string, lastSync?: string }
+  monster   Json?    // { enabled: boolean, apiKey?: string, autoPost: boolean, status: string, lastSync?: string }
+
+  // Global settings
+  defaultPlatforms String[] @default([])  // Platforms to auto-select for new job postings
+  syncFrequency    String   @default("manual") // "manual", "hourly", "daily"
+
+  // Notification settings
+  notifications Json? // { syncSuccess: boolean, syncFailure: boolean, applicationReceived: boolean }
+
+  // Sync tracking
+  lastGlobalSync DateTime?
+  syncErrors     Json?    // Array of recent sync errors
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

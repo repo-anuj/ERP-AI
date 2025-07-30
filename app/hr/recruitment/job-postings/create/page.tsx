@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Save, Eye, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -73,27 +74,61 @@ export default function CreateJobPostingPage() {
     isPublished: false,
   });
 
+  // Distribution settings state
+  const [distributionSettings, setDistributionSettings] = useState({
+    selectedPlatforms: [] as string[],
+    schedulePost: false,
+    scheduledDate: '',
+    scheduledTime: '',
+  });
+
+  // Available platforms state
+  const [availablePlatforms, setAvailablePlatforms] = useState<any[]>([]);
+
   useEffect(() => {
-    // Fetch departments and locations in parallel
+    // Fetch departments, locations, and job board settings in parallel
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [deptsResponse, locsResponse] = await Promise.all([
-          fetch('/api/departments', { next: { revalidate: 3600 } }), // Cache for 1 hour
-          fetch('/api/locations', { next: { revalidate: 3600 } }) // Cache for 1 hour
+        const [deptsResponse, locsResponse, jobBoardResponse] = await Promise.all([
+          fetch('/api/departments?type=simple', { next: { revalidate: 3600 } }), // Cache for 1 hour
+          fetch('/api/locations', { next: { revalidate: 3600 } }), // Cache for 1 hour
+          fetch('/api/hr/recruitment/settings', { next: { revalidate: 3600 } }) // Cache for 1 hour
         ]);
 
         if (!deptsResponse.ok || !locsResponse.ok) {
           throw new Error('Failed to fetch required data');
         }
 
-        const [deptsData, locsData] = await Promise.all([
+        const [deptsData, locsData, jobBoardData] = await Promise.all([
           deptsResponse.json(),
-          locsResponse.json()
+          locsResponse.json(),
+          jobBoardResponse.ok ? jobBoardResponse.json() : null
         ]);
 
-        setDepartments(deptsData.departments || []);
-        setLocations(locsData.locations || []);
+        // APIs return arrays directly, not wrapped in objects
+        setDepartments(Array.isArray(deptsData) ? deptsData : []);
+        setLocations(Array.isArray(locsData) ? locsData : []);
+
+        // Process job board settings
+        if (jobBoardData) {
+          const platforms = [
+            { id: 'linkedin', name: 'LinkedIn', icon: '💼', enabled: jobBoardData.linkedin?.enabled || false, status: jobBoardData.linkedin?.status || 'disconnected' },
+            { id: 'indeed', name: 'Indeed', icon: '🌐', enabled: jobBoardData.indeed?.enabled || false, status: jobBoardData.indeed?.status || 'disconnected' },
+            { id: 'website', name: 'Company Website', icon: '🏢', enabled: jobBoardData.website?.enabled || false, status: jobBoardData.website?.status || 'active' },
+            { id: 'glassdoor', name: 'Glassdoor', icon: '⭐', enabled: jobBoardData.glassdoor?.enabled || false, status: jobBoardData.glassdoor?.status || 'disconnected' },
+            { id: 'naukri', name: 'Naukri.com', icon: '🇮🇳', enabled: jobBoardData.naukri?.enabled || false, status: jobBoardData.naukri?.status || 'disconnected' },
+            { id: 'monster', name: 'Monster', icon: '👹', enabled: jobBoardData.monster?.enabled || false, status: jobBoardData.monster?.status || 'disconnected' }
+          ].filter(platform => platform.enabled);
+
+          setAvailablePlatforms(platforms);
+
+          // Set default selected platforms
+          setDistributionSettings(prev => ({
+            ...prev,
+            selectedPlatforms: jobBoardData.defaultPlatforms || ['website']
+          }));
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
         toast({
@@ -176,7 +211,10 @@ export default function CreateJobPostingPage() {
         }
         return acc;
       }, {} as Record<string, any>);
-      
+
+      // Add distribution settings
+      payload.externalJobBoards = distributionSettings.selectedPlatforms;
+
       // Add company ID and timestamps
       payload.companyId = ''; // Will be set by the API middleware
       payload.createdAt = new Date().toISOString();
@@ -428,6 +466,107 @@ export default function CreateJobPostingPage() {
                 ))}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Distribution Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Distribution Settings</CardTitle>
+            <CardDescription>Choose where to post this job</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {availablePlatforms.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {availablePlatforms.map((platform) => (
+                    <div key={platform.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                      <Checkbox
+                        id={platform.id}
+                        checked={distributionSettings.selectedPlatforms.includes(platform.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setDistributionSettings(prev => ({
+                              ...prev,
+                              selectedPlatforms: [...prev.selectedPlatforms, platform.id]
+                            }));
+                          } else {
+                            setDistributionSettings(prev => ({
+                              ...prev,
+                              selectedPlatforms: prev.selectedPlatforms.filter(p => p !== platform.id)
+                            }));
+                          }
+                        }}
+                      />
+                      <div className="flex items-center space-x-2 flex-1">
+                        <span className="text-lg">{platform.icon}</span>
+                        <div>
+                          <Label htmlFor={platform.id} className="font-medium cursor-pointer">
+                            {platform.name}
+                          </Label>
+                          <Badge
+                            variant={platform.status === 'connected' || platform.status === 'active' ? 'default' : 'secondary'}
+                            className="ml-2 text-xs"
+                          >
+                            {platform.status === 'connected' || platform.status === 'active' ? 'Ready' : 'Setup Required'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center space-x-2 pt-4">
+                  <Checkbox
+                    id="schedule-post"
+                    checked={distributionSettings.schedulePost}
+                    onCheckedChange={(checked) =>
+                      setDistributionSettings(prev => ({ ...prev, schedulePost: checked as boolean }))
+                    }
+                  />
+                  <Label htmlFor="schedule-post">Schedule for later</Label>
+                </div>
+
+                {distributionSettings.schedulePost && (
+                  <div className="grid grid-cols-2 gap-4 pl-6">
+                    <div>
+                      <Label htmlFor="scheduled-date">Date</Label>
+                      <Input
+                        id="scheduled-date"
+                        type="date"
+                        value={distributionSettings.scheduledDate}
+                        onChange={(e) =>
+                          setDistributionSettings(prev => ({ ...prev, scheduledDate: e.target.value }))
+                        }
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="scheduled-time">Time</Label>
+                      <Input
+                        id="scheduled-time"
+                        type="time"
+                        value={distributionSettings.scheduledTime}
+                        onChange={(e) =>
+                          setDistributionSettings(prev => ({ ...prev, scheduledTime: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Globe className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium">No platforms configured</p>
+                <p className="text-sm">Configure job board settings in HR Settings to enable distribution.</p>
+                <Button variant="outline" className="mt-4" asChild>
+                  <Link href="/hr/settings?tab=job-posting">
+                    Configure Platforms
+                  </Link>
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
