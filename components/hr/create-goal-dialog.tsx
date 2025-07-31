@@ -200,7 +200,7 @@ export function CreateGoalDialog({ open, onClose, onSuccess }: CreateGoalDialogP
                   <SelectValue placeholder="Select manager" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No manager assigned</SelectItem>
+                  <SelectItem value="none">No manager assigned</SelectItem>
                   {employees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
                       {employee.name} ({employee.employeeId})

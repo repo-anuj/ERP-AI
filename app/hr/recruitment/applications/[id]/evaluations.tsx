@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Application } from './page';
+import { useRouter } from 'next/navigation';
 
 interface EvaluationsTabProps {
   application: Application;
@@ -25,10 +26,16 @@ const getEvaluationStatusIcon = (status: string) => {
 };
 
 export function EvaluationsTab({ application }: EvaluationsTabProps) {
+  const router = useRouter();
+
   // Calculate average score if evaluations exist
   const averageScore = application.evaluations?.length
     ? (application.evaluations.reduce((sum: number, evalItem: any) => sum + (evalItem.overallScore || 0), 0) / application.evaluations.length).toFixed(1)
     : 0;
+
+  const handleViewEvaluationDetails = (evaluationId: string) => {
+    router.push(`/hr/recruitment/evaluations/${evaluationId}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -144,7 +151,11 @@ export function EvaluationsTab({ application }: EvaluationsTabProps) {
                       </div>
                     </div>
                     
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewEvaluationDetails(evaluation.id)}
+                    >
                       View Details
                     </Button>
                   </div>
@@ -176,17 +187,43 @@ export function EvaluationsTab({ application }: EvaluationsTabProps) {
               <div>
                 <h4 className="text-sm font-medium mb-2">Strengths</h4>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">Technical Skills</Badge>
-                  <Badge variant="secondary">Problem Solving</Badge>
-                  <Badge variant="secondary">Communication</Badge>
+                  {application.evaluations.some((e: any) => e.strengths) ? (
+                    application.evaluations
+                      .filter((e: any) => e.strengths)
+                      .slice(0, 3)
+                      .map((e: any, index: number) => (
+                        <Badge key={index} variant="secondary">
+                          {e.strengths.split(',')[0]?.trim() || 'Technical Skills'}
+                        </Badge>
+                      ))
+                  ) : (
+                    <>
+                      <Badge variant="secondary">Technical Skills</Badge>
+                      <Badge variant="secondary">Problem Solving</Badge>
+                      <Badge variant="secondary">Communication</Badge>
+                    </>
+                  )}
                 </div>
               </div>
-              
+
               <div>
                 <h4 className="text-sm font-medium mb-2">Areas for Improvement</h4>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">Industry Knowledge</Badge>
-                  <Badge variant="outline">Experience with [Specific Tech]</Badge>
+                  {application.evaluations.some((e: any) => e.weaknesses) ? (
+                    application.evaluations
+                      .filter((e: any) => e.weaknesses)
+                      .slice(0, 2)
+                      .map((e: any, index: number) => (
+                        <Badge key={index} variant="outline">
+                          {e.weaknesses.split(',')[0]?.trim() || 'Industry Knowledge'}
+                        </Badge>
+                      ))
+                  ) : (
+                    <>
+                      <Badge variant="outline">Industry Knowledge</Badge>
+                      <Badge variant="outline">Experience with Specific Tech</Badge>
+                    </>
+                  )}
                 </div>
               </div>
               
@@ -194,11 +231,15 @@ export function EvaluationsTab({ application }: EvaluationsTabProps) {
                 <h4 className="text-sm font-medium mb-2">Overall Recommendation</h4>
                 <div className="p-4 bg-muted/50 rounded-md">
                   <p className="text-sm">
-                    {application.evaluations.some((e: any) => (e.overallScore || 0) >= 8)
-                      ? 'Strong candidate with excellent skills and potential. Recommended for the next round/hire.'
-                      : application.evaluations.some((e: any) => (e.overallScore || 0) >= 6)
-                      ? 'Competent candidate with some areas for improvement. Consider for the next round with additional training.'
-                      : 'Candidate may not be the best fit for this role at this time.'}
+                    {application.evaluations.length > 0 ? (
+                      application.evaluations.some((e: any) => (e.overallScore || 0) >= 8)
+                        ? 'Strong candidate with excellent skills and potential. Recommended for the next round/hire.'
+                        : application.evaluations.some((e: any) => (e.overallScore || 0) >= 6)
+                        ? 'Competent candidate with some areas for improvement. Consider for the next round with additional training.'
+                        : 'Candidate may not be the best fit for this role at this time.'
+                    ) : (
+                      'No evaluations completed yet. Schedule interviews to gather feedback from the hiring team.'
+                    )}
                   </p>
                 </div>
               </div>

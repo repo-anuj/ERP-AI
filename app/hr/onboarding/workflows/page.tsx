@@ -57,8 +57,8 @@ export default function OnboardingWorkflowsPage() {
   const [workflows, setWorkflows] = useState<OnboardingWorkflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
@@ -272,7 +272,7 @@ export default function OnboardingWorkflowsPage() {
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="true">Active</SelectItem>
                 <SelectItem value="false">Inactive</SelectItem>
               </SelectContent>
@@ -283,7 +283,7 @@ export default function OnboardingWorkflowsPage() {
                 <SelectValue placeholder="All Departments" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Departments</SelectItem>
+                <SelectItem value="all">All Departments</SelectItem>
                 <SelectItem value="Engineering">Engineering</SelectItem>
                 <SelectItem value="Sales">Sales</SelectItem>
                 <SelectItem value="Marketing">Marketing</SelectItem>
@@ -296,8 +296,8 @@ export default function OnboardingWorkflowsPage() {
               variant="outline"
               onClick={() => {
                 setSearchTerm('');
-                setStatusFilter('');
-                setDepartmentFilter('');
+                setStatusFilter('all');
+                setDepartmentFilter('all');
               }}
             >
               <Filter className="w-4 h-4 mr-2" />

@@ -625,7 +625,7 @@ export function AddProjectDialog() {
                             employee.position?.toLowerCase().includes('manager') ||
                             employee.position?.toLowerCase().includes('lead')
                           ).length === 0 && (
-                            <SelectItem value="" disabled>
+                            <SelectItem value="none" disabled>
                               No managers available
                             </SelectItem>
                           )}

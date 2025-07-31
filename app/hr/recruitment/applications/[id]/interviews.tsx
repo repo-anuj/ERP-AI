@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Application } from './page';
+import { useRouter } from 'next/navigation';
 
 interface InterviewsTabProps {
   application: Application;
@@ -26,6 +27,12 @@ const getInterviewStatusIcon = (status: string) => {
 };
 
 export function InterviewsTab({ application, onScheduleInterview }: InterviewsTabProps) {
+  const router = useRouter();
+
+  const handleViewInterviewDetails = (interviewId: string) => {
+    router.push(`/hr/recruitment/interviews/${interviewId}`);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -77,7 +84,11 @@ export function InterviewsTab({ application, onScheduleInterview }: InterviewsTa
                       </div>
                     )}
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewInterviewDetails(interview.id)}
+                  >
                     View Details
                   </Button>
                 </div>

@@ -70,9 +70,9 @@ export default function BackgroundChecksPage() {
   const [backgroundChecks, setBackgroundChecks] = useState<BackgroundCheck[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [checkTypeFilter, setCheckTypeFilter] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [checkTypeFilter, setCheckTypeFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
@@ -88,9 +88,9 @@ export default function BackgroundChecksPage() {
       });
 
       if (searchTerm) params.append('search', searchTerm);
-      if (statusFilter) params.append('status', statusFilter);
-      if (checkTypeFilter) params.append('checkType', checkTypeFilter);
-      if (priorityFilter) params.append('priority', priorityFilter);
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
+      if (checkTypeFilter && checkTypeFilter !== 'all') params.append('checkType', checkTypeFilter);
+      if (priorityFilter && priorityFilter !== 'all') params.append('priority', priorityFilter);
 
       const response = await fetch(`/api/hr/recruitment/background-checks?${params}`);
       if (!response.ok) throw new Error('Failed to fetch background checks');
@@ -303,7 +303,7 @@ export default function BackgroundChecksPage() {
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
@@ -317,7 +317,7 @@ export default function BackgroundChecksPage() {
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="criminal">Criminal</SelectItem>
                 <SelectItem value="employment">Employment</SelectItem>
                 <SelectItem value="education">Education</SelectItem>
@@ -334,7 +334,7 @@ export default function BackgroundChecksPage() {
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Priorities</SelectItem>
+                <SelectItem value="all">All Priorities</SelectItem>
                 <SelectItem value="urgent">Urgent</SelectItem>
                 <SelectItem value="high">High</SelectItem>
                 <SelectItem value="standard">Standard</SelectItem>
@@ -346,9 +346,9 @@ export default function BackgroundChecksPage() {
               variant="outline"
               onClick={() => {
                 setSearchTerm('');
-                setStatusFilter('');
-                setCheckTypeFilter('');
-                setPriorityFilter('');
+                setStatusFilter('all');
+                setCheckTypeFilter('all');
+                setPriorityFilter('all');
               }}
             >
               <Filter className="w-4 h-4 mr-2" />

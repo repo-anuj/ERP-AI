@@ -95,8 +95,60 @@ export default function ApplicationDetailPage() {
   const [activeTab, setActiveTab] = useState('overview');
   
   const handleScheduleInterview = () => {
-    // Logic to schedule interview
-    console.log('Schedule interview for:', application?.candidate.firstName);
+    if (!application) return;
+
+    // Navigate to interview scheduling page with application context
+    router.push(`/hr/recruitment/interviews/create?applicationId=${application.id}&candidateId=${application.candidate.id}&jobPostingId=${application.jobPosting.id}`);
+  };
+
+  const handleMoveToNextStage = async () => {
+    if (!application) return;
+
+    try {
+      const nextStageMap: Record<string, string> = {
+        'applied': 'screening',
+        'screening': 'interview',
+        'interview': 'offer',
+        'offer': 'hired'
+      };
+
+      const nextStage = nextStageMap[application.status];
+      if (!nextStage) {
+        toast({
+          title: 'Info',
+          description: 'Application is already at the final stage',
+        });
+        return;
+      }
+
+      const response = await fetch(`/api/hr/recruitment/applications/${application.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: nextStage,
+          stage: nextStage,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update application');
+
+      const updatedApplication = await response.json();
+      setApplication({ ...application, status: nextStage });
+
+      toast({
+        title: 'Success',
+        description: `Application moved to ${nextStage} stage`,
+      });
+    } catch (error) {
+      console.error('Error updating application:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update application status',
+        variant: 'destructive',
+      });
+    }
   };
 
   useEffect(() => {
@@ -123,6 +175,15 @@ export default function ApplicationDetailPage() {
       fetchApplication();
     }
   }, [params.id, toast]);
+
+  // Handle tab parameter from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' }> = {
@@ -190,10 +251,19 @@ export default function ApplicationDetailPage() {
           </div>
           <div className="flex items-center gap-2">
             {getStatusBadge(application.status)}
-            <Button variant="outline" size="sm" disabled={application.status === 'hired'}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={application.status === 'hired' || application.status === 'rejected'}
+              onClick={handleMoveToNextStage}
+            >
               Move to Next Stage
             </Button>
-            <Button size="sm" disabled={application.status === 'hired'}>
+            <Button
+              size="sm"
+              disabled={application.status === 'hired' || application.status === 'rejected'}
+              onClick={handleScheduleInterview}
+            >
               Schedule Interview
             </Button>
           </div>

@@ -204,7 +204,7 @@ export default function OnboardingInstancesPage() {
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="not_started">Not Started</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
@@ -218,7 +218,7 @@ export default function OnboardingInstancesPage() {
                 <SelectValue placeholder="All Workflows" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Workflows</SelectItem>
+                <SelectItem value="all">All Workflows</SelectItem>
                 {/* This would be populated with actual workflows */}
               </SelectContent>
             </Select>

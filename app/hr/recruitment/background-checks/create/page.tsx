@@ -214,7 +214,7 @@ export default function CreateBackgroundCheckPage() {
         description: 'Background check created successfully',
       });
 
-      router.push(`/hr/recruitment/background-checks/${data.backgroundCheck.id}`);
+      router.push('/hr/recruitment/background-checks');
     } catch (error: any) {
       toast({
         title: 'Error',
