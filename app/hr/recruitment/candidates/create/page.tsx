@@ -29,7 +29,7 @@ export default function CreateCandidatePage() {
     noticePeriod: '',
     skills: '',
     education: '',
-    resume: '',
+    resumeUrl: '',
     portfolioUrl: '',
     linkedinUrl: '',
     source: 'job_board',
@@ -55,6 +55,17 @@ export default function CreateCandidatePage() {
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid email address',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -64,6 +75,13 @@ export default function CreateCandidatePage() {
         totalExperience: formData.totalExperience ? parseFloat(formData.totalExperience) : null,
         noticePeriod: formData.noticePeriod ? parseInt(formData.noticePeriod) : null,
         skills: formData.skills ? formData.skills.split(',').map(skill => skill.trim()) : [],
+        education: [], // Initialize as empty array for now
+        experience: [], // Initialize as empty array for now
+        certifications: [], // Initialize as empty array for now
+        // Clean up empty URLs to avoid validation errors
+        portfolioUrl: formData.portfolioUrl || null,
+        linkedinUrl: formData.linkedinUrl || null,
+        resumeUrl: formData.resumeUrl || null,
       };
 
       const response = await fetch('/api/hr/recruitment/candidates', {
@@ -75,8 +93,19 @@ export default function CreateCandidatePage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(errorData || 'Failed to create candidate');
+        let errorMessage = 'Failed to create candidate';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          if (errorData.details) {
+            console.error('Validation details:', errorData.details);
+          }
+        } catch {
+          // If JSON parsing fails, try text
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -266,9 +295,12 @@ export default function CreateCandidatePage() {
                 id="education"
                 value={formData.education}
                 onChange={(e) => handleInputChange('education', e.target.value)}
-                placeholder="Enter educational background"
+                placeholder="Enter educational background (e.g., Bachelor's in Computer Science from XYZ University)"
                 rows={3}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                This will be stored as notes. Detailed education management coming soon.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -284,6 +316,16 @@ export default function CreateCandidatePage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="resumeUrl">Resume URL</Label>
+                <Input
+                  id="resumeUrl"
+                  type="url"
+                  value={formData.resumeUrl}
+                  onChange={(e) => handleInputChange('resumeUrl', e.target.value)}
+                  placeholder="https://drive.google.com/file/d/..."
+                />
+              </div>
+              <div>
                 <Label htmlFor="portfolioUrl">Portfolio URL</Label>
                 <Input
                   id="portfolioUrl"
@@ -293,16 +335,17 @@ export default function CreateCandidatePage() {
                   placeholder="https://portfolio.example.com"
                 />
               </div>
-              <div>
-                <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
-                <Input
-                  id="linkedinUrl"
-                  type="url"
-                  value={formData.linkedinUrl}
-                  onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
-                  placeholder="https://linkedin.com/in/username"
-                />
-              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
+              <Input
+                id="linkedinUrl"
+                type="url"
+                value={formData.linkedinUrl}
+                onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
+                placeholder="https://linkedin.com/in/username"
+              />
             </div>
 
             <div>

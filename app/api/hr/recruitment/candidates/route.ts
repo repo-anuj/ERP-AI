@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -18,19 +19,19 @@ const candidateSchema = z.object({
   nationality: z.string().optional().nullable(),
   currentLocation: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
-  linkedinUrl: z.string().url("Invalid LinkedIn URL").optional().nullable().or(z.literal("")),
-  portfolioUrl: z.string().url("Invalid portfolio URL").optional().nullable().or(z.literal("")),
-  githubUrl: z.string().url("Invalid GitHub URL").optional().nullable().or(z.literal("")),
+  linkedinUrl: z.string().url("Invalid LinkedIn URL").optional().nullable().or(z.literal("")).or(z.undefined()),
+  portfolioUrl: z.string().url("Invalid portfolio URL").optional().nullable().or(z.literal("")).or(z.undefined()),
+  githubUrl: z.string().url("Invalid GitHub URL").optional().nullable().or(z.literal("")).or(z.undefined()),
   currentCompany: z.string().optional().nullable(),
   currentPosition: z.string().optional().nullable(),
   totalExperience: z.number().min(0).optional().nullable(),
   currentSalary: z.number().min(0).optional().nullable(),
   expectedSalary: z.number().min(0).optional().nullable(),
   noticePeriod: z.number().min(0).optional().nullable(),
-  resumeUrl: z.string().url("Invalid resume URL").optional().nullable().or(z.literal("")),
-  coverLetterUrl: z.string().url("Invalid cover letter URL").optional().nullable().or(z.literal("")),
+  resumeUrl: z.string().url("Invalid resume URL").optional().nullable().or(z.literal("")).or(z.undefined()),
+  coverLetterUrl: z.string().url("Invalid cover letter URL").optional().nullable().or(z.literal("")).or(z.undefined()),
   skills: z.array(z.string()).default([]),
-  education: z.array(z.any()).default([]),
+  education: z.union([z.array(z.any()), z.string()]).default([]), // Accept both array and string
   experience: z.array(z.any()).default([]),
   certifications: z.array(z.any()).default([]),
   source: z.string().optional().nullable(),
@@ -246,6 +247,32 @@ export async function POST(request: NextRequest) {
       dateOfBirth: validatedData.dateOfBirth ? new Date(validatedData.dateOfBirth) : null,
       companyId: user.companyId,
     };
+
+    // Handle education field - convert string to array if needed
+    if (typeof validatedData.education === 'string' && validatedData.education.trim()) {
+      // For now, store the education string as a note in the education array
+      candidateData.education = [{
+        id: randomUUID(),
+        institution: 'Manual Entry',
+        degree: validatedData.education,
+        fieldOfStudy: null,
+        startDate: null,
+        endDate: null,
+        gpa: null,
+        description: validatedData.education
+      }];
+    } else if (Array.isArray(validatedData.education)) {
+      candidateData.education = validatedData.education;
+    } else {
+      candidateData.education = [];
+    }
+
+    // Clean up empty URL fields to avoid validation errors
+    ['linkedinUrl', 'portfolioUrl', 'githubUrl', 'resumeUrl', 'coverLetterUrl'].forEach(field => {
+      if (candidateData[field] === '' || candidateData[field] === undefined) {
+        candidateData[field] = null;
+      }
+    });
 
     // Clean up undefined values that might cause Prisma issues
     Object.keys(candidateData).forEach(key => {
